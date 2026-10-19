@@ -1,0 +1,24 @@
+.veil {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms var(--out);
+}
+.veil.on { opacity: 1; }
+.veil .pill {
+  padding: 18px 30px;
+  border-radius: 999px;
+  background: var(--page);
+  box-shadow: var(--float);
+  font-weight: 500;
+  transform: scale(0.94);
+  transition: transform 200ms var(--pop);
+}
+.veil.on .pill { transform: none; }

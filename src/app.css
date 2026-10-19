@@ -1,0 +1,382 @@
+/* Inter for words, JetBrains Mono for code: variable, Latin only, from this origin (the app makes no outside requests). */
+@font-face { font-family: Inter; font-weight: 100 900; font-display: swap; src: url(/fonts/inter.woff2); }
+@font-face { font-family: Inter; font-style: italic; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-italic.woff2); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono.woff2); }
+@font-face { font-family: 'JetBrains Mono'; font-style: italic; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono-italic.woff2); }
+
+:root {
+  /* three tones, from the page back to the paper and the well the code sits in */
+  --page: #f5f5f7;
+  --paper: #ffffff;
+  --well: #e6e8ef;
+  --well-2: #f3f4f8;
+  --fg: #1d1d1f;
+  --fg-2: #48484a;
+  --fg-3: #636368;
+  --line: rgba(0, 0, 0, 0.09);
+  --line-2: rgba(0, 0, 0, 0.16);
+  --glass: rgba(255, 255, 255, 0.86);
+  --bar: color-mix(in srgb, var(--page) 72%, transparent);
+  --lift: 0 1px 2px rgba(20, 24, 40, 0.06), 0 12px 24px -16px rgba(20, 24, 40, 0.18);
+  --edge: 0 0 #0000;
+  --float: 0 0 0 1px var(--line), 0 1px 2px rgba(20, 24, 40, 0.06), 0 14px 32px -10px rgba(20, 24, 40, 0.22);
+  --accent: #0066cc;
+  --danger: #b3261e;
+  --tint: color-mix(in srgb, var(--danger) 7%, var(--paper));
+  /* motion: nothing runs longer than 300ms, and only transform and opacity move */
+  --out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --in: cubic-bezier(0.4, 0, 1, 1);
+  --io: cubic-bezier(0.65, 0, 0.35, 1);
+  --pop: cubic-bezier(0.2, 0.9, 0.3, 1.06);
+  --rel: cubic-bezier(0.3, 1.25, 0.5, 1);
+  --sans: Inter, -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --measure: 1120px;
+  --gut: 80px;
+  --jump: 96px;
+  color-scheme: light;
+}
+
+:root[data-width='wide'] { --measure: 1720px; }
+
+:root[data-theme='dark'] {
+  --page: #0a0a0c;
+  --paper: #1a1a21;
+  --well: #272833;
+  --well-2: #20212a;
+  --fg: #f5f5f7;
+  --fg-2: #cfcfd4;
+  --fg-3: #9a9aa1;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-2: rgba(255, 255, 255, 0.2);
+  --glass: rgba(34, 34, 38, 0.84);
+  --lift: 0 0 #0000;
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --float: 0 0 0 1px var(--line), 0 14px 32px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --accent: #4da3ff;
+  --danger: #ff7b72;
+  --tint: color-mix(in srgb, var(--danger) 10%, var(--paper));
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--fg);
+  font: 16px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The platform's own scrollbars, thin: they fade away where the system lets them, and color-scheme dresses them. */
+* { scrollbar-width: thin; }
+
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* One hover for every control: a fill of the text colour at 8%, behind the content. */
+.icon, .handle, .row { position: relative; isolation: isolate; }
+.icon::before, .handle::before, .row::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 100ms var(--out);
+}
+.icon:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
+.row:active::before { opacity: 0.14; }
+
+/* header: a full-width bar of glass; the file on the left, the tools in one pill on the right */
+
+.bar {
+  position: fixed;
+  z-index: 10;
+  inset: 0 0 auto;
+  height: 56px;
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+}
+.bar .inner { display: flex; align-items: center; gap: 12px; height: 100%; padding: 0 20px; }
+
+.name {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--fg);
+}
+.name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name.idle { font-weight: 500; color: var(--fg-2); }
+.tools {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: var(--fg-2);
+  transition: transform 200ms var(--rel);
+}
+.icon:hover { color: var(--fg); }
+.icon:focus-visible { outline-offset: -2px; }
+.icon:active, .handle:active { transform: scale(0.97); transition-duration: 100ms; }
+
+.swap .glyph {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: rotate(-60deg) scale(0.6);
+  transition: transform 300ms var(--io), opacity 200ms var(--out);
+}
+.swap .glyph.on { opacity: 1; transform: none; }
+
+/* empty state: a line of type on the page itself, the whole window being the place to drop */
+
+main { min-height: 100vh; }
+
+.drop {
+  position: absolute;
+  inset: 40vh 0 auto;
+  margin-inline: auto;
+  width: min(680px, calc(100vw - 48px));
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  text-align: center;
+  border-radius: 14px;
+  transition: transform 200ms var(--rel);
+  animation: rise 300ms var(--out) both;
+}
+.drop:active { transform: scale(0.99); }
+.drop strong { font-size: clamp(28px, 6vw, 44px); line-height: 1.1; font-weight: 650; letter-spacing: -0.03em; text-wrap: balance; }
+.drop span { color: var(--fg-3); font-size: 16px; }
+.drop:hover span { color: var(--fg-2); }
+
+/* footer: a small pill that floats over the page and signs it, always in view */
+
+.made {
+  position: fixed;
+  z-index: 8;
+  inset: auto 0 16px;
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 16px 5px 5px;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  color: var(--fg-3);
+  font-size: 13px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 200ms var(--rel);
+  animation: rise 300ms var(--out) 200ms backwards;
+}
+.made img { display: block; width: 28px; height: 28px; border-radius: 50%; background: var(--well); transition: transform 300ms var(--rel); }
+.made b { font-weight: 600; color: var(--fg); }
+.made:hover img { transform: rotate(-8deg) scale(1.1); }
+.made:hover b { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.made:active { transform: scale(0.97); transition-duration: 100ms; }
+
+/* notebook */
+
+.notebook {
+  width: min(var(--measure), 100%);
+  margin: 0 auto;
+  padding: 88px 24px 160px;
+}
+
+/* Every cell owns half of the 16px between cells. A code cell also keeps room below it for its shadow
+   (the paint containment of content-visibility would cut it off) and gives that room back as negative margin. */
+.cell {
+  --bleed: 12px;
+  display: grid;
+  grid-template-columns: var(--gut) minmax(0, 1fr);
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto var(--h);
+  padding-block: 8px;
+  scroll-margin-top: var(--jump);
+}
+.cell.code {
+  padding: 8px var(--bleed) 24px;
+  margin: 0 calc(var(--bleed) * -1) -16px;
+}
+
+.gutter {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-right: 16px;
+  user-select: none;
+}
+.cnt { position: relative; padding-top: 24px; font: 12px/22.275px var(--mono); color: var(--fg-3); }
+.gutter.first .cnt { padding-top: 19px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The handle: always visible on a long cell, and it follows the reader down it. */
+.handle {
+  position: sticky;
+  top: 72px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 21px 0 0 0;
+  border-radius: 999px;
+  color: var(--fg-3);
+  transition: transform 200ms var(--rel);
+}
+.gutter.first .handle { margin-top: 16px; }
+.handle:hover { color: var(--fg); }
+.handle.quiet { visibility: hidden; pointer-events: none; }
+.handle svg, .row svg { flex: none; width: 16px; height: 16px; transition: transform 200ms var(--io); }
+.handle[aria-expanded='true'] svg, .row[aria-expanded='true'] svg { transform: rotate(90deg); }
+.handle::after { content: ''; position: absolute; inset: -8px; }
+@media (pointer: fine) { .handle::after { display: none; } }
+
+/* A code cell is a tray on the page. The code sits in one inset box, the answer in another. */
+.card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 18px;
+  corner-shape: squircle;
+  background: var(--paper);
+  box-shadow: var(--lift);
+}
+.card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: var(--edge); pointer-events: none; }
+.card:focus:not(:focus-visible) { outline: 0; }
+
+pre { margin: 0; font-family: var(--mono); }
+
+.srcbox, .outs { position: relative; min-width: 0; overflow: hidden; border-radius: 10px; corner-shape: squircle; --pr: 20px; }
+.srcbox { background: var(--well); }
+.src {
+  padding: 16px var(--pr) 16px 20px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  tab-size: 4;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.src code { font: inherit; }
+
+.hl span { color: var(--shiki-light); font-style: var(--shiki-light-font-style); font-weight: var(--shiki-light-font-weight); }
+:root[data-theme='dark'] .hl span { color: var(--shiki-dark); font-style: var(--shiki-dark-font-style); font-weight: var(--shiki-dark-font-weight); }
+
+/* Closed, hidden and capped all look the same: one row, the whole row a button. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 20px 0 16px;
+  text-align: left;
+  font: 13px/1 var(--sans);
+  color: var(--fg-2);
+}
+.row.well { background: var(--well); }
+.row.soft { background: var(--well-2); }
+.row.closed, .row.code, .row.layer { border-radius: 10px; corner-shape: squircle; }
+.row svg { color: var(--fg-3); }
+.row .lead { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.closed .lead, .row.code .lead { font: 13.5px var(--mono); }
+.row em { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: normal 12px var(--sans); color: var(--fg-3); }
+.row.closed { padding-left: 20px; }
+.row.cap { height: 36px; font-size: 12.5px; }
+.row:focus-visible { outline-offset: -2px; }
+.row.fade::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 100% 0;
+  height: 64px;
+  background: linear-gradient(transparent, var(--well));
+  pointer-events: none;
+}
+
+.outs { display: grid; background: var(--well-2); }
+.out { min-width: 0; padding: 12px 0; }
+.out + .out { padding-top: 0; }
+.out pre { padding: 4px var(--pr) 4px 20px; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; }
+.out.stderr pre { color: var(--fg-2); }
+
+/* An error keeps the paper and gains a tint; a typed header says what went wrong. */
+.out.err { padding: 16px 0 8px; background: var(--tint); }
+.exc { margin: 0 0 6px; padding: 0 var(--pr) 0 20px; font: 14px/1.5 var(--sans); overflow-wrap: anywhere; }
+.exc strong { margin-right: 0.6em; font-weight: 600; color: var(--danger); }
+.err pre { font-size: 12.5px; color: var(--fg-3); }
+.err pre [class*='fg'] { color: inherit; }
+
+.note { margin: 0; padding: 2px var(--pr) 6px 20px; font-size: 12px; line-height: 1.5; color: var(--fg-3); }
+
+.pic { position: relative; display: block; width: fit-content; max-width: calc(100% - 40px); margin: 4px 20px; }
+.out-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  corner-shape: squircle;
+}
+:root[data-theme='dark'] .out-image:not(.plate) { filter: brightness(0.9); }
+/* Figures saved with transparency would vanish in dark mode, so they sit on a soft light plate. */
+.out-image.plate { padding: 12px; background: #f3f3f5; }
+
+/* markdown (the rest lives in md.css, loaded with the renderer) */
+
+.md { min-width: 0; font-size: 16.5px; line-height: 1.7; overflow-wrap: break-word; }
+.pending { margin: 0; white-space: pre-wrap; color: var(--fg-3); }
+
+/* motion */
+
+@keyframes swap { from { opacity: 0; transform: translateY(6px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } }
+.rise { animation: rise 200ms var(--out) both; }
+
+@media (max-width: 720px) {
+  .notebook { padding-inline: 12px; }
+  .cell { --bleed: 8px; position: relative; grid-template-columns: minmax(0, 1fr); }
+  .gutter { display: contents; }
+  .cnt { position: absolute; top: 40px; left: 4px; padding: 0; font-size: 0; }
+  .bar .inner { padding: 0 12px 0 16px; }
+  .bar .icon { width: 44px; height: 44px; }
+  .handle { position: absolute; top: 29px; left: calc(var(--bleed) + 12px); margin: 0; z-index: 1; }
+  .gutter.first .handle { top: 24px; margin: 0; }
+  .card.tall .src { padding-left: 44px; }
+  .card.tall .row.closed { padding-left: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+}

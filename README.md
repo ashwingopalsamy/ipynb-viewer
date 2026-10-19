@@ -1,0 +1,60 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/wordmark-dark.svg">
+    <img src=".github/assets/wordmark-light.svg" width="300" alt="ipynb viewer">
+  </picture>
+</p>
+
+<p align="center"><b>Jupyter notebooks, without Jupyter.</b><br>Lightweight and fully local. Just drop the file and read it, delightfully.</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/tag-never-runs-code-dark.svg">
+    <img src=".github/assets/tag-never-runs-code-light.svg" height="30" alt="Never runs code">
+  </picture>
+  <a href="LICENSE"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/tag-mit-dark.svg">
+    <img src=".github/assets/tag-mit-light.svg" height="30" alt="MIT licence">
+  </picture></a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hero-dark.png">
+    <img src=".github/assets/hero-light.png" width="920" alt="A notebook called Cooling coffee dropped onto the viewer, shown half in the light theme and half in the dark one: a title, a cooling equation set in proper math, and a highlighted code cell">
+  </picture>
+</p>
+
+## Read a notebook
+
+Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in) and drop a `.ipynb` anywhere on the page.
+
+The file never leaves your browser. There is no server to send it to, and no code in it ever runs. If you only want to see what a notebook says, you no longer need a kernel for it.
+
+## What it does
+
+- **Reads like a document.** Prose is set in Inter and code in JetBrains Mono, with math typeset and every code cell highlighted.
+- **Knows where you are.** A slim rail on the right tracks the chapter you are in and opens into the full outline.
+- **Keeps outputs calm.** A progress bar shows only its final state, and a long traceback leads with the line that matters.
+- **Puts figures first.** One tap lays every plot out on a shelf, and each one saves as an image.
+- **Shares a cell as a picture.** Press `s` and a cell becomes a clean image, ready for a post or a doc.
+- **Keeps up with your work.** In Chromium browsers, a notebook you dropped refreshes when it changes on disk.
+
+Every shortcut is in [docs/shortcuts.md](docs/shortcuts.md), or press `?` in the app. To try it on something real, drop [examples/cooling-coffee.ipynb](examples/cooling-coffee.ipynb).
+
+## Run it yourself
+
+```sh
+git clone https://github.com/ashwingopalsamy/ipynb-viewer
+cd ipynb-viewer
+npm install
+npm run dev
+```
+
+It needs Node 22 or newer. `npm run build` writes a static site to `dist/` that any file host can serve.
+
+## How it stays small
+
+The core of the reader is under 30 KB gzipped. Everything else, from code highlighting to math, loads only when a notebook asks for it. [docs/architecture.md](docs/architecture.md) has the rest.
+
+<sub>[MIT](LICENSE) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) · Not affiliated with Project Jupyter.</sub>

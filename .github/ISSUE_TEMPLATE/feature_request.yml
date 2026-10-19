@@ -1,0 +1,17 @@
+name: Idea
+description: Something that would make reading notebooks better
+labels: [idea]
+body:
+  - type: textarea
+    id: moment
+    attributes:
+      label: The moment
+      description: What were you reading, and where did the viewer get in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+    validations:
+      required: true

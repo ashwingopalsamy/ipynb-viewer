@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Jupyter notebooks, without Jupyter." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>ipynb viewer</title>
+    <script>
+      (function () {
+        var t, w, p;
+        try {
+          t = localStorage.getItem('theme');
+          w = localStorage.getItem('width');
+          p = localStorage.getItem('pf');
+        } catch (e) {}
+        if (p) document.documentElement.dataset.pf = p;
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+        document.documentElement.dataset.width = w === 'wide' ? 'wide' : 'normal';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+/* Seldom needed: warnings, raw cells, the chapter under the file name. Loads with the extras. */
+.notice {
+  margin: 0 0 20px var(--gut);
+  font-size: 13.5px;
+  color: var(--fg-3);
+}
+.notice summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px;
+  border-radius: 999px;
+  background: var(--well);
+  cursor: pointer;
+  list-style: none;
+}
+.notice summary::-webkit-details-marker { display: none; }
+.notice svg { width: 16px; height: 16px; }
+.notice ul { margin: 10px 0 0; padding-left: 20px; }
+.raw {
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: var(--well);
+  font-size: 13px;
+  white-space: pre-wrap;
+  color: var(--fg-2);
+}
+/* Where the outline lives in a popover, the chapter being read follows the file name. */
+.chapter { display: flex; flex: 1 1 0; gap: 8px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
+.chapter::before { content: '/'; flex: none; opacity: 0.6; }
+.chapter > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
+@media (min-width: 1360px) { .chapter { display: none; } }
+@media (max-width: 720px) {
+  .name.two { display: grid; gap: 1px; align-content: center; }
+  .name.two .file { font-size: 11.5px; font-weight: 400; color: var(--fg-3); }
+  .chapter { font-size: 14px; font-weight: 600; color: var(--fg); }
+  .chapter::before { display: none; }
+}
+@media (max-width: 720px) { .notice { margin-left: 0; } }
