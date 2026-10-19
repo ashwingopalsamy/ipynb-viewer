@@ -1,0 +1,32 @@
+.live {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% { opacity: 0.25; }
+}
+
+/* A cell that just changed on disk glows once. */
+.fresh .card, .fresh .md { position: relative; }
+.fresh .card::before, .fresh .md::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: 18px;
+  background: var(--accent);
+  pointer-events: none;
+  animation: glow 2400ms ease-out both;
+}
+
+@keyframes glow {
+  0% { opacity: 0.22; }
+  100% { opacity: 0; }
+}
+

@@ -1,0 +1,29 @@
+.back {
+  position: fixed;
+  z-index: 12;
+  left: 0;
+  right: 0;
+  bottom: 68px;
+  margin-inline: auto;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  color: var(--fg);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: transform 200ms var(--rel);
+  animation: lift 300ms var(--out) both 300ms;
+}
+.back:active { transform: scale(0.97); transition-duration: 100ms; }
+
+@keyframes lift {
+  from { opacity: 0; transform: translateY(12px); }
+}

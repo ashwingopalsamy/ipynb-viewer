@@ -1,0 +1,81 @@
+/* The screenshot dialog: the picture on the left, what shapes it on the right. */
+.shot {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms var(--out), visibility 0s 200ms;
+}
+.shot.on { opacity: 1; visibility: visible; transition-delay: 0s; }
+
+.dlg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  width: min(1160px, 100%);
+  height: min(780px, 100%);
+  overflow: hidden;
+  border-radius: 18px;
+  corner-shape: squircle;
+  background: var(--paper);
+  box-shadow: var(--float);
+  outline: 0;
+  transform: translateY(8px) scale(0.98);
+  transition: transform 220ms var(--pop);
+}
+.shot.on .dlg { transform: none; }
+
+.stage { position: relative; display: grid; place-items: center; min-width: 0; min-height: 0; overflow: auto; padding: 24px; background: var(--well-2); }
+.stage canvas { display: block; max-width: none; }
+.stage .wait { margin: 0; font-size: 13px; color: var(--fg-3); }
+
+.ctl { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.ctl header { display: flex; align-items: center; justify-content: space-between; padding: 14px 12px 2px 20px; }
+.ctl h2 { margin: 0; font: 600 15px/1.2 var(--sans); }
+.x { position: relative; isolation: isolate; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-3); }
+.x::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.x:hover { color: var(--fg); }
+.x:hover::before { opacity: 0.08; }
+.x:focus-visible { outline-offset: -2px; }
+
+.ctl .scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 20px; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent); }
+.ctl .cat { margin: 16px 12px 6px; }
+.ctl .scroll > .cat:first-child { margin-top: 10px; }
+.opt { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 38px; padding: 0 4px 0 12px; font-size: 13.5px; }
+.opt > span { color: var(--fg-2); }
+.opt .seg { margin: 4px 0; }
+.ctl .sw { height: 40px; }
+
+.swatches { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 4px; }
+.swatch { position: relative; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: inset 0 0 0 1px var(--line-2); }
+.swatch.none { background: linear-gradient(to top right, transparent calc(50% - 1px), var(--fg-3) calc(50% - 1px), var(--fg-3) calc(50% + 1px), transparent calc(50% + 1px)), var(--well-2); }
+.swatch::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--fg); opacity: 0; transform: scale(0.88); transition: opacity 150ms var(--out), transform 220ms var(--rel); }
+.swatch[aria-checked='true']::after { opacity: 1; transform: none; }
+.swatch:active { transform: scale(0.94); }
+.swatch:focus-visible { outline-offset: 5px; }
+
+.ctl footer { display: grid; gap: 6px; padding: 12px 20px 16px; background: var(--paper); }
+.ctl .meta { display: flex; justify-content: space-between; margin: 0; font: 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); min-height: 17px; }
+.ctl .note { margin: 0; font: 12px/1.4 var(--sans); color: var(--fg-3); }
+.ctl .note:empty { display: none; }
+.ctl .note.bad { color: var(--danger); }
+.ctl .btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (pointer: coarse) {
+  .x { width: 44px; height: 44px; }
+  .ctl .sw { height: 44px; }
+  .opt { min-height: 48px; }
+  .swatch::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+}
+
+@media (max-width: 720px) {
+  .shot { padding: 12px; }
+  .dlg { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 34%) minmax(0, 1fr); }
+  .stage { padding: 12px; }
+}

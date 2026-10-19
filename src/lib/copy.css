@@ -1,0 +1,33 @@
+/* The buttons in the corner of the code and output boxes: always there, quiet until the pointer comes. */
+.acts { position: absolute; z-index: 2; top: 10px; right: 8px; display: flex; }
+.copy, .snap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  isolation: isolate;
+  border-radius: 999px;
+  color: var(--fg-3);
+  transition: transform 200ms var(--rel);
+}
+.copy::before, .snap::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.copy:hover, .snap:hover { color: var(--fg); }
+.copy:hover::before, .snap:hover::before { opacity: 0.08; }
+.copy:active, .snap:active { transform: scale(0.94); transition-duration: 100ms; }
+.copy:focus-visible, .snap:focus-visible { outline-offset: -2px; }
+@media (pointer: coarse) {
+  .copy::after, .snap::after { content: ''; position: absolute; inset: -6px; }
+  .acts { gap: 12px; }
+}
+
+.copy svg { position: absolute; inset: 0; margin: auto; transition: transform 200ms var(--io), opacity 150ms var(--out); }
+.copy .k { opacity: 0; transform: scale(0.6); }
+.copy.done { color: var(--fg); }
+.copy.done .c { opacity: 0; transform: scale(0.6); }
+.copy.done .k { opacity: 1; transform: none; }
+
+/* with the buttons there, the text keeps clear of them */
+.srcbox:has(.acts > button), .outs:has(.acts > button) { --pr: 52px; }
+.srcbox:has(.acts > button:nth-of-type(2)), .outs:has(.acts > button:nth-of-type(2)) { --pr: 84px; }
+@media (pointer: coarse) { .srcbox:has(.acts > button:nth-of-type(2)), .outs:has(.acts > button:nth-of-type(2)) { --pr: 96px; } }

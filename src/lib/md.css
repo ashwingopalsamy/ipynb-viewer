@@ -1,0 +1,29 @@
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6 { margin: 1.6em 0 0.5em; line-height: 1.25; letter-spacing: -0.02em; font-weight: 650; }
+.md h1 { font-size: 2.1rem; letter-spacing: -0.03em; font-weight: 700; margin: 1em 0 0.6em; }
+.md h2 { font-size: 1.6rem; margin-top: 2em; }
+.cell.markdown:has(> .md > :is(h1, h2):first-child) { padding-top: 26px; }
+.md h3 { font-size: 1.28rem; }
+.md h4, .md h5, .md h6 { font-size: 1.05rem; }
+.md p, .md ul, .md ol, .md blockquote, .md pre, .md table, .md details { margin: 0.8em 0; }
+.md ul, .md ol { padding-left: 1.5em; }
+.md li + li { margin-top: 0.25em; }
+.md a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.md a:hover { text-decoration-color: var(--accent); color: var(--accent); }
+.md code { font: 0.88em var(--mono); padding: 0.15em 0.45em; border-radius: 6px; background: var(--well); }
+.md pre { padding: 14px 18px; border-radius: 10px; corner-shape: squircle; background: var(--well); overflow-x: auto; font-size: 13px; line-height: 1.65; }
+.md pre code { padding: 0; border: 0; background: none; font-size: inherit; }
+.md blockquote { padding: 0.05em 1.1em; border-radius: 10px; corner-shape: squircle; background: color-mix(in srgb, var(--well) 60%, transparent); color: var(--fg-2); }
+.md hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.md img { max-width: 100%; height: auto; border-radius: 10px; corner-shape: squircle; }
+.md table { display: block; width: max-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.94em; background: var(--paper); border-radius: 10px; corner-shape: squircle; }
+.md th, .md td { padding: 9px 16px; text-align: left; }
+.md th { font-weight: 600; background: var(--well); }
+.md tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--fg) 3%, var(--paper)); }
+.md .math-block { margin: 1em 0; overflow-x: auto; text-align: center; }
+.md > :is(p, ul, ol, blockquote, h3, h4, h5, h6, .math-block, hr, details) { max-width: 60ch; }
+.md .math.display { display: block; }
+.md .katex { font-size: 1.08em; }
+.md .math[data-tex] { font-family: var(--mono); font-size: 0.9em; color: var(--fg-3); }
+

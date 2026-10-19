@@ -1,0 +1,16 @@
+:root {
+  --a0: #1d1d1f; --a1: #b3261e; --a2: #0a6640; --a3: #8a5a00; --a4: #0b5fc5; --a5: #8a2fa0; --a6: #0b6a8a; --a7: #57606a;
+  --a8: #48484a; --a9: #c4251c; --a10: #157a3d; --a11: #946200; --a12: #1a5fcf; --a13: #9b3ba6; --a14: #0b7285; --a15: #1d1d1f;
+}
+:root[data-theme='dark'] {
+  --a0: #9a9aa1; --a1: #ff7b72; --a2: #7fd7a0; --a3: #f2c14e; --a4: #79b8ff; --a5: #e0a0f5; --a6: #6ed4e8; --a7: #e5e5ea;
+  --a8: #8e8e93; --a9: #ff9a93; --a10: #9ae6b4; --a11: #ffd97a; --a12: #9cc9ff; --a13: #ecb8fa; --a14: #8ee8f5; --a15: #ffffff;
+}
+.fg0 { color: var(--a0); } .fg1 { color: var(--a1); } .fg2 { color: var(--a2); } .fg3 { color: var(--a3); }
+.fg4 { color: var(--a4); } .fg5 { color: var(--a5); } .fg6 { color: var(--a6); } .fg7 { color: var(--a7); }
+.fg8 { color: var(--a8); } .fg9 { color: var(--a9); } .fg10 { color: var(--a10); } .fg11 { color: var(--a11); }
+.fg12 { color: var(--a12); } .fg13 { color: var(--a13); } .fg14 { color: var(--a14); } .fg15 { color: var(--a15); }
+.bg0, .bg1, .bg2, .bg3, .bg4, .bg5, .bg6, .bg7 { color: var(--paper); }
+.bg0 { background: var(--a0); } .bg1 { background: var(--a1); } .bg2 { background: var(--a2); } .bg3 { background: var(--a3); }
+.bg4 { background: var(--a4); } .bg5 { background: var(--a5); } .bg6 { background: var(--a6); } .bg7 { background: var(--a7); }
+.bold { font-weight: 700; } .dim { opacity: 0.8; } .italic { font-style: italic; } .underline { text-decoration: underline; }

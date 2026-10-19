@@ -1,0 +1,71 @@
+/* Reader options: tokens on <html data-pf>, flipped from the settings menu. */
+
+/* text size: every cell scales, the page, the header and the menus do not */
+[data-pf~='z90'] .notebook > .cell { zoom: 0.9; --jump: calc(96px / 0.9); }
+[data-pf~='z110'] .notebook > .cell { zoom: 1.1; --jump: calc(96px / 1.1); }
+[data-pf~='z125'] .notebook > .cell { zoom: 1.25; --jump: calc(96px / 1.25); }
+[data-pf~='z140'] .notebook > .cell { zoom: 1.4; --jump: calc(96px / 1.4); }
+
+[data-pf~='serif'] .md { font-family: ui-serif, 'New York', Charter, 'Iowan Old Style', Georgia, 'Times New Roman', serif; font-size: 17.5px; line-height: 1.72; }
+
+/* line numbers: a counter on every highlighted line; the room is kept while the highlighter is still on its way */
+.hl { counter-reset: ln; }
+[data-pf~='ln'] .hl .line::before {
+  content: counter(ln);
+  counter-increment: ln;
+  display: inline-block;
+  width: 3ch;
+  margin-right: 20px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--fg-3);
+  user-select: none;
+}
+[data-pf~='ln'] .src:has(> code:not(.hl)) { padding-left: calc(20px + 3ch + 20px); }
+
+/* wrapped code: long lines break instead of scrolling; with numbers, wrapped lines hang under the first */
+[data-pf~='wrap'] .src { overflow-x: hidden; }
+[data-pf~='wrap'] .src code { white-space: pre-wrap; overflow-wrap: anywhere; }
+[data-pf~='wrap'] .hl { white-space: normal; }
+[data-pf~='wrap'] .hl .line { display: block; min-height: 1lh; white-space: pre-wrap; overflow-wrap: anywhere; }
+[data-pf~='ln'][data-pf~='wrap'] .hl .line { padding-left: calc(3ch + 20px); text-indent: calc(-3ch - 20px); }
+
+/* status: one small dot beside the run count, green for a cell that ran, red for one that ended in an error */
+:root { --ok: #1d8a4a; }
+:root[data-theme='dark'] { --ok: #4cc38a; }
+.cnt::before {
+  content: '';
+  position: absolute;
+  top: 31px;
+  right: -12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.cnt[data-st='err']::before { width: 7px; height: 7px; background: var(--danger); box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 24%, transparent); }
+[data-pf~='nodot'] .cnt::before { display: none; }
+.gutter.first .cnt::before { top: 26px; }
+@media (max-width: 720px) {
+  .cnt::before { top: 0; right: auto; left: -5px; }
+  .gutter.first .cnt { top: 35px; }
+}
+
+[data-pf~='nocnt'] .cnt { font-size: 0; }
+
+/* spotlight: the cell under the reading line stays bright; the rest steps back, and a hover or focus brings it forward */
+[data-pf~='spot'] .notebook > .cell { opacity: 0.4; transition: opacity 250ms var(--out); }
+[data-pf~='spot'] .notebook > .cell.lit, [data-pf~='spot'] .notebook > .cell:hover, [data-pf~='spot'] .notebook > .cell:focus-within { opacity: 1; }
+
+/* a header that gets out of the way while reading down */
+[data-pf~='hush'] .bar { transition: transform 250ms var(--io); }
+[data-pf~='hush'] .bar[data-hush] { transform: translateY(-100%); }
+[data-pf~='hush'] .bar[data-hush]::after { opacity: 0; }
+
+[data-pf~='calm'] *, [data-pf~='calm'] *::before, [data-pf~='calm'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}

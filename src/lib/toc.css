@@ -1,0 +1,120 @@
+/* The outline: tick marks along the right edge. Hovering or focusing them opens the full list. */
+.rail {
+  position: fixed;
+  z-index: 9;
+  top: 50%;
+  right: 0;
+  display: none;
+  width: 40px;
+  height: calc(var(--rows) * 20px + 24px);
+  margin-top: calc(var(--rows) * -10px - 12px);
+}
+.stack { display: block; width: 100%; height: 100%; padding: 12px 0; cursor: default; }
+.stack:focus-visible { outline-offset: -6px; border-radius: 12px; }
+.ticks { display: block; height: 100%; clip-path: inset(0 -200px); }
+.tr {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 20px;
+  padding-right: 14px;
+  transform: translateY(calc(var(--shift) * -20px));
+  transition: transform 300ms var(--io), opacity 300ms var(--out);
+}
+.tk {
+  position: relative;
+  width: max(6px, calc(16px - var(--d) * 4px));
+  height: 2px;
+  border-radius: 1px;
+  background: var(--fg-3);
+  opacity: 0.75;
+  transform-origin: 100% 50%;
+  transition: transform 250ms var(--io), opacity 150ms var(--out);
+}
+.tk::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity 150ms var(--out); }
+.tr.near .tk { opacity: 1; }
+.tr.now .tk { opacity: 1; transform: scale(1.5, 1.4); }
+.tr.now .tk::after { opacity: 1; }
+
+/* Where the margin has room, the headings around the current one are named beside their ticks. */
+.lbl {
+  position: absolute;
+  right: 46px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px/20px var(--sans);
+  color: var(--fg-3);
+  opacity: 0;
+  transition: opacity 200ms var(--out);
+}
+.rail:hover .lbl, .rail.pin .lbl, .rail:has(:focus-visible) .lbl { opacity: 0 !important; }
+
+.panel {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 284px;
+  max-height: min(72vh, 560px);
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 14px;
+  corner-shape: squircle;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(10px, -50%) scale(0.98);
+  transform-origin: 100% 50%;
+  transition: opacity 140ms var(--in) 140ms, transform 140ms var(--in) 140ms, visibility 0s 280ms;
+}
+.rail:hover .panel, .rail.pin .panel, .rail:has(:focus-visible) .panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+  transition: opacity 200ms var(--out) 60ms, transform 220ms var(--pop) 60ms, visibility 0s;
+}
+
+.t {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px 0 calc(10px + var(--d, 0) * 12px);
+  overflow: hidden;
+  border-radius: 10px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 30px;
+  color: var(--fg-3);
+}
+.t::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.t:hover::before { opacity: 0.08; }
+.t.near { color: var(--fg-2); }
+.t[aria-current] { color: var(--fg); font-weight: 600; }
+.t[aria-current]::before { background: var(--fg); opacity: 0.1; }
+.t:focus-visible { outline-offset: -2px; }
+
+#toc-list { display: grid; max-height: min(70vh, 480px); overflow-y: auto; overscroll-behavior: contain; }
+
+.md :is(h1, h2, h3, h4, h5, h6) { scroll-margin-top: var(--jump); }
+
+/* Past a phone's width the outline lives on the edge, and the page leaves it room. */
+@media (min-width: 721px) {
+  .rail { display: block; }
+  [data-toc-toggle], #pop-toc { display: none; }
+  :root[data-toc] .notebook { padding-right: max(24px, calc(56px - max(0px, (100% - var(--measure)) / 2))); }
+}
+@media (min-width: 1360px) {
+  .tr.near .lbl, .tr.now .lbl { opacity: 1; }
+  .tr.now .lbl { color: var(--fg); }
+  :root[data-toc] .notebook { padding-right: max(24px, calc(232px - max(0px, (100% - var(--measure)) / 2))); }
+}
