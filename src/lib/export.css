@@ -28,34 +28,3 @@
   .save { opacity: 0.92; transform: none; }
   .save::after { content: ''; position: absolute; inset: -6px; }
 }
-
-.fig { display: grid; gap: 4px; padding: 4px; }
-.fig .seg { margin: 0; }
-.fig .meta { display: flex; justify-content: space-between; margin: 6px 4px 0; font: 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); min-height: 17px; }
-.fig .note { margin: 0 4px; font: 12px/1.4 var(--sans); color: var(--fg-3); }
-.fig .note:empty { display: none; }
-.fig .note.bad { color: var(--danger); }
-.fig .btns { display: flex; gap: 8px; justify-content: flex-end; }
-.fig .cat { margin: 8px 8px 2px; }
-.fig .cap { margin: 6px 8px 0; font: 12px/1.4 var(--sans); color: var(--fg-3); }
-
-.btn {
-  position: relative;
-  isolation: isolate;
-  height: 34px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--well);
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--fg);
-  transition: transform 200ms var(--rel);
-}
-.btn::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
-.btn:hover::before { opacity: 0.07; }
-.btn:active { transform: scale(0.96); transition-duration: 100ms; }
-.btn.solid { background: var(--fg); color: var(--paper); }
-.btn.solid:hover::before { opacity: 0.14; }
-.btn:disabled { opacity: 0.4; cursor: default; }
-.btn:focus-visible { outline-offset: 2px; }
-@media (pointer: coarse) { .btn { height: 44px; } }

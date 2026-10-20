@@ -19,8 +19,8 @@
 .mark { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--well); color: var(--fg-2); }
 .quiet .mark { width: 28px; height: 28px; background: none; }
 .acts-net { display: flex; gap: 8px; }
-.nb { height: 36px; padding: 0 16px; border-radius: 999px; background: var(--well); color: var(--fg); font-size: 13px; font-weight: 600; white-space: nowrap; transition: transform 200ms var(--rel); }
-.nb:hover { background: color-mix(in srgb, var(--well) 100%, var(--fg) 8%); }
+.nb { height: var(--btn); padding: 0 var(--s4); border-radius: 999px; background: var(--btn-2); color: var(--fg); font: 600 var(--fs-sm)/1 var(--sans); white-space: nowrap; transition: transform 200ms var(--rel); }
+.nb:hover { background: color-mix(in srgb, var(--fg) 14%, transparent); }
 .nb:active { transform: scale(0.97); transition-duration: 100ms; }
 .nb.go { background: var(--fg); color: var(--paper); }
 .nb.go:hover { background: color-mix(in srgb, var(--fg) 88%, var(--paper)); }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Cell } from './notebook';
-  import Glyph from './Glyph.svelte';
+  import Icon from './Lucide.svelte';
   import Pop from './Pop.svelte';
   import { ui, jump } from './ui.svelte';
   import { search, mark, LIMIT } from './search';
@@ -41,7 +41,7 @@
 <Pop id="search" label="Search" width={520} bare inline anchor={() => document.querySelector('.bar')}>
   <div class="find" bind:this={box} role="search">
     <label class="field">
-      <Glyph name="search" />
+      <Icon name="search" />
       <input type="search" oninput={(e) => (q = e.currentTarget.value)} onfocus={(e) => e.currentTarget.select()} placeholder="Search this notebook" aria-label="Search this notebook" autocomplete="off" spellcheck="false" />
       {#if typed && found.hits.length}<span class="n" role="status">{found.more ? `${LIMIT}+` : found.hits.length}</span>{/if}
       <kbd>esc</kbd>

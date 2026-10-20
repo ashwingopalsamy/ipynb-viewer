@@ -42,22 +42,18 @@
 
   const runInfo = $derived(!has('nocnt') || !has('nodot'));
   const size = $derived(SIZES.indexOf(zoom()));
-  const step = (by: number) => setZoom(SIZES[Math.min(SIZES.length - 1, Math.max(0, size + by))]);
+  let dir = $state('');
+  const step = (by: number) => {
+    dir = by < 0 ? 'down' : '';
+    setZoom(SIZES[Math.min(SIZES.length - 1, Math.max(0, size + by))]);
+  };
+  const fromSettings = () => document.querySelector('[data-pop=settings]') ?? bar();
 </script>
 
-{#snippet sw(label: string, on: boolean, flip: () => void, hint = '')}
-  <button class="sw" role="switch" aria-checked={on} onclick={flip}>
-    <span>{label}</span>
-    {#if hint}<kbd>{hint}</kbd>{/if}
-    <i class="track"><i class="knob"></i></i>
-  </button>
-{/snippet}
-
-{#snippet opt(label: string, icon: Lucide, on: boolean, flip: () => void, hint = '')}
+{#snippet opt(label: string, icon: Lucide, on: boolean, flip: () => void, sub: string)}
   <button class="sw" role="switch" aria-checked={on} onclick={flip}>
     <Icon name={icon} />
-    <span>{label}</span>
-    {#if hint}<kbd>{hint}</kbd>{/if}
+    <span>{label}<small>{sub}</small></span>
     <i class="track"><i class="knob"></i></i>
   </button>
 {/snippet}
@@ -75,7 +71,7 @@
         <span>Text size</span>
         <div class="set-ctl step" role="group" aria-label="Text size">
           <button aria-label="Smaller text" disabled={size <= 0} onclick={() => step(-1)}><b class="s">A</b></button>
-          <output>{SIZES[size]}%</output>
+          <output>{#key size}<span class="roll {dir}">{SIZES[size]}%</span>{/key}</output>
           <button aria-label="Larger text" disabled={size >= SIZES.length - 1} onclick={() => step(1)}><b class="l">A</b></button>
         </div>
       </div>
@@ -83,17 +79,17 @@
 
     <p class="set-cat">Text</p>
     <div class="set-group">
-      {@render opt('Serif', 'type', has('serif'), () => set('serif', !has('serif')))}
-      {@render opt('Wrap', 'wrap', has('wrap'), () => set('wrap', !has('wrap')))}
-      {@render opt('Lines', 'order', has('ln'), () => set('ln', !has('ln')))}
+      {@render opt('Serif', 'type', has('serif'), () => set('serif', !has('serif')), 'Text cells in a book face')}
+      {@render opt('Wrap', 'wrap', has('wrap'), () => set('wrap', !has('wrap')), 'Long code lines wrap')}
+      {@render opt('Line numbers', 'order', has('ln'), () => set('ln', !has('ln')), 'Beside every line of code')}
     </div>
 
     <p class="set-cat">Cells</p>
     <div class="set-group">
-      {@render opt('Run info', 'hash', runInfo, () => (set('nocnt', runInfo), set('nodot', runInfo)))}
-      {@render opt('Trim', 'scissors', !has('notrim'), () => set('notrim', !has('notrim')))}
-      {@render opt('Spotlight', 'focus', has('spot'), () => set('spot', !has('spot')))}
-      {#if ui.scrambled}{@render opt('Run order', 'shuffle', ui.replayed, () => (ui.replayed = !ui.replayed))}{/if}
+      {@render opt('Run info', 'hash', runInfo, () => (set('nocnt', runInfo), set('nodot', runInfo)), 'Run counts beside each cell')}
+      {@render opt('Trim', 'scissors', !has('notrim'), () => set('notrim', !has('notrim')), 'Shorten long outputs')}
+      {@render opt('Spotlight', 'focus', has('spot'), () => set('spot', !has('spot')), 'Dim all but the cell you read')}
+      {#if ui.scrambled}{@render opt('Run order', 'shuffle', ui.replayed, () => (ui.replayed = !ui.replayed), 'Cells in the order they ran')}{/if}
     </div>
 
     <p class="set-cat">Pictures</p>
@@ -105,21 +101,24 @@
     </div>
     <p class="set-note">{HINTS[net.mode]}{net.mode !== 'never' && net.lock === 2 ? ' This page has shut them out; reload to change that.' : ''}</p>
 
-    <div class="pills">
-      <button onclick={() => (ui.pop = 'privacy')}><Icon name="shield" />Privacy</button>
-      <button onclick={() => (ui.pop = 'keys')}><Icon name="keyboard" />Keys</button>
-      <a href={new URL('./', document.baseURI).href}><Icon name="house" />Home</a>
+    <div class="set-foot">
+      <button class="btn quiet" onclick={() => (ui.pop = 'privacy')}><Icon name="shield" />Privacy</button>
+      <button class="btn quiet" onclick={() => (ui.pop = 'keys')}><Icon name="keyboard" />Shortcuts</button>
+      <a class="btn quiet" href={new URL('./', document.baseURI).href}><Icon name="house" />Home</a>
     </div>
   </div>
 </Pop>
 
-<Pop id="keys" label="Keyboard shortcuts" width={320} lead={false} anchor={bar}>
-  <dl class="keys">
-    {#each keys as [k, what]}
-      <dt>{#each k.split(' ') as one}<kbd>{one}</kbd>{/each}</dt>
-      <dd>{what}</dd>
-    {/each}
-  </dl>
-  <hr />
-  {@render sw('Single-key shortcuts', prefs.keys, () => setKeys(!prefs.keys))}
+<Pop id="keys" label="Keyboard shortcuts" width={344} lead={false} anchor={fromSettings}>
+  <div class="set">
+    <dl class="keys">
+      {#each keys as [k, what]}
+        <dt>{#each k.split(' ') as one}<kbd>{one}</kbd>{/each}</dt>
+        <dd>{what}</dd>
+      {/each}
+    </dl>
+    <div class="set-group">
+      {@render opt('Single-key shortcuts', 'keyboard', prefs.keys, () => setKeys(!prefs.keys), 'They stand down while you type')}
+    </div>
+  </div>
 </Pop>

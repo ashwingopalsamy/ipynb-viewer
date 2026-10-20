@@ -1,9 +1,11 @@
 <script lang="ts">
   import Pop from './Pop.svelte';
   import Seg from './Seg.svelte';
+  import Icon from './Lucide.svelte';
   import { ui } from './ui.svelte';
   import { canWebp, canCopy, convert, copyPng, EXT, fileName, fits, LABEL, load, mimeOf, save, size, type Format } from './export';
   import './export.css';
+  import './settings.css';
 
   // The menu that hangs from a picture's save button: format, size, and where it goes.
   const SCALES = [1, 2, 3] as const;
@@ -97,15 +99,20 @@
   }
 </script>
 
-<Pop id="figure" label="Save figure" width={288} near anchor={() => fig?.el ?? null}>
-  <div class="fig">
-    <Seg label="Format" options={FORMATS} value={format} onchange={(v) => ((format = v), remember())} />
-    <Seg label="Size" options={SCALES.map((n) => [n, `${n}×`] as const)} value={scale} disabled={SCALES.filter((n) => !room(n))} onchange={(v) => ((want = v), remember())} />
-    <p class="meta"><span>{#if img}{w.toLocaleString()} × {h.toLocaleString()} px{/if}</span><span>{#if weight !== null}{size(weight)}{/if}</span></p>
-    <p class="note" class:bad={!!failed} role="status">{failed || note}</p>
-    <div class="btns">
-      {#if canCopy()}<button class="btn" onclick={copy}>{copied ? 'Copied' : format === 'png' ? 'Copy' : 'Copy PNG'}</button>{/if}
-      <button class="btn solid" disabled={!img} onclick={download}>Save {LABEL[format]}</button>
+<Pop id="figure" label="Save figure" width={288} near lead={false} anchor={() => fig?.el ?? null}>
+  <div class="set">
+    <div class="set-group">
+      <div class="set-row"><span>Format</span><div class="set-ctl"><Seg label="Format" options={FORMATS} value={format} onchange={(v) => ((format = v), remember())} /></div></div>
+      <div class="set-row"><span>Size</span><div class="set-ctl"><Seg label="Size" options={SCALES.map((n) => [n, `${n}×`] as const)} value={scale} disabled={SCALES.filter((n) => !room(n))} onchange={(v) => ((want = v), remember())} /></div></div>
+    </div>
+    <dl class="stats">
+      <div><dt>Pixels</dt><dd>{img ? `${w.toLocaleString()} × ${h.toLocaleString()}` : '–'}</dd></div>
+      <div><dt>File</dt><dd>{#key weight}<span class="roll">{weight !== null ? size(weight) : '–'}</span>{/key}</dd></div>
+    </dl>
+    <p class="set-note" class:bad={!!failed} role="status">{failed || note}</p>
+    <div class="set-foot">
+      {#if canCopy()}<button class="btn" class:done={copied} onclick={copy}><span class="ico-swap"><Icon name="copy" /><Icon name="check" /></span>{copied ? 'Copied' : format === 'png' ? 'Copy' : 'Copy PNG'}</button>{/if}
+      <button class="btn solid" disabled={!img} onclick={download}><Icon name="download" />Save {LABEL[format]}</button>
     </div>
   </div>
 </Pop>

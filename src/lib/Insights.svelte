@@ -45,10 +45,15 @@
     timer = setTimeout(() => (note = ''), 4000);
   };
 
-  async function copy(text: string, ok: string) {
+  let done = $state('');
+  let doneTimer: ReturnType<typeof setTimeout> | undefined;
+  async function copy(text: string, ok: string, key = '') {
     try {
       await navigator.clipboard.writeText(text);
       say(ok);
+      done = key;
+      clearTimeout(doneTimer);
+      doneTimer = setTimeout(() => (done = ''), 1600);
     } catch {
       say('The clipboard did not accept it.');
     }
@@ -67,7 +72,7 @@
       if (ui.hide && hits.length) text = redact(text, hits);
       const url = `${location.origin}${location.pathname}#${await pack(text, name)}`;
       if (url.length > LINK_MAX) continue;
-      return copy(url, `Link copied, ${size(url.length)}. It carries the notebook without ${strip === 'images' ? 'pictures' : 'outputs'}, and no server ever sees it.`);
+      return copy(url, `Link copied, ${size(url.length)}. It carries the notebook without ${strip === 'images' ? 'pictures' : 'outputs'}, and no server ever sees it.`, 'link');
     }
     say('Too large for a link, even without outputs. Save a copy and send the file.');
   }
@@ -129,7 +134,7 @@
             </div>
             {#if hits.length > 4}<p class="set-note">and {hits.length - 4} more.</p>{/if}
             <div class="set-group">
-              <button class="set-action" onclick={link}><Icon name="link" />Copy link</button>
+              <button class="set-action" class:done={done === 'link'} onclick={link}><span class="ico-swap"><Icon name="link" /><Icon name="check" /></span>Copy link</button>
               <button class="set-action" onclick={other}><Icon name="compare" />Compare</button>
             </div>
             <p class="set-note">The link carries the notebook after the #, so no server sees it. Compare reads an earlier file here.</p>
@@ -139,7 +144,7 @@
               {#if need?.kernel}<div class="set-kv"><span>Kernel</span><b>{need.kernel}</b></div>{/if}
               {#if need?.format}<div class="set-kv"><span>Format</span><b>{need.format}</b></div>{/if}
               {#if need?.command}
-                <div class="set-code"><code>{need.command}</code><button aria-label="Copy the install command" title="Copy" onclick={() => copy(need!.command!, 'Copied the install command.')}><Icon name="copy" size={16} /></button></div>
+                <div class="set-code"><code>{need.command}</code><button class:done={done === 'cmd'} aria-label="Copy the install command" title="Copy" onclick={() => copy(need!.command!, 'Copied the install command.', 'cmd')}><span class="ico-swap"><Icon name="copy" /><Icon name="check" /></span></button></div>
               {/if}
             </div>
             {#if need?.command}

@@ -4,6 +4,17 @@ const root = document.documentElement
 const home = document.getElementById('home')!
 const landing = document.getElementById('landing') as HTMLLinkElement | null
 const picker = document.getElementById('picker') as HTMLInputElement
+const ask = document.querySelector<HTMLElement>('.ask')
+// The paste hint names the platform's own modifier key.
+if (!/Mac|iPhone|iPad/.test(navigator.userAgent)) root.dataset.pc = ''
+// A paste that held no link shakes the button once.
+const nope = () => {
+  ask?.classList.remove('nope')
+  void ask?.offsetWidth
+  ask?.classList.add('nope')
+}
+// The ⌘ (or Ctrl) in the hint goes down with the reader's own key.
+const held = (e: KeyboardEvent) => root.classList.toggle('mod', e.metaKey || e.ctrlKey)
 const listening = new AbortController()
 const { signal } = listening
 
@@ -78,6 +89,7 @@ picker.addEventListener(
 window.addEventListener(
   'keydown',
   (e) => {
+    held(e)
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
       e.preventDefault()
       choose()
@@ -131,10 +143,16 @@ window.addEventListener(
   (e) => {
     if ((e.target as Element).closest?.('input, textarea')) return
     const text = e.clipboardData?.getData('text') ?? ''
-    if (text.includes('http')) import('../lib/link').then((m) => m.pasted(text))
+    if (!text.includes('http')) return nope()
+    root.classList.add('sent')
+    import('../lib/link').then((m) => m.pasted(text) || (root.classList.remove('sent'), nope()))
   },
   { signal },
 )
+window.addEventListener('keyup', held, { signal })
+window.addEventListener('blur', () => root.classList.remove('mod'), { signal })
+// A back-navigation must never show a stuck spinner.
+window.addEventListener('pageshow', (e) => e.persisted && root.classList.remove('sent', 'mod'), { signal })
 
 // A notebook link in the address bar goes straight to the reader, which fetches it. The code that reads the link loads beside the
 // reader rather than after it.

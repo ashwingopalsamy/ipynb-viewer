@@ -21,6 +21,8 @@
   --out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --rel: cubic-bezier(0.3, 1.25, 0.5, 1);
   --io: cubic-bezier(0.65, 0, 0.35, 1);
+  --in: cubic-bezier(0.4, 0, 1, 1);
+  --pop: cubic-bezier(0.2, 0.9, 0.3, 1.06);
   --sans: Inter, -apple-system, system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   color-scheme: light;
@@ -111,7 +113,6 @@ b { font-weight: 600; }
 main { width: min(1040px, 100%); margin: 0 auto; padding: 0 24px 64px; }
 
 /* hero: the headline, one line of explanation, and the one place to drop a notebook */
-.hero { display: grid; justify-items: center; gap: 14px; padding: clamp(28px, 5vw, 48px) 0 12px; text-align: center; }
 .logo { width: 60px; height: 72px; filter: drop-shadow(0 12px 20px rgba(20, 24, 40, 0.2)); }
 h1 { max-width: 15ch; margin: 4px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; font-weight: 700; letter-spacing: -0.04em; text-wrap: balance; }
 h1 span { color: var(--fg-3); }
@@ -120,49 +121,69 @@ h1 span { color: var(--fg-3); }
 /* home: the first screen is the hero, centred, with a cue to the explainers at its foot; the explainers scroll below, and the footer comes last */
 main.home { padding-bottom: 0; }
 .first { display: flex; flex-direction: column; align-items: center; min-height: calc(100dvh - 76px); }
-.hero { flex: 1; width: min(var(--col), 100%); display: grid; align-content: center; justify-items: center; gap: 14px; padding: 24px 0; text-align: center; }
+.hero { flex: 1; width: 100%; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 24px 0; text-align: center; }
 
-/* the one place to act: a line of text with an underline that draws in on hover. Nothing around it. */
-.ask {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 36px;
-  padding: 6px 0;
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--fg-2);
-  transition: color 150ms var(--out);
+/* the one place to act: the system's primary pill, and under it the other two ways in */
+.cta { display: grid; justify-items: center; gap: 14px; margin-top: 28px; }
+.ask { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 24px 0 20px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 16px/1 var(--sans); letter-spacing: -0.01em; transition: transform 200ms var(--rel); }
+.ask::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--page); opacity: 0; transition: opacity 120ms var(--out); }
+.ask:hover::before { opacity: 0.14; }
+.ask:active { transform: scale(0.97); transition-duration: 100ms; }
+.ask:focus-visible { outline-offset: 3px; }
+.ask-ico { display: grid; width: 20px; height: 20px; }
+.ask-ico svg { grid-area: 1 / 1; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: opacity 160ms var(--out); }
+/* the arrow lifts out of its tray under the pointer: this sends a file up */
+.ask .arr { transition: transform 240ms var(--rel); }
+.ask:hover .arr, .ask:focus-visible .arr { transform: translateY(-2px); }
+.ask-txt { display: grid; }
+.ask-txt > span { grid-area: 1 / 1; text-align: center; transition: opacity 160ms var(--out), transform 240ms var(--out); }
+.i-wait, .ask .busy { opacity: 0; }
+.ask .busy { transform: translateY(6px); }
+/* a pasted link: the button itself says it is on its way */
+.sent .i-up, .sent .ask .say { opacity: 0; }
+.sent .ask .say { transform: translateY(-6px); }
+.sent .i-wait, .sent .ask .busy { opacity: 1; }
+.sent .ask .busy { transform: none; }
+.sent .i-wait { animation: spin 800ms linear infinite; }
+@keyframes spin { to { transform: rotate(1turn); } }
+/* a paste that held no link: one short shake, the way a wrong password does */
+.ask.nope { animation: nope 320ms var(--io); }
+@keyframes nope { 20% { transform: translateX(-5px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } }
+
+.hint { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; margin: 0; font-size: 14px; line-height: 22px; color: var(--fg-3); }
+.hint kbd { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; font-size: 12px; transition: transform 100ms var(--out), box-shadow 100ms var(--out), background-color 100ms var(--out); }
+.hint kbd.m { margin-left: 4px; }
+/* the modifier key goes down with the reader's own */
+.mod .hint kbd.m { transform: translateY(1px); box-shadow: none; background: var(--well); }
+.pc, [data-pc] .mac { display: none; }
+[data-pc] .pc { display: inline; }
+/* a phone has nothing to drop and nowhere to paste */
+@media (hover: none) { .hint { display: none; } }
+
+/* a file carried over the page: the page steps back and the button comes forward as the place to let go */
+.carry { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--page) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 160ms var(--out), visibility 0s 160ms; }
+.over .carry { opacity: 1; visibility: visible; transition-delay: 0s; }
+.carry span { display: inline-flex; align-items: center; gap: 12px; height: 60px; padding: 0 30px 0 24px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 19px/1 var(--sans); letter-spacing: -0.01em; transform: scale(0.9); transition: transform 240ms var(--pop); }
+.over .carry span { transform: none; }
+.carry svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.over .carry .arr { animation: bob 700ms var(--io) infinite alternate; }
+@keyframes bob { to { transform: translateY(2.5px); } }
+
+/* the cue: two chevrons fall in turn, three times, then rest; it fades as the reader starts down, its job done */
+.next { display: inline-flex; align-items: center; gap: 8px; height: 36px; margin: 0 auto 28px; padding: 0 12px 0 16px; border-radius: 999px; color: var(--fg-3); font-size: 14px; text-decoration: none; transition: color 150ms var(--out), background-color 150ms var(--out); animation: cue-in 500ms var(--out) 600ms both; }
+.next:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.next svg { width: 16px; height: 16px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.next path { animation: fall 1.8s var(--io) 1.4s 3 both; }
+.next path + path { animation-delay: 1.52s; }
+.next:hover path { animation-iteration-count: infinite; }
+@keyframes cue-in { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes fall { 0%, 15% { opacity: 1; transform: none; } 45% { opacity: 0; transform: translateY(4px); } 46% { opacity: 0; transform: translateY(-4px); } 75%, 100% { opacity: 1; transform: none; } }
+@keyframes cue-out { to { opacity: 0; transform: translateY(10px); } }
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .next { animation: cue-in 500ms var(--out) 600ms both, cue-out linear both; animation-timeline: auto, scroll(root); animation-range: normal, 0 180px; }
+  }
 }
-.ask:hover { color: var(--fg); }
-.ask:focus-visible { outline-offset: 6px; }
-.ask svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.ask span { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; padding-bottom: 3px; transition: background-size 350ms var(--out); }
-.ask:hover span { background-size: 100% 1px; }
-
-/* a file carried over the page: the whole page says where it will go */
-.over::after {
-  content: 'Let go to open it';
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--page) 80%, transparent);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  font: 600 clamp(22px, 4vw, 30px) / 1.2 var(--sans);
-  letter-spacing: -0.02em;
-  color: var(--fg);
-  pointer-events: none;
-  animation: veil 150ms var(--out) both;
-}
-@keyframes veil { from { opacity: 0; } }
-
-.next { display: inline-flex; align-items: center; gap: 6px; margin: 0 auto 32px; padding: 10px 16px; border-radius: 999px; color: var(--fg-3); font-size: 14px; text-decoration: none; transition: color 150ms var(--out); }
-.next:hover { color: var(--fg); }
-.next svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; animation: nudge 2.4s var(--io) infinite; }
-@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
 
 /* the footer comes after the explainers */
 footer { margin-top: 64px; }
@@ -274,11 +295,12 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
   .tiles, .keys { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .icon, .ask, .next { transition: none; }
-  .next svg { animation: none; }
+  .icon, .ask, .ask *, .next, .carry, .carry * { transition: none; }
+  .next, .next path, .ask.nope, .sent .i-wait, .over .carry .arr { animation: none; }
+  .next path + path { display: none; }
 }
 @media print {
-  .bar, .ask, .next { display: none; }
+  .bar, .cta, .next, .carry { display: none; }
   .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
   body { background: #fff; }
   .block { break-inside: avoid; }

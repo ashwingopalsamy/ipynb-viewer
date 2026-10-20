@@ -2,11 +2,13 @@
   import type { Cell } from './notebook';
   import Pop from './Pop.svelte';
   import Seg from './Seg.svelte';
+  import Icon from './Lucide.svelte';
   import { ui } from './ui.svelte';
   import { toMarkdown, tokens, type Detail } from './handoff';
   import { findSecrets, redact } from './insight/secrets';
   import { fileName, save, size } from './export';
   import './export.css';
+  import './settings.css';
 
   // The menu behind the document button: the notebook as Markdown for a prompt or a note, copied or saved.
   let { cells, name, language }: { cells: readonly Cell[]; name: string; language: string | null } = $props();
@@ -83,18 +85,21 @@
   }
 </script>
 
-<Pop id="md" label="Copy as Markdown" width={300} anchor={() => document.querySelector('[data-pop=md]')}>
-  <div class="fig">
-    <h3 class="cat">Copy as Markdown</h3>
-    <p class="cap">Outputs</p>
-    <Seg label="Outputs" options={DETAIL} value={detail} onchange={choose} />
-    <p class="cap">Fit to a model</p>
-    <Seg label="Token budget" options={BUDGET} value={budget} onchange={(b) => (budget = b)} />
-    <p class="meta"><span>{#if made}{made.cells.toLocaleString('en-US')} cells · about {count} tokens{/if}</span><span>{#if made}{size(weight)}{/if}</span></p>
-    <p class="note" class:bad={!!failed} role="status">{failed || note}</p>
-    <div class="btns">
-      <button class="btn" disabled={!made} onclick={download}>Save .md</button>
-      <button class="btn solid" disabled={!made} onclick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+<Pop id="md" label="Copy as Markdown" width={344} lead={false} anchor={() => document.querySelector('[data-pop=md]')}>
+  <div class="set">
+    <div class="set-group">
+      <div class="set-row"><span>Outputs</span><div class="set-ctl"><Seg label="Outputs" options={DETAIL} value={detail} onchange={choose} /></div></div>
+      <div class="set-row"><span>Fit to model</span><div class="set-ctl"><Seg label="Token budget" options={BUDGET} value={budget} onchange={(b) => (budget = b)} /></div></div>
+    </div>
+    <dl class="stats">
+      <div><dt>Cells</dt><dd>{made ? made.cells.toLocaleString('en-US') : '–'}</dd></div>
+      <div><dt>Tokens</dt><dd>{#key count}<span class="roll">{made ? `~${count}` : '–'}</span>{/key}</dd></div>
+      <div><dt>Size</dt><dd>{#key weight}<span class="roll">{made ? size(weight) : '–'}</span>{/key}</dd></div>
+    </dl>
+    <p class="set-note" class:bad={!!failed} role="status">{failed || note}</p>
+    <div class="set-foot">
+      <button class="btn" disabled={!made} onclick={download}><Icon name="download" />Save .md</button>
+      <button class="btn solid" class:done={copied} disabled={!made} onclick={copy}><span class="ico-swap"><Icon name="copy" /><Icon name="check" /></span>{copied ? 'Copied' : 'Copy'}</button>
     </div>
   </div>
 </Pop>
