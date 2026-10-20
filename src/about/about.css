@@ -1,5 +1,5 @@
-@font-face { font-family: Inter; font-weight: 100 900; font-display: block; src: url(/fonts/inter.woff2); }
-@font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: block; src: url(/fonts/jetbrains-mono.woff2); }
+@font-face { font-family: Inter; font-weight: 100 900; font-display: swap; src: url(/fonts/inter.woff2); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono.woff2); }
 
 :root {
   --page: #f5f5f7;

@@ -1,5 +1,3 @@
-import { toggleTheme } from '../lib/theme.svelte'
-
 // The home page is the app. It shows the landing page until a notebook is chosen, dropped, pasted or linked; then the landing
 // page goes and the reader takes its place on the same page. The reader is loaded only at that moment.
 const root = document.documentElement
@@ -8,6 +6,30 @@ const landing = document.getElementById('landing') as HTMLLinkElement | null
 const picker = document.getElementById('picker') as HTMLInputElement
 const listening = new AbortController()
 const { signal } = listening
+
+// The same switch as lib/theme.svelte.ts, without its runes: that module pulls the Svelte runtime into this small first script, and the reader loads it later.
+const stored = () => {
+  try {
+    const v = localStorage.getItem('theme')
+    return v === 'light' || v === 'dark' ? v : null
+  } catch {
+    return null
+  }
+}
+const paint = (value: string) => {
+  root.dataset.theme = value
+  ;(document.getElementsByName('theme-color')[0] as HTMLMetaElement).content = value === 'dark' ? '#0a0a0c' : '#f5f5f7'
+}
+function toggleTheme() {
+  const next = root.dataset.theme === 'dark' ? 'light' : 'dark'
+  paint(next)
+  try {
+    localStorage.setItem('theme', next)
+  } catch {
+    // storage can be blocked; the choice then lasts for this visit only
+  }
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => !stored() && paint(e.matches ? 'dark' : 'light'), { signal })
 let opened = false
 let loading: Promise<typeof import('../lib/watch')> | undefined
 const watch = () => (loading ??= import('../lib/watch'))
