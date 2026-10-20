@@ -2,10 +2,12 @@
 
 The viewer is a static site (`dist/`) with no server code. Notebooks are read on the visitor's device and are never uploaded.
 
-- **ipynb.ashwingopalsamy.in** is the main site: a Cloudflare Worker that serves `dist/` as static assets, with the hostname attached as a custom domain. It is deployed from a laptop, not from CI.
+- **ipynb.ashwingopalsamy.in** is the main site: a Cloudflare Worker that serves `dist/` as static assets, with the hostname attached as a custom domain. It is deployed by `.github/workflows/deploy.yml` on every push to `main`, or by hand with `npm run deploy`.
 - **ashwingopalsamy.github.io/ipynb-viewer/** is a mirror published by `.github/workflows/pages.yml` on every push to `main`. It is marked `noindex` and its canonical link points at the main site.
 
 ## Deploy
+
+CI needs two repository secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. For a manual deploy:
 
 ```sh
 wrangler login        # once

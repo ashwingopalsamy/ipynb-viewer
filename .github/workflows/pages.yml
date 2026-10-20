@@ -12,7 +12,7 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-# The GitHub Pages mirror. The main site at ipynb.ashwingopalsamy.in is deployed by hand with `npm run deploy`.
+# The GitHub Pages mirror. The main site at ipynb.ashwingopalsamy.in is deployed by deploy.yml.
 jobs:
   mirror:
     runs-on: ubuntu-latest
