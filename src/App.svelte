@@ -3,13 +3,17 @@
   import { theme, toggleTheme } from './lib/theme.svelte';
   import CellView from './lib/Cell.svelte';
   import Icon from './lib/Icon.svelte';
+  import Lucide from './lib/Lucide.svelte';
   import { blank } from './lib/blank';
+
+  // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
+  let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
 
   let cells = $state.raw<Cell[]>([]);
   let meta = $state.raw<NotebookMeta | null>(null);
   let warnings = $state.raw<string[]>([]);
   let name = $state('');
-  let status = $state<'empty' | 'fetching' | 'ready' | 'error'>('empty');
+  let status = $state<'empty' | 'fetching' | 'ready' | 'error'>(file ? 'fetching' : 'empty');
   let detail = $state('');
   let dragging = $state(false);
   let picker: HTMLInputElement;
@@ -20,7 +24,6 @@
   let Actions = $state<typeof import('./lib/Extras.svelte').Actions>();
   let Veil = $state<typeof import('./lib/Veil.svelte').default>();
   let changed = $state.raw<ReadonlySet<string>>(new Set());
-  let live = $state(false);
   let stop: (() => void) | undefined;
 
   const rows = $derived(replayed && reorder ? reorder(cells) : cells);
@@ -41,7 +44,6 @@
       stop?.();
       stop = undefined;
       ready = false;
-      live = !!handle;
       name = file.name;
       cells = [];
       meta = null;
@@ -105,26 +107,18 @@
   }
 
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
-  const link = new URLSearchParams(location.search).get('url');
-  if (link) {
+  if (/[?#](?:url|nb)=/.test(location.href)) {
     status = 'fetching';
-    import('./lib/link')
-      .then((m) => m.fetchLink(link, (text) => (detail = text)))
-      .then(
-        (file) => {
-          if (!run) open(file);
-        },
-        (e) => {
-          if (!run) ((status = 'error'), (detail = e.message));
-        },
-      );
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => run || open(file), (why) => run || ((status = 'error'), (detail = why))));
   }
 
+  if (file) open(file, handle);
+
   // A link pasted on the empty screen reloads the page with it, the same way a shared link would arrive.
-  function paste(e: ClipboardEvent) {
+  const paste = (e: ClipboardEvent) => {
     const text = e.clipboardData?.getData('text') ?? '';
-    if (status !== 'ready' && /^https?:\/\/\S+\s*$/i.test(text)) location.search = 'url=' + encodeURIComponent(text);
-  }
+    if (status !== 'ready' && text.includes('http')) import('./lib/link').then((m) => m.pasted(text));
+  };
 
   function pick() {
     const file = picker.files?.[0];
@@ -171,8 +165,8 @@
 <header class="bar">
   <div class="inner">
     <span class="name pill" class:idle={!name} class:two={sections > 1}>
-      <span class="file">{#if live}<i class="live" title="Updates when the file changes"></i>{/if}{name || 'ipynb viewer'}</span>
-      {#if sections > 1}<span class="chapter">{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
+      <span class="file"><Icon name="file" />{name || 'ipynb viewer'}</span>
+      {#if sections > 1}<span class="chapter"><Icon name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
     </span>
     <button class="open pill" onclick={choose} aria-label="Open notebook">
       <Icon name="open" /><span>Open notebook</span>
@@ -180,14 +174,14 @@
     <div class="tools pill">
       {#if Actions}<Actions />{/if}
       <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
-        <span class="glyph" class:on={theme.value === 'light'}><Icon name="moon" /></span>
-        <span class="glyph" class:on={theme.value === 'dark'}><Icon name="sun" /></span>
+        <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>
+        <span class="glyph" class:on={theme.value === 'dark'}><Lucide name="sun" /></span>
       </button>
     </div>
   </div>
 </header>
 
-{#if Extras}<Extras cells={rows} raw={cells} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
+{#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
 
 <main>
   {#if status !== 'ready'}
@@ -217,7 +211,7 @@
 
 <a class="made" href="https://ashwingopalsamy.in" target="_blank" rel="noopener" referrerpolicy="no-referrer">
   <img src="ashwin.webp" width="22" height="22" alt="" decoding="async" />
-  <span>Built by <b>Ashwin Gopalsamy</b></span>
+  <span>With love by <b>Ashwin Gopalsamy</b></span>
 </a>
 
 {#if Veil}<Veil on={dragging} />{/if}

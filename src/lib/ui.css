@@ -1,3 +1,4 @@
+button { -webkit-tap-highlight-color: transparent; }
 /* Popovers, the settings menu and the shortcut sheet. */
 .pop {
   position: fixed;
@@ -25,17 +26,25 @@
 #pop-settings { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
 .pop hr { height: 1px; margin: 6px 4px; border: 0; background: var(--line); }
 
-/* settings: five small groups, each with a quiet name */
-.menu { display: grid; padding: 2px 0 6px; }
-.cat { margin: 14px 12px 4px; font: 600 12px/1 var(--sans); letter-spacing: 0.01em; color: var(--fg-3); }
-.menu > div:first-child .cat { margin-top: 10px; }
-.menu .sw { height: 34px; }
+/* settings: small groups, each with a symbol and a name, its rows resting in one rounded well */
+.menu { display: grid; gap: 2px; padding: 0 0 2px; }
+.cat { display: flex; align-items: center; gap: 8px; margin: 14px 12px 6px; font: 600 13px/1 var(--sans); color: var(--fg-2); }
+.cat svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
+.menu > div:first-child .cat { margin-top: 8px; }
+.cat .more { display: flex; align-items: center; gap: 8px; width: 100%; font: inherit; color: inherit; border-radius: 8px; }
+.chev { display: grid; margin-left: auto; transition: transform 200ms var(--io); }
+.chev.open { transform: rotate(90deg); }
+.well { display: grid; padding: 2px; border-radius: 14px; corner-shape: squircle; background: var(--well-2); }
+.well.last { margin-top: 12px; }
+.menu .sw { height: 36px; border-radius: 12px; }
+.menu .well .sw svg { flex: none; color: var(--fg-3); }
+#pop-settings { border-radius: 20px; }
 .sw.static { cursor: default; }
 .sw.static::before { display: none; }
 
-.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 32px; margin: 4px 6px 6px; padding: 2px; border-radius: 10px; corner-shape: squircle; background: var(--well); }
-.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 8px; corner-shape: squircle; background: var(--paper); box-shadow: 0 1px 2px rgba(20, 24, 40, 0.14), 0 0 0 0.5px var(--line); transform: translateX(calc(var(--i) * 100%)); transition: transform 250ms var(--io); }
-.seg button { border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
+.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 36px; margin: 2px 2px 4px; padding: 2px; border-radius: 999px; background: var(--well); }
+.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; background: var(--paper); box-shadow: 0 1px 2px rgba(20, 24, 40, 0.14), 0 0 0 0.5px var(--line); transform: translateX(calc(var(--i) * 100%)); transition: transform 250ms var(--io); }
+.seg button { border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
 .seg button[aria-checked='true'] { color: var(--fg); }
 .seg button:disabled { opacity: 0.35; cursor: default; }
 .seg button:focus-visible { outline-offset: -2px; }
@@ -83,22 +92,6 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
 
 .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--page); }
 
-/* once the page has moved, the text running under the header blurs and fades out instead of meeting the pills */
-.bar::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 -10px;
-  background: var(--bar);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  backdrop-filter: blur(14px) saturate(1.5);
-  -webkit-mask-image: linear-gradient(#000 62%, transparent);
-  mask-image: linear-gradient(#000 62%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms var(--out);
-}
-:root[data-scrolled] .bar::before { opacity: 1; }
-
 /* a name for each symbol, on hover or keyboard focus only; the last one keeps to the window's edge */
 @media (hover: hover) {
   [data-tip]::after {
@@ -140,9 +133,11 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
   .seg button[aria-checked='true'] { color: HighlightText; }
 }
 
-/* The header has no room for a search button on a phone, so Settings carries the way in. */
-.find-row { display: none; }
+/* On a phone the controls sit in a dock at the bottom: what floats above it clears it, and a card opens upward. */
 @media (max-width: 720px) {
-  .bar .icon.search-btn { display: none; }
-  .find-row { display: flex; }
+  :root .back, :root .tpill, :root .notice-pill { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .tools [data-tip]::after { display: none; }
+  .tools [aria-expanded='true'] { background: var(--fg); color: var(--paper); }
+  #app { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  #pop-settings { max-height: calc(100dvh - 140px); }
 }

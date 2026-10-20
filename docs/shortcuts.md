@@ -14,6 +14,7 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 | `n` `p` | Next or previous cell that uses it |
 | `t` | Contents |
 | `m` | Copy as Markdown |
+| `i` | Notebook sheet: secrets, requirements, weight |
 | `/` | Search the notebook (also `⌘K` or `Ctrl K`) |
 | `?` | This list |
 | `esc` | Close a popover or a picture |

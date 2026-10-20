@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import './out.css';
   import { collapseCarriageReturns, stripAnsi, type Output } from './notebook';
   import { describeData, type Shown } from './mime';
   import { foldBars, HEAD, LIMIT, TAIL } from './streams';

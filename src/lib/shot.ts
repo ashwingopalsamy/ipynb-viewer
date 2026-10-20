@@ -13,6 +13,7 @@ export type Show = 'both' | 'code' | 'out';
 export type Layout = 'stack' | 'side';
 export type Pad = 'S' | 'M' | 'L';
 export type Shape = 'fit' | 'wide' | 'square';
+export type Corner = 'sharp' | 'soft' | 'round';
 
 export interface Opts {
   show: Show;
@@ -21,6 +22,7 @@ export interface Opts {
   backdrop: Backdrop;
   pad: Pad;
   shape: Shape;
+  corner: Corner;
   lines: boolean;
   title: boolean;
 }
@@ -319,6 +321,8 @@ const GAP = 8;
 const INSET = 20;
 const CARD_R = 18;
 const PANEL_R = 10;
+/** The backdrop's corner radius for each Corners choice, in the picture's own pixels (before the size multiplier). */
+const CORNER: Record<Corner, number> = { sharp: 0, soft: 28, round: 56 };
 const TITLE_H = 36;
 const CODE = { size: 13.5, lh: 22 };
 const OUT = { size: 13, lh: 21 };
@@ -774,18 +778,21 @@ export function scene(p: Prepared, o: Opts): Scene {
       ctx.save();
       ctx.scale(s, s);
       ctx.textBaseline = 'alphabetic';
-      // the backdrop: a diagonal blend with a soft light in the corner
+      // the backdrop: a diagonal blend with a soft light in the corner, its corners as the Corners option says (a plain page has none)
+      const frame = bd.a ? CORNER[o.corner] : 0;
       if (bd.a) {
         const g = ctx.createLinearGradient(0, 0, w, h);
         g.addColorStop(0, bd.a);
         g.addColorStop(1, bd.b!);
+        squircle(ctx, 0, 0, w, h, frame);
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
+        ctx.fill();
         const glow = ctx.createRadialGradient(w * 0.15, h * 0.1, 0, w * 0.15, h * 0.1, Math.max(w, h) * 0.8);
         glow.addColorStop(0, 'rgba(255,255,255,0.28)');
         glow.addColorStop(1, 'rgba(255,255,255,0)');
+        squircle(ctx, 0, 0, w, h, frame);
         ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, w, h);
+        ctx.fill();
       } else if (o.shape !== 'fit') {
         ctx.fillStyle = pal.page;
         ctx.fillRect(0, 0, w, h);

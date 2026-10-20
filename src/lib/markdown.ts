@@ -5,7 +5,6 @@ import DOMPurify from 'dompurify';
 import type { MimeBundle } from './notebook';
 import { isNum } from './tabular';
 import { guard, settle, LINKS } from './guard';
-import { has } from './prefs.svelte';
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -82,7 +81,7 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       // ids in notebook markup are prefixed so they cannot shadow the page's own; links to them follow
       node.setAttribute('href', '#user-content-' + href.slice(1));
     }
-  } else if (node.tagName === 'IMG') settle(node, has('remote'));
+  } else if (node.tagName === 'IMG') settle(node, remote);
 });
 
 /** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
@@ -158,12 +157,20 @@ export async function outputHtml(source: string): Promise<string | null> {
   if (table) return table;
   const safe = await import('./safe');
   // a drawing is one <svg> and nothing around it; anything else is markup that happens to hold one
-  return /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*(?:<!doctype[^>]*>\s*)?<svg[\s>][\s\S]*<\/svg>\s*$/i.test(source) ? safe.drawing(source) : safe.rich(source, has('remote'));
+  return /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*(?:<!doctype[^>]*>\s*)?<svg[\s>][\s\S]*<\/svg>\s*$/i.test(source) ? safe.drawing(source) : safe.rich(source, remote);
 }
 
-/** Brings the pictures from the web in or out of the page, to match the reader's setting. */
-export function reveal() {
-  const on = has('remote');
+/** Whether pictures from the web may load. Off until the reader has been asked and said yes (see netstate.svelte.ts). */
+let remote = false;
+
+export function allowWeb(on: boolean) {
+  remote = on;
+  reveal();
+}
+
+/** Brings the pictures from the web in or out of the page, to match the reader's choice. */
+function reveal() {
+  const on = remote;
   const page = '.notebook .md, .notebook .rich';
   if (on) {
     for (const note of document.querySelectorAll<HTMLElement>(`:is(${page}) .rimg`)) {

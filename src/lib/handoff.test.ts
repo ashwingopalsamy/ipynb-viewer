@@ -101,3 +101,35 @@ describe('tokens', () => {
     expect(tokens('')).toBe(0);
   });
 });
+
+describe('token budget', () => {
+  const long = (n: number) => Array.from({ length: n }, (_, i) => `line ${i} ${'x'.repeat(60)}`).join('\n');
+  const cells = Array.from({ length: 12 }, (_, i) => ({
+    id: `c${i}`,
+    type: 'code' as const,
+    source: `step(${i})`,
+    metadata: {},
+    executionCount: i,
+    outputs: [{ type: 'stream' as const, name: 'stdout', text: long(80) }],
+  }));
+  const opts = { file: 'a.ipynb', language: 'python', outputs: 'trim' as const };
+
+  it('leaves the text alone with no budget', () => {
+    expect(toMarkdown(cells, opts).squeezed).toBe(0);
+  });
+
+  it('cuts outputs harder until the text fits', () => {
+    const plain = toMarkdown(cells, opts);
+    const fit = toMarkdown(cells, { ...opts, budget: Math.floor(tokens(plain.text) * 0.6) });
+    expect(fit.squeezed).toBeGreaterThan(0);
+    expect(fit.over).toBe(false);
+    expect(tokens(fit.text)).toBeLessThanOrEqual(Math.floor(tokens(plain.text) * 0.6));
+  });
+
+  it('drops outputs and says so when even that is not enough', () => {
+    const fit = toMarkdown(cells, { ...opts, budget: 10 });
+    expect(fit.squeezed).toBe(3);
+    expect(fit.over).toBe(true);
+    expect(fit.text).not.toContain('line 5');
+  });
+});

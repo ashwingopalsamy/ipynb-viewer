@@ -1,20 +1,6 @@
-.live {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 7px;
-  vertical-align: 1px;
-  border-radius: 50%;
-  background: var(--fg-3);
-  animation: breathe 2.8s ease-in-out infinite;
-}
-@keyframes breathe {
-  50% { opacity: 0.25; }
-}
-
 /* A cell that just changed on disk glows once. */
-.fresh .card, .fresh .md { position: relative; }
-.fresh .card::before, .fresh .md::before {
+.fresh .md { position: relative; }
+.fresh .md::before, .cell.code.fresh::after {
   content: '';
   position: absolute;
   z-index: 1;
@@ -24,6 +10,8 @@
   pointer-events: none;
   animation: glow 2400ms ease-out both;
 }
+.cell.code.fresh { position: relative; }
+.cell.code.fresh::after { grid-area: 1 / 2; }
 
 @keyframes glow {
   0% { opacity: 0.22; }

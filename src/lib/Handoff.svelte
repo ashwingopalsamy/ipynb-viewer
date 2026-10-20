@@ -4,6 +4,7 @@
   import Seg from './Seg.svelte';
   import { ui } from './ui.svelte';
   import { toMarkdown, tokens, type Detail } from './handoff';
+  import { findSecrets, redact } from './insight/secrets';
   import { fileName, save, size } from './export';
   import './export.css';
 
@@ -23,6 +24,13 @@
       return 'trim';
     }
   };
+  const BUDGET: [number, string][] = [
+    [0, 'None'],
+    [8000, '8k'],
+    [32000, '32k'],
+    [128000, '128k'],
+  ];
+  let budget = $state(0);
   let detail = $state<Detail>(stored());
   const choose = (d: Detail) => {
     detail = d;
@@ -34,15 +42,22 @@
   };
 
   // Only worked out while the menu is up: a large notebook should not be rewritten as it streams in.
-  const made = $derived.by(() => (ui.pop === 'md' ? toMarkdown(cells, { file: name, language, outputs: detail }) : null));
-  const weight = $derived(made ? new TextEncoder().encode(made.text).length : 0);
+  const made = $derived.by(() => (ui.pop === 'md' ? toMarkdown(cells, { file: name, language, outputs: detail, budget }) : null));
+  // what a notebook gives away by accident stays out of the copy unless the reader says otherwise
+  const hits = $derived(made && ui.hide ? findSecrets(cells) : []);
+  const text = $derived(made ? (hits.length ? redact(made.text, hits) : made.text) : '');
+  const weight = $derived(new TextEncoder().encode(text).length);
   const count = $derived.by(() => {
-    const n = made ? tokens(made.text) : 0;
+    const n = made ? tokens(text) : 0;
     return n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)}k`;
   });
   const note = $derived(
     made
-      ? [detail === 'trim' && made.trimmed ? 'Long outputs keep their first and last lines.' : '', detail !== 'none' && made.left ? 'Pictures and interactive outputs are named, not included.' : '']
+      ? [
+          made.over ? 'Over the budget even with no outputs.' : made.squeezed ? `Outputs were cut harder to fit ${budget / 1000}k.` : detail === 'trim' && made.trimmed ? 'Long outputs keep their first and last lines.' : '',
+          detail !== 'none' && made.left && !made.over ? 'Pictures and interactive outputs are named, not included.' : '',
+          hits.length ? `${hits.length} possible ${hits.length === 1 ? 'secret is' : 'secrets are'} hidden.` : '',
+        ]
           .filter(Boolean)
           .join(' ')
       : '',
@@ -54,7 +69,7 @@
   async function copy() {
     failed = '';
     try {
-      await navigator.clipboard.writeText(made!.text);
+      await navigator.clipboard.writeText(text);
       copied = true;
       clearTimeout(timer);
       timer = setTimeout(() => (copied = false), 1600);
@@ -63,7 +78,7 @@
     }
   }
   function download() {
-    save(new Blob([made!.text], { type: 'text/markdown' }), `${fileName(name)}.md`);
+    save(new Blob([text], { type: 'text/markdown' }), `${fileName(name)}.md`);
     ui.pop = null;
   }
 </script>
@@ -73,6 +88,8 @@
     <h3 class="cat">Copy as Markdown</h3>
     <p class="cap">Outputs</p>
     <Seg label="Outputs" options={DETAIL} value={detail} onchange={choose} />
+    <p class="cap">Fit to a model</p>
+    <Seg label="Token budget" options={BUDGET} value={budget} onchange={(b) => (budget = b)} />
     <p class="meta"><span>{#if made}{made.cells.toLocaleString('en-US')} cells · about {count} tokens{/if}</span><span>{#if made}{size(weight)}{/if}</span></p>
     <p class="note" class:bad={!!failed} role="status">{failed || note}</p>
     <div class="btns">

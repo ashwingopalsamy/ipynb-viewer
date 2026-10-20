@@ -12,8 +12,11 @@ A notebook is untrusted input. The viewer reads it and never runs it.
 - **Markdown is sanitized.** Cell Markdown is rendered to HTML and cleaned by DOMPurify, with `style` removed. Links open in a new tab without an opener.
 - **HTML outputs are cut down to tables.** A pandas frame survives as plain table markup. Any other HTML output, scripted or not, is shown as its plain-text fallback.
 - **The file stays local.** It is read in the browser and never uploaded.
+- **The page goes quiet.** Once a notebook is open, the page narrows its own content security policy so it cannot open connections at all. A policy can only be tightened, never loosened, so the browser enforces this and the page cannot undo it.
+- **The web is asked about.** A picture a notebook links to on the web is fetched only after you say yes, once per notebook (or always, or never, in Settings). Choosing to keep them blocked tightens the policy again, so the browser refuses them even if a sanitizer missed one. No referrer is sent either way.
+- **A shared link asks first.** A page opened with `?url=` names the site it would fetch from and waits for you before any request.
 
-One exception to the last point: an image that a notebook's Markdown links to on the web is fetched by your browser, with no referrer sent.
+After the first visit the app keeps its own files on the device (a service worker, `sw.js`), so a notebook opens with no request at all. The Privacy sheet in Settings counts the requests the page has made since the notebook opened, from the browser's own log.
 
 ## Planned
 

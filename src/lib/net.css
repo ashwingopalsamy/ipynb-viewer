@@ -1,0 +1,44 @@
+/* The web, asked about: a card above the first cell, and the question a shared link raises before anything is fetched. */
+.net {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: center;
+  margin: 0 0 16px var(--gut);
+  padding: 16px 20px;
+  border-radius: 18px;
+  corner-shape: squircle;
+  background: var(--paper);
+  box-shadow: var(--lift);
+  animation: rise 250ms var(--out) both;
+}
+.net.quiet { padding-block: 10px; background: none; box-shadow: none; }
+.net .say { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--fg-2); }
+.net .say h2 { margin: 0 0 2px; font-size: 15px; line-height: 1.35; font-weight: 600; color: var(--fg); }
+.net .say p { margin: 0; }
+.mark { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--well); color: var(--fg-2); }
+.quiet .mark { width: 28px; height: 28px; background: none; }
+.acts-net { display: flex; gap: 8px; }
+.nb { height: 36px; padding: 0 16px; border-radius: 999px; background: var(--well); color: var(--fg); font-size: 13px; font-weight: 600; white-space: nowrap; transition: transform 200ms var(--rel); }
+.nb:hover { background: color-mix(in srgb, var(--well) 100%, var(--fg) 8%); }
+.nb:active { transform: scale(0.97); transition-duration: 100ms; }
+.nb.go { background: var(--fg); color: var(--paper); }
+.nb.go:hover { background: color-mix(in srgb, var(--fg) 88%, var(--paper)); }
+
+.gate { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--page) 86%, transparent); animation: rise 200ms var(--out) both; }
+.gate-card { display: grid; gap: 12px; justify-items: start; width: min(460px, 100%); padding: 24px; border-radius: 22px; corner-shape: squircle; background: var(--paper); box-shadow: var(--float); }
+.gate-card h2 { margin: 4px 0 0; font-size: 20px; font-weight: 650; letter-spacing: -0.02em; }
+.gate-card p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-2); }
+.gate-card p b { color: var(--fg); font-weight: 600; }
+.gate-card code { max-width: 100%; padding: 8px 12px; border-radius: 10px; corner-shape: squircle; background: var(--well); font: 12px/1.4 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.again { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--fg-2); cursor: pointer; }
+.again input { width: 18px; height: 18px; margin: 0; accent-color: var(--fg); }
+.gate-card .acts-net { margin-top: 4px; }
+
+@media (max-width: 720px) {
+  .net { grid-template-columns: auto minmax(0, 1fr); margin-left: 0; }
+  .net .acts-net, .net > .nb { grid-column: 1 / -1; justify-self: start; }
+}
+@media (forced-colors: active) { .nb.go { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
+
+a.sw { text-decoration: none; color: inherit; }

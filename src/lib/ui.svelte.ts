@@ -1,8 +1,9 @@
 import type { CodeCell } from './notebook';
 import type { Trace } from './names';
+import type { Report } from './insight/diff';
 
 // State shared by the toolbar, the menus and the outline. It loads with the extras, never with the core.
-export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search';
+export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare';
 
 /** The picture a reader is about to save: its data, and the button the menu hangs from. */
 export interface Figure {
@@ -27,6 +28,10 @@ export const ui = $state<{
   trace: Trace | null;
   file: string;
   lang: string | null;
+  /** Whether copies leave out the secrets the scan found. On unless the reader says otherwise. */
+  hide: boolean;
+  /** The other notebook being compared with this one, and what differs. */
+  cmp: { name: string; report: Report } | null;
 }>({
   pop: null,
   sections: 0,
@@ -40,6 +45,8 @@ export const ui = $state<{
   trace: null,
   file: '',
   lang: null,
+  hide: true,
+  cmp: null,
 });
 
 export const toggle = (id: Pop) => (ui.pop = ui.pop === id ? null : id);
@@ -65,7 +72,7 @@ export function setKeys(on: boolean) {
 export const single = (e: KeyboardEvent) =>
   prefs.keys && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target as Element).closest('input, textarea, select, [contenteditable]');
 
-export const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches || !!document.documentElement.dataset.pf?.includes('calm');
+export const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const miss = (el: Element, block: 'start' | 'center') => {
   const r = el.getBoundingClientRect();

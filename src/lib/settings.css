@@ -1,0 +1,68 @@
+/* Settings and Privacy, the two sheets from the header. Radii follow one rule, as in a notebook cell:
+   the card is 18, its inner cards are 10 (18 - 8 padding), and the squarish controls inside them are 8.
+   Toggles and the footer buttons stay pills. Every label, control and note starts or ends on the same 14px inset. */
+.pop#pop-settings, .pop#pop-privacy { border-radius: 18px; padding: 8px; }
+
+.set { display: grid; gap: 8px; }
+.set-cat { padding: 0 14px; font: 600 12px/1.2 var(--sans); color: var(--fg-3); }
+.set-note { margin: 0; padding: 0 14px; font-size: 12.5px; line-height: 1.5; color: var(--fg-3); }
+.set-note:empty { display: none; }
+
+/* an inner card: rows sit flush, divided by hairlines, and the card clips them to its corners */
+.set-group { display: grid; overflow: hidden; border-radius: 10px; corner-shape: squircle; background: var(--well); }
+.set-group > * + * { border-top: 1px solid var(--line); }
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  color: var(--fg);
+}
+
+/* a squarish control in one column, so every choice on the sheet ends on the same line */
+.set-ctl { flex: none; width: 208px; }
+.set-ctl .seg { width: 100%; height: 34px; margin: 0; padding: 2px; border-radius: 999px; background: var(--well-2); }
+.set-ctl .seg .thumb { top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; }
+.set-ctl .seg button { padding: 0 2px; border-radius: 999px; font-size: 12.5px; white-space: nowrap; }
+.set-ctl .seg button:hover:not([aria-checked='true']) { background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.set-ctl.step { display: flex; align-items: center; justify-content: space-between; height: 34px; padding: 2px; border-radius: 999px; background: var(--well-2); }
+.set-ctl.step button { width: 40px; height: 30px; border-radius: 999px; }
+.set-ctl.step output { min-width: 0; }
+
+/* a switch row keeps the shared pill switch and its icon, with the same 14px inset as every other row */
+.set .sw { height: 44px; padding: 0 14px; gap: 12px; border-radius: 0; }
+.set .sw > svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
+.set .sw[aria-expanded] > svg { transition: transform 200ms var(--io); }
+.set .sw[aria-expanded='true'] > svg { transform: rotate(90deg); }
+
+/* a read-only fact: its name, then its value on the right */
+.set-kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 14px; font-size: 13.5px; color: var(--fg); }
+.set-kv b { font-size: 13px; font-weight: 600; color: var(--fg-2); text-align: right; }
+
+/* the count: the number in a fixed column, its sentence beside it */
+.set-count { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 4px 14px 0; }
+.set-count b { font: 650 40px/1 var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.set-count span { font-size: 13px; line-height: 1.4; color: var(--fg-2); }
+
+.set-ledger {
+  display: grid;
+  max-height: 150px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border-radius: 10px;
+  corner-shape: squircle;
+  background: var(--well-2);
+  list-style: none;
+}
+.set-ledger li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 10px; font-size: 12.5px; }
+.set-ledger b { font-weight: 600; white-space: nowrap; }
+.set-ledger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-3); }
+
+/* the footer buttons are pills, as the other actions are; they share the card's gap */
+.set .pills { gap: 8px; }
+
+@media (pointer: coarse) { .set .sw, .set-kv, .set-row { min-height: 44px; } }

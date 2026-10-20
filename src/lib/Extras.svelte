@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-  import type { Cell } from './notebook';
+  import type { Cell, NotebookMeta } from './notebook';
   import './rare.css';
   import './ui.css';
   import './prefs.css';
@@ -11,6 +11,8 @@
   import Shelf from './Shelf.svelte';
   import Resume from './Resume.svelte';
   import Menus from './Menus.svelte';
+  import Net from './Net.svelte';
+  import Privacy from './Privacy.svelte';
   import { reorder as order } from './replay';
   import { ui, toggle, single, jump } from './ui.svelte';
   import { has } from './prefs.svelte';
@@ -20,6 +22,7 @@
   let {
     cells,
     raw,
+    meta,
     name,
     language,
     ready,
@@ -31,6 +34,8 @@
     cells: readonly Cell[];
     /** The notebook as saved, before any replay reordering. */
     raw: readonly Cell[];
+    /** What the file says about itself: format, kernel, language. Null until the file has been read. */
+    meta: NotebookMeta | null;
     name: string;
     language: string | null;
     ready: boolean;
@@ -61,6 +66,8 @@
   let Hand = $state<typeof import('./Handoff.svelte').default>();
   let Light = $state<typeof import('./Lightbox.svelte').default>();
   let Find = $state<typeof import('./Search.svelte').default>();
+  let Info = $state<typeof import('./Insights.svelte').default>();
+  let Diff = $state<typeof import('./Compare.svelte').default>();
   $effect(() => {
     if (ui.fig && !Figure) import('./Figure.svelte').then((m) => (Figure = m.default));
   });
@@ -74,6 +81,12 @@
     if (ui.light && !Light) import('./Lightbox.svelte').then((m) => (Light = m.default));
   });
   $effect(() => {
+    if (ui.pop === 'info' && !Info) import('./Insights.svelte').then((m) => (Info = m.default));
+  });
+  $effect(() => {
+    if (ui.pop === 'compare' && !Diff) import('./Compare.svelte').then((m) => (Diff = m.default));
+  });
+  $effect(() => {
     if (ui.pop === 'search' && !Find) import('./Search.svelte').then((m) => (Find = m.default));
   });
   $effect(() => {
@@ -82,9 +95,16 @@
   // Name tracing loads with the first click on a name in the code.
   const trace = () => import('./names');
   function pick(e: MouseEvent) {
-    if (e.detail !== 1 || e.button !== 0 || has('notrace') || ui.shot) return;
-    if ((e.target as Element).closest?.('.notebook .src')) trace().then((m) => m.onClick(e, cells, language));
+    if (e.detail !== 1 || e.button !== 0 || ui.shot) return;
+    const on = e.target as Element;
+    if (on.matches?.('.notebook th')) import('./tables').then((m) => m.sort(on as HTMLTableCellElement));
+    else if (!has('notrace') && on.closest?.('.notebook .src')) trace().then((m) => m.onClick(e, cells, language));
   }
+  // a table offers its CSV once the pointer has reached it
+  const near = (e: MouseEvent) => {
+    const t = (e.target as Element).closest?.('.notebook table');
+    if (t) import('./tables').then((m) => m.offer(t as HTMLTableElement));
+  };
   $effect(() => {
     if (ui.trace && has('notrace')) trace().then((m) => m.clear());
   });
@@ -110,6 +130,8 @@
 
   const cellsOnPage = () => [...document.querySelectorAll<HTMLElement>('.notebook > [data-cell]')];
   const reading = () => cellsOnPage().findLast((c) => c.getBoundingClientRect().top <= 140);
+  // The cell the reader has picked: the one holding keyboard focus (a click on a cell focuses it), else the one at the reading line.
+  const picked = () => (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('.notebook > [data-cell]') ?? reading();
 
   // The notebook is one tab stop; arrows move between its handles and rows.
   const ITEMS = '.notebook .handle:not(.quiet), .notebook .row:not(.closed), .notebook .snap, .notebook .copy, .notebook .save, .notebook .zoom';
@@ -148,7 +170,7 @@
       return e.preventDefault();
     }
     if (!single(e)) return;
-    const here = reading();
+    const here = picked();
     if (e.key === 'c') hold(here ?? document.body, () => setCode(!view.code), 'cell');
     else if (e.key === 'o') hold(here ?? document.body, () => setOut(!view.out), 'cell');
     else if (e.key === 'x') here?.querySelector<HTMLElement>('.handle')?.click();
@@ -159,6 +181,7 @@
     }
     else if ((e.key === 'n' || e.key === 'p') && ui.trace) trace().then((m) => m.step(e.key === 'n' ? 1 : -1));
     else if (e.key === 'm') toggle('md');
+    else if (e.key === 'i') toggle('info');
     else if (e.key === '/') toggle('search');
     else if (e.key === 'f') trace().then((m) => m.fromSelection(cells, language));
     else if (e.key === 'j' || e.key === 'k') {
@@ -180,7 +203,6 @@
   let lastY = 0;
   function moved() {
     const y = scrollY;
-    document.documentElement.toggleAttribute('data-scrolled', y > 8);
     if (Math.abs(y - lastY) < 6) return;
     if (has('hush')) document.querySelector('.bar')?.toggleAttribute('data-hush', y > lastY && y > 120 && !ui.pop);
     lastY = y;
@@ -197,7 +219,7 @@
   }
 </script>
 
-<svelte:window onkeydown={keys} onscroll={moved} onpointerdown={away} onclick={pick} onfocusin={(e) => {
+<svelte:window onmouseover={near} onkeydown={keys} onscroll={moved} onpointerdown={away} onclick={pick} onfocusin={(e) => {
     const on = e.target as Element;
     if (on.matches?.(ITEMS)) park(on as HTMLElement);
     if (on.closest?.('.bar')) document.querySelector('.bar')?.removeAttribute('data-hush');
@@ -205,8 +227,12 @@
 
 <Toc {cells} bind:count={sections} bind:chapter />
 <Menus />
+<Net cells={raw} {name} {ready} />
+<Privacy />
 {#if Figure}<Figure />{/if}
 {#if Shot}<Shot />{/if}
+{#if Info}<Info cells={raw} {meta} {name} />{/if}
+{#if Diff}<Diff cells={raw} />{/if}
 {#if Pill}<Pill />{/if}
 {#if Hand}<Hand cells={raw} {name} {language} />{/if}
 {#if Light}<Light {cells} />{/if}

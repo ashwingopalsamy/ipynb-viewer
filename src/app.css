@@ -1,8 +1,6 @@
-/* Inter for words, JetBrains Mono for code: variable, Latin only, from this origin (the app makes no outside requests). */
+/* Inter for words, JetBrains Mono for code: variable, Latin only, from this origin (the app makes no outside requests); the italics come with the extras. */
 @font-face { font-family: Inter; font-weight: 100 900; font-display: swap; src: url(/fonts/inter.woff2); }
-@font-face { font-family: Inter; font-style: italic; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-italic.woff2); }
 @font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono.woff2); }
-@font-face { font-family: 'JetBrains Mono'; font-style: italic; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono-italic.woff2); }
 
 :root {
   /* three tones, from the page back to the paper and the well the code sits in */
@@ -16,9 +14,11 @@
   --line: rgba(0, 0, 0, 0.09);
   --line-2: rgba(0, 0, 0, 0.16);
   --glass: rgba(255, 255, 255, 0.86);
-  --bar: color-mix(in srgb, var(--page) 70%, transparent);
+  --ring: color-mix(in srgb, var(--fg) 60%, transparent);
   --lift: 0 1px 2px rgba(20, 24, 40, 0.06), 0 12px 24px -16px rgba(20, 24, 40, 0.18);
   --edge: 0 0 #0000;
+  --sunk: var(--well-2);
+  --dip: inset 0 1px 3px rgba(20, 24, 40, 0.14);
   --float: 0 0 0 1px var(--line), 0 1px 2px rgba(20, 24, 40, 0.06), 0 14px 32px -10px rgba(20, 24, 40, 0.22);
   --accent: #0066cc;
   --danger: #b3261e;
@@ -53,6 +53,8 @@
   --glass: rgba(34, 34, 38, 0.84);
   --lift: 0 0 #0000;
   --edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --sunk: #121217;
+  --dip: inset 0 2px 5px rgba(0, 0, 0, 0.55);
   --float: 0 0 0 1px var(--line), 0 14px 32px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --accent: #4da3ff;
   --danger: #ff7b72;
@@ -75,8 +77,8 @@ body {
 /* The platform's own scrollbars, thin: they fade away where the system lets them, and color-scheme dresses them. */
 * { scrollbar-width: thin; }
 
-button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* One hover for every control: a fill of the text colour at 8%, behind the content. */
 .icon, .open, .handle, .row { position: relative; isolation: isolate; }
@@ -86,6 +88,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   z-index: -1;
   inset: 0;
   border-radius: inherit;
+  corner-shape: inherit;
   background: currentColor;
   opacity: 0;
   transition: opacity 100ms var(--out);
@@ -104,7 +107,6 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   border-radius: 999px;
   background: var(--glass);
   box-shadow: var(--float);
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
   backdrop-filter: blur(22px) saturate(1.7);
   pointer-events: auto;
 }
@@ -119,11 +121,13 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   line-height: 1.3;
   color: var(--fg);
 }
-.name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The clip box is padded so descenders (g, y, j) sit inside it; the margin keeps the layout where it was. */
+.name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
 .name.idle { font-weight: 500; color: var(--fg-2); }
+/* a file for the name, a heading for the chapter: the icons say which is which */
+.name svg { flex: none; width: 15px; height: 15px; color: var(--fg-3); }
+.file > svg { margin-right: 7px; vertical-align: -2px; }
 .open { gap: 8px; margin-left: auto; padding: 0 16px 0 13px; font-size: 13px; font-weight: 600; color: var(--fg-2); transition: transform 200ms var(--rel); }
-.open:hover { color: var(--fg); }
-.open:active { transform: scale(0.97); transition-duration: 100ms; }
 .tools { flex: none; gap: 2px; padding: 4px; }
 .icon {
   display: grid;
@@ -135,9 +139,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   color: var(--fg-2);
   transition: transform 200ms var(--rel);
 }
-.icon:hover { color: var(--fg); }
-.icon:focus-visible { outline-offset: -2px; }
-.icon:active, .handle:active { transform: scale(0.97); transition-duration: 100ms; }
+.icon:hover, .open:hover, .handle:hover { color: var(--fg); }
+.icon:active, .handle:active, .open:active { transform: scale(0.97); transition-duration: 100ms; }
 
 .swap .glyph {
   position: absolute;
@@ -240,12 +243,10 @@ main { flex: 1; }
   transition: transform 200ms var(--rel);
 }
 .gutter.first .handle { margin-top: 16px; }
-.handle:hover { color: var(--fg); }
 .handle.quiet { visibility: hidden; pointer-events: none; }
 .handle svg, .row svg { flex: none; width: 16px; height: 16px; transition: transform 200ms var(--io); }
 .handle[aria-expanded='true'] svg, .row[aria-expanded='true'] svg { transform: rotate(90deg); }
-.handle::after { content: ''; position: absolute; inset: -8px; }
-@media (pointer: fine) { .handle::after { display: none; } }
+@media (pointer: coarse) { .handle::after { content: ''; position: absolute; inset: -8px; } }
 
 /* A code cell is a tray on the page. The code sits in one inset box, the answer in another. */
 .card {
@@ -259,7 +260,8 @@ main { flex: 1; }
   background: var(--paper);
   box-shadow: var(--lift);
 }
-.card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: var(--edge); pointer-events: none; }
+.card::after, .outs::after { content: ''; position: absolute; inset: 0; border-radius: inherit; corner-shape: inherit; box-shadow: var(--edge); pointer-events: none; }
+.outs::after { box-shadow: var(--dip); }
 .card:focus:not(:focus-visible) { outline: 0; }
 
 pre { margin: 0; font-family: var(--mono); }
@@ -292,7 +294,6 @@ pre { margin: 0; font-family: var(--mono); }
   color: var(--fg-2);
 }
 .row.well { background: var(--well); }
-.row.soft { background: var(--well-2); }
 .row.closed, .row.code, .row.layer { border-radius: 10px; corner-shape: squircle; }
 .row svg { color: var(--fg-3); }
 .row .lead { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -300,7 +301,7 @@ pre { margin: 0; font-family: var(--mono); }
 .row em { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: normal 12px var(--sans); color: var(--fg-3); }
 .row.closed { padding-left: 20px; }
 .row.cap { height: 36px; font-size: 12.5px; }
-.row:focus-visible { outline-offset: -2px; }
+.icon:focus-visible, .row:focus-visible { outline-offset: -2px; }
 .row.fade::after {
   content: '';
   position: absolute;
@@ -310,18 +311,11 @@ pre { margin: 0; font-family: var(--mono); }
   pointer-events: none;
 }
 
-.outs { display: grid; background: var(--well-2); }
+.outs { display: grid; background: var(--sunk); }
 .out { min-width: 0; padding: 12px 0; }
 .out + .out { padding-top: 0; }
 .out pre { padding: 4px var(--pr) 4px 20px; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; }
 .out.stderr pre { color: var(--fg-2); }
-
-/* An error keeps the paper and gains a tint; a typed header says what went wrong. */
-.out.err { padding: 16px 0 8px; background: var(--tint); }
-.exc { margin: 0 0 6px; padding: 0 var(--pr) 0 20px; font: 14px/1.5 var(--sans); overflow-wrap: anywhere; }
-.exc strong { margin-right: 0.6em; font-weight: 600; color: var(--danger); }
-.err pre { font-size: 12.5px; color: var(--fg-3); }
-.err pre [class*='fg'] { color: inherit; }
 
 .note { margin: 0; padding: 2px var(--pr) 6px 20px; font-size: 12px; line-height: 1.5; color: var(--fg-3); }
 
@@ -333,9 +327,6 @@ pre { margin: 0; font-family: var(--mono); }
   border-radius: 10px;
   corner-shape: squircle;
 }
-:root[data-theme='dark'] .out-image:not(.plate) { filter: brightness(0.85); }
-/* Figures saved with transparency would vanish in dark mode, so they sit on a soft light plate. */
-.out-image.plate { padding: 12px; background: #f3f3f5; }
 
 /* markdown (the rest lives in md.css, loaded with the renderer) */
 
@@ -357,8 +348,8 @@ pre { margin: 0; font-family: var(--mono); }
   .name { padding: 0 16px; }
   .open { width: 44px; padding: 0; justify-content: center; }
   .open span { display: none; }
-  .tools { padding: 2px; }
-  .bar .icon { width: 40px; height: 40px; }
+  .tools { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); justify-content: space-evenly; height: 52px; padding: 0; }
+  .bar .icon { width: 44px; height: 44px; }
   .handle { position: absolute; top: 29px; left: calc(var(--bleed) + 12px); margin: 0; z-index: 1; }
   .gutter.first .handle { top: 24px; margin: 0; }
   .card.tall .src { padding-left: 44px; }

@@ -1,3 +1,5 @@
+import { mount } from 'svelte';
+
 // Reading a notebook from a web address. This loads only when the page is opened with ?url=, and what it returns is a
 // plain File: from there the notebook goes through the same reader, sanitizers and sandbox as one opened from disk.
 
@@ -329,3 +331,57 @@ export async function fetchLink(input: string, say: (text: string) => void, env:
   const got = await download(plan.url, say, env, 'notebook');
   return new File([got.blob], plan.name ?? called(got.url), { type: 'application/json', lastModified: got.modified });
 }
+
+/** Asks before anything is fetched: the site named in a shared link will see the reader's address. */
+async function ask(host: string, href: string): Promise<boolean> {
+  const [{ default: Gate }, { trust }] = await Promise.all([import('./Gate.svelte'), import('./netstate.svelte')]);
+  return new Promise((yes) => {
+    const box = document.body.appendChild(document.createElement('div'));
+    mount(Gate, {
+      target: box,
+      props: {
+        host,
+        url: href,
+        answer: (go: boolean, always: boolean) => {
+          box.remove();
+          if (go && always) trust(host);
+          yes(go);
+        },
+      },
+    });
+  });
+}
+
+/**
+ * The address carried `?url=` or `#nb=`. A notebook in the link opens at once; a `url` asks unless the reader already trusts that site, then fetch it and hand the file (or
+ * the reason it failed) back. Saying no returns to the empty screen with nothing requested.
+ */
+export async function start(href: string, say: (text: string) => void, done: (file: File) => void, fail: (why: string) => void) {
+  const link = new URL(href);
+  // a notebook carried in the address needs no request at all
+  if (link.hash.includes('nb=')) {
+    try {
+      const got = await (await import('./insight/share')).unpack(link.hash);
+      return got ? done(new File([got.text], got.name, { type: 'application/json' })) : fail('There was no notebook in that link.');
+    } catch (e) {
+      return fail((e as Error).message);
+    }
+  }
+  const input = link.searchParams.get('url');
+  if (!input) return fail('There was no address to open.');
+  try {
+    const here = new URL(location.href);
+    const plan = resolve(input, here);
+    const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
+    if (target.origin !== here.origin && !(await import('./netstate.svelte')).trusted(target.host)) {
+      say('Waiting for you');
+      if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return location.replace(location.pathname + location.hash);
+    }
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+  fetchLink(input, say).then(done, (e) => fail(e.message));
+}
+
+/** A link pasted on the empty screen reloads the page with it, so the download always comes before anything is drawn. */
+export const pasted = (text: string) => /^https?:\/\/\S+\s*$/i.test(text) && (location.search = 'url=' + encodeURIComponent(text));

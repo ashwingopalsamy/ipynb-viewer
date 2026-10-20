@@ -1,3 +1,11 @@
+@font-face { font-family: Inter; font-style: italic; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-italic.woff2); }
+@font-face { font-family: 'JetBrains Mono'; font-style: italic; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono-italic.woff2); }
+
+/* Figures: white-backed plots are softened in dark, and ones saved with transparency sit on a light plate so they do not vanish. */
+:root[data-theme='dark'] .out-image:not(.plate) { filter: brightness(0.85); }
+.out-image.plate { padding: 12px; background: #f3f3f5; }
+
+
 /* Seldom needed: warnings, raw cells, the chapter under the file name. Loads with the extras. */
 .notice {
   margin: 0 0 20px var(--gut);
@@ -27,14 +35,13 @@
 }
 /* Where the outline lives in a popover, the chapter being read follows the file name. */
 .chapter { display: flex; flex: 1 1 0; gap: 8px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
-.chapter::before { content: '/'; flex: none; opacity: 0.6; }
-.chapter > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
+.chapter > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding-block: 0.2em; margin-block: -0.2em; animation: swap 200ms var(--out) both; }
 @media (min-width: 1360px) { .chapter { display: none; } }
+@media (min-width: 1024px) { :root:not([data-width='narrow']) .chapter { display: none; } }
 @media (max-width: 720px) {
   .name.two { display: grid; gap: 1px; align-content: center; }
   .name.two .file { font-size: 11.5px; font-weight: 400; color: var(--fg-3); }
   .chapter { font-size: 14px; font-weight: 600; color: var(--fg); }
-  .chapter::before { display: none; }
 }
 @media (max-width: 720px) { .notice { margin-left: 0; } }
 
@@ -43,14 +50,14 @@
 /* On paper: the page alone, in the light theme, with each cell kept whole where it fits. */
 @media print {
   :root:root[data-theme] {
-    --page: #fff; --paper: #fff; --well: #f0f1f5; --well-2: #f7f8fa; --fg: #1d1d1f; --fg-2: #48484a; --fg-3: #636368;
+    --page: #fff; --paper: #fff; --well: #f0f1f5; --well-2: #f7f8fa; --sunk: #f7f8fa; --dip: 0 0 #0000; --fg: #1d1d1f; --fg-2: #48484a; --fg-3: #636368;
     --line: rgba(0, 0, 0, 0.12); --line-2: rgba(0, 0, 0, 0.2); --accent: #0066cc; --danger: #b3261e; --ok: #1d8a4a;
     --a0: #1d1d1f; --a1: #b3261e; --a2: #0a6640; --a3: #8a5a00; --a4: #0b5fc5; --a5: #8a2fa0; --a6: #0b6a8a; --a7: #57606a;
     color-scheme: light;
   }
   :root[data-theme='dark'] .hl span { color: var(--shiki-light); font-style: var(--shiki-light-font-style); font-weight: var(--shiki-light-font-weight); }
   :root[data-theme='dark'] .out-image:not(.plate) { filter: none; }
-  .bar, .rail, .made, .acts, .handle, .save, .tpill, .back, .pop, .shelf, .veil, .shot, .lb, .notice-pill { display: none !important; }
+  .bar, .rail, .made, .acts, .handle, .save, .tpill, .back, .pop, .figs-shelf, .veil, .shot, .lb, .notice-pill { display: none !important; }
   :root[data-pf] .notebook > .cell { zoom: 1; opacity: 1; }
   .notebook { width: 100%; padding: 0; }
   .cell { content-visibility: visible; }
@@ -60,3 +67,14 @@
   .src, .out pre { overflow: visible; white-space: pre-wrap; overflow-wrap: anywhere; }
   .md a { color: inherit; }
 }
+
+/* Tables sort from their header, and copy as CSV from a chip that shows when the pointer is over them */
+.notebook :is(.tbl, .rich, .md) thead th { cursor: pointer; user-select: none; }
+.notebook :is(.tbl, .rich, .md) thead th:hover { color: var(--fg); }
+.notebook th[aria-sort='ascending']::after { content: ' \2191'; }
+.notebook th[aria-sort='descending']::after { content: ' \2193'; }
+.csv-box { position: relative; }
+.csv { position: absolute; right: 10px; bottom: 10px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--glass); box-shadow: 0 0 0 1px var(--line), 0 2px 8px rgba(20, 24, 40, 0.14); font-size: 12px; font-weight: 550; opacity: 0; transform: scale(0.94); transition: opacity 150ms var(--out), transform 200ms var(--out); }
+.csv-box:hover > .csv, .csv:focus-visible { opacity: 1; transform: none; }
+@media (hover: none) { .csv { display: none; } }
+.made:has(+ .made) { padding-bottom: 6px; }

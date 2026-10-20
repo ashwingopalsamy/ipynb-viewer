@@ -4,7 +4,7 @@
 
   // `near` hangs the card from its trigger (right edges together, flipping above when the page ends); without it
   // the card sits under the header, centred on the trigger.
-  let { id, label, width = 260, lead = true, near = false, top: first = false, anchor, children }: { id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
+  let { id, label, width = 260, lead = true, near = false, top: first = false, span = false, bare = false, anchor, children }: { span?: boolean; bare?: boolean; id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
 
   const open = $derived(ui.pop === id);
   let box = $state<HTMLElement>();
@@ -28,10 +28,23 @@
       origin = r.left + r.width / 2 - left;
       return;
     }
+    // a card hung from a tool shares the tools pill's right edge; Settings reaches back to the Open pill's left edge
+    const dock = r && r.top < innerHeight / 2 && innerWidth > 720 ? from?.closest('.tools') : null;
+    if (dock && r) {
+      const edge = dock.getBoundingClientRect().right;
+      const lo = span ? (document.querySelector('.open')?.getBoundingClientRect().left ?? edge - w) : edge - w;
+      wide = edge - lo;
+      left = lo;
+      up = false;
+      top = 64;
+      origin = r.left + r.width / 2 - lo;
+      return;
+    }
     const mid = r ? r.left + r.width / 2 : innerWidth / 2;
     left = Math.min(Math.max(12, mid - w / 2), innerWidth - w - 12);
-    // the header is 56px tall whether or not it has stepped aside
-    top = 64;
+    // the header is 56px tall whether or not it has stepped aside; a trigger in the phone's dock opens its card upward
+    up = !!r && r.top > innerHeight / 2;
+    top = up ? Math.max(12, r!.top - 8 - box.offsetHeight) : 64;
     origin = mid - left;
   }
 
@@ -51,7 +64,7 @@
     };
     if (near) addEventListener('scroll', follow, { passive: true });
     // a note appearing or going changes the card's height, and a card that opens upward must stay on its trigger
-    const grow = near ? new ResizeObserver(() => place(from)) : undefined;
+    const grow = near || (from && from.getBoundingClientRect().top > innerHeight / 2) ? new ResizeObserver(() => place(from)) : undefined;
     grow?.observe(node);
     return () => {
       removeEventListener('scroll', follow);
@@ -61,6 +74,6 @@
   });
 </script>
 
-<div class="pop" class:on={open} class:up id="pop-{id}" role="dialog" aria-label={label} tabindex="-1" bind:this={box} style:left="{left}px" style:top="{top}px" style:width="{wide || width}px" style:--ox="{origin}px">
+<div class="pop" class:on={open} class:up class:bare id="pop-{id}" role="dialog" aria-label={label} tabindex="-1" bind:this={box} style:left="{left}px" style:top="{top}px" style:width="{wide || width}px" style:--ox="{origin}px">
   {@render children()}
 </div>

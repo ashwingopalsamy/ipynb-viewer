@@ -21,9 +21,24 @@
   let pin = $state(false);
   let panel = $state<HTMLElement>();
 
+  // The ticks step aside while a panel or a picture is open: they would sit under it, and nobody can use them then.
+  // The contents popover is hidden past 720px, so at that width it cannot be seen and must not hide the ticks.
+  let desk = $state(matchMedia('(min-width: 721px)').matches);
+  $effect(() => {
+    const m = matchMedia('(min-width: 721px)');
+    const on = () => (desk = m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  });
+  const away = $derived((!!ui.pop && !(ui.pop === 'toc' && desk)) || ui.shelf || !!ui.light || !!ui.shot);
   const found = $derived(outline(cells));
   const entries = $derived(found.headings);
   const now = $derived(entries[current]?.text ?? '');
+  // The section being read, at the notebook's top level: the last such heading at or above the reading line, else the first.
+  const head = $derived.by(() => {
+    for (let i = Math.max(0, current); i >= 0; i--) if (!entries[i]?.depth) return entries[i]?.text ?? '';
+    return entries.find((h) => !h.depth)?.text ?? '';
+  });
   const at = $derived(Math.max(0, current));
   // A long outline slides under a fixed window that keeps the current row in view.
   const shift = $derived(Math.min(Math.max(0, at - (ROWS >> 1)), Math.max(0, entries.length - ROWS)));
@@ -203,7 +218,7 @@
 {/snippet}
 
 {#if entries.length > 1}
-  <nav class="rail" class:pin aria-label="Contents" style:--span={height} style:--slide={slide} onpointerenter={centre} onfocusin={(e) => (e.target as Element).matches(':focus-visible') && centre()}>
+  <nav class="rail" class:pin class:away aria-label="Contents" style:--span={height} style:--slide={slide} onpointerenter={centre} onfocusin={(e) => (e.target as Element).matches(':focus-visible') && centre()}>
     <button class="stack" aria-label="Contents" aria-expanded={pin} aria-controls="toc-panel" onclick={tap}>
       <span class="ticks" aria-hidden="true">
         {#each entries as h, i}
@@ -225,3 +240,5 @@
     </nav>
   </Pop>
 {/if}
+
+{#if head}<div class="mid pill" aria-hidden="true">{#key head}<span>{head}</span>{/key}</div>{/if}

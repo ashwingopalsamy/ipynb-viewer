@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Cell } from './notebook';
+  import Glyph from './Glyph.svelte';
   import Pop from './Pop.svelte';
   import { ui, jump } from './ui.svelte';
   import { search, mark, LIMIT } from './search';
@@ -37,25 +38,32 @@
 
 <svelte:window onkeydown={keys} />
 
-<Pop id="search" label="Search" width={520} anchor={() => document.querySelector('.bar')}>
+<Pop id="search" label="Search" width={520} bare anchor={() => document.querySelector('.bar')}>
   <div class="find" bind:this={box} role="search">
-    <input type="search" oninput={(e) => (q = e.currentTarget.value)} onfocus={(e) => e.currentTarget.select()} placeholder="Search this notebook" aria-label="Search this notebook" autocomplete="off" spellcheck="false" />
+    <label class="field">
+      <Glyph name="search" />
+      <input type="search" oninput={(e) => (q = e.currentTarget.value)} onfocus={(e) => e.currentTarget.select()} placeholder="Search this notebook" aria-label="Search this notebook" autocomplete="off" spellcheck="false" />
+      {#if typed && found.hits.length}<span class="n" role="status">{found.more ? `${LIMIT}+` : found.hits.length}</span>{/if}
+      <kbd>esc</kbd>
+    </label>
     {#if typed}
-      {#if found.hits.length}
-        <ul>
-          {#each found.hits as h}
-            <li>
-              <button class="hit" onclick={() => go(h.cell)}>
-                <span class="kind">{h.kind}{h.n !== null ? ` [${h.n}]` : ''}</span>
-                <span class="snip">{h.before}<mark>{h.match}</mark>{h.after}</span>
-              </button>
-            </li>
-          {/each}
-        </ul>
-        {#if found.more}<p class="none">The first {LIMIT} matches. Narrow it down to see the rest.</p>{/if}
-      {:else}
-        <p class="none" role="status">Nothing matches that.</p>
-      {/if}
+      <div class="res">
+        {#if found.hits.length}
+          <ul>
+            {#each found.hits as h}
+              <li>
+                <button class="hit" onclick={() => go(h.cell)}>
+                  <span class="kind">{h.kind}{h.n !== null ? ` [${h.n}]` : ''}</span>
+                  <span class="snip">{h.before}<mark>{h.match}</mark>{h.after}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+          {#if found.more}<p class="none">The first {LIMIT} matches. Narrow it down to see the rest.</p>{/if}
+        {:else}
+          <p class="none" role="status">Nothing matches that.</p>
+        {/if}
+      </div>
     {/if}
   </div>
 </Pop>
