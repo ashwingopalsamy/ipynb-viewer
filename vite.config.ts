@@ -34,6 +34,12 @@ function finish(): Plugin {
   return {
     name: 'finish',
     apply: 'build',
+    // The build rewrites the landing page's stylesheet link and drops its id, and the app finds that link by id to switch it off once a
+    // notebook opens. Without the id the landing page's `.cell` rule stays on and flattens every notebook cell.
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html) => html.replace(/<link rel="stylesheet"([^>]*href="[^"]*\/home-[^"]+\.css")/, '<link id="landing" rel="stylesheet"$1'),
+    },
     configResolved: (config) => {
       out = config.build.outDir
       base = config.base.replace(/^\/|\/$/g, '')
