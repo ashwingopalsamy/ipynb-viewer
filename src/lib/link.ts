@@ -40,8 +40,8 @@ const INTERNAL = /(?:^|\.)(?:localhost|local|internal|lan|home|corp|intranet|pri
 const NOT_A_FILE = 'That is a GitHub page, not a file. Open the notebook there and copy the address from its page.';
 const PRIVATE = 'Addresses on a local or private network are not opened.';
 
-/** On the Cloudflare copy the page may only talk to its own site (connect-src 'self'), which fetches GitHub's files for it: tools/worker.js. */
-const RELAY = import.meta.env.MODE === 'cloudflare';
+/** A production build served from the root is the Cloudflare copy (the Pages mirror is built under /ipynb-viewer/), whatever command built it. On it the page may only talk to its own site (connect-src 'self'), which fetches GitHub's files for it: tools/worker.js. */
+const RELAY = import.meta.env.PROD && import.meta.env.BASE_URL === '/';
 const VIA = new Set(['raw.githubusercontent.com', 'gist.githubusercontent.com', 'api.github.com']);
 const relay = (url: URL, here: URL) => (RELAY && VIA.has(url.hostname) ? new URL(`${import.meta.env.BASE_URL}link/${url.hostname}${url.pathname}`, here) : url);
 
