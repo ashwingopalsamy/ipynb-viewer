@@ -1,11 +1,13 @@
 <script lang="ts">
   import Seg from './Seg.svelte';
+  import Icon from './Lucide.svelte';
   import { roving } from './roving';
   import { ui } from './ui.svelte';
   import { has } from './prefs.svelte';
   import { canCopy, canWebp, copyPng, encode, EXT, fileName, fits, LABEL, save, size, type Format } from './export';
   import { BACKDROPS, palette, prepare, raster, scene, type Backdrop, type Corner, type Layout, type Opts, type Pad, type Prepared, type Scene, type Shape, type Show } from './shot';
   import './export.css';
+  import './settings.css';
   import './shot.css';
   import './ansi.css';
 
@@ -210,55 +212,57 @@
       {/if}
     </div>
     <div class="ctl">
-      <header>
-        <h2>Save cell as image</h2>
-        <button class="x" aria-label="Close" title="Close · esc" onclick={close}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>
-        </button>
-      </header>
-      <div class="scroll">
-        <h3 class="cat">Content</h3>
-        <div class="opt"><span>Show</span><Seg label="Show" options={[['both', 'Both'], ['code', 'Code'], ['out', 'Output']] as const} value={shown} disabled={[...(both ? [] : ['both']), ...(hasCode ? [] : ['code']), ...(hasOut ? [] : ['out'])] as Show[]} onchange={(v) => (show = v)} /></div>
-        <div class="opt"><span>Layout</span><Seg label="Layout" options={[['stack', 'Stacked'], ['side', 'Side by side']] as const} value={opts.layout} disabled={both && shown === 'both' ? [] : ['side']} onchange={(v) => set('layout', v)} /></div>
-        {@render switcher('Line numbers', opts.lines, () => set('lines', !opts.lines))}
-        {@render switcher('File name and run count', k.title, () => set('title', !k.title))}
-
-        <h3 class="cat">Style</h3>
-        <div class="opt"><span>Theme</span><Seg label="Theme" options={[['page', 'Page'], ['light', 'Light'], ['dark', 'Dark']] as const} value={k.theme ?? 'page'} onchange={(v) => set('theme', v)} /></div>
-        <div class="opt">
-          <span>Backdrop</span>
-          <div class="swatches" role="radiogroup" aria-label="Backdrop">
-            {#each BACKDROPS as b, i}
-              <button
-                class="swatch"
-                class:none={!b.a}
-                role="radio"
-                aria-checked={k.backdrop === b.id}
-                aria-label={b.label}
-                title={b.label}
-                tabindex={k.backdrop === b.id ? 0 : -1}
-                style:--a={b.a}
-                style:--b={b.b}
-                onclick={() => set('backdrop', b.id)}
-                onkeydown={(e) => roving(e, at, BACKDROPS.length, () => false, (n) => set('backdrop', BACKDROPS[n].id))}
-              ></button>
-            {/each}
-          </div>
+      <header class="dlg-head"><h2>Save cell as image</h2><button class="x" aria-label="Close" title="Close · esc" onclick={close}><Icon name="x" /></button></header>
+      <div class="scroll set">
+        <h3 class="set-cat">Content</h3>
+        <div class="set-group">
+          <div class="set-row"><span>Show</span><div class="set-ctl"><Seg label="Show" options={[['both', 'Both'], ['code', 'Code'], ['out', 'Output']] as const} value={shown} disabled={[...(both ? [] : ['both']), ...(hasCode ? [] : ['code']), ...(hasOut ? [] : ['out'])] as Show[]} onchange={(v) => (show = v)} /></div></div>
+          <div class="set-row"><span>Layout</span><div class="set-ctl"><Seg label="Layout" options={[['stack', 'Stacked'], ['side', 'Side by side']] as const} value={opts.layout} disabled={both && shown === 'both' ? [] : ['side']} onchange={(v) => set('layout', v)} /></div></div>
+          {@render switcher('Line numbers', opts.lines, () => set('lines', !opts.lines))}
+          {@render switcher('File name and run count', k.title, () => set('title', !k.title))}
         </div>
-        <div class="opt"><span>Margin</span><Seg label="Margin" options={[['S', 'Snug'], ['M', 'Even'], ['L', 'Roomy']] as const} value={k.pad} disabled={k.backdrop === 'none' ? ['S', 'M', 'L'] : []} onchange={(v) => set('pad', v)} /></div>
-        <div class="opt"><span>Corners</span><Seg label="Corners" options={[['sharp', 'Sharp'], ['soft', 'Soft'], ['round', 'Round']] as const} value={k.corner} disabled={k.backdrop === 'none' ? ['sharp', 'soft', 'round'] : []} onchange={(v) => set('corner', v)} /></div>
-
-        <h3 class="cat">File</h3>
-        <div class="opt"><span>Shape</span><Seg label="Shape" options={[['fit', 'Fit'], ['wide', '16:9'], ['square', '1:1']] as const} value={k.shape} onchange={(v) => set('shape', v)} /></div>
-        <div class="opt"><span>Size</span><Seg label="Size" options={SCALES.map((n) => [n, `${n}×`] as const)} value={scale} disabled={SCALES.filter((n) => sc && !fits(sc.w, sc.h, n))} onchange={(v) => set('scale', v)} /></div>
-        <div class="opt"><span>Format</span><Seg label="Format" options={FORMATS} value={k.format} onchange={(v) => set('format', v)} /></div>
+        <h3 class="set-cat">Style</h3>
+        <div class="set-group">
+          <div class="set-row"><span>Theme</span><div class="set-ctl"><Seg label="Theme" options={[['page', 'Page'], ['light', 'Light'], ['dark', 'Dark']] as const} value={k.theme ?? 'page'} onchange={(v) => set('theme', v)} /></div></div>
+          <div class="set-row">
+            <span>Backdrop</span>
+            <div class="set-ctl swatches" role="radiogroup" aria-label="Backdrop">
+              {#each BACKDROPS as b, i}
+                <button
+                  class="swatch"
+                  class:none={!b.a}
+                  role="radio"
+                  aria-checked={k.backdrop === b.id}
+                  aria-label={b.label}
+                  title={b.label}
+                  tabindex={k.backdrop === b.id ? 0 : -1}
+                  style:--a={b.a}
+                  style:--b={b.b}
+                  onclick={() => set('backdrop', b.id)}
+                  onkeydown={(e) => roving(e, at, BACKDROPS.length, () => false, (n) => set('backdrop', BACKDROPS[n].id))}
+                ></button>
+              {/each}
+            </div>
+          </div>
+          <div class="set-row"><span>Margin</span><div class="set-ctl"><Seg label="Margin" options={[['S', 'Snug'], ['M', 'Even'], ['L', 'Roomy']] as const} value={k.pad} disabled={k.backdrop === 'none' ? ['S', 'M', 'L'] : []} onchange={(v) => set('pad', v)} /></div></div>
+          <div class="set-row"><span>Corners</span><div class="set-ctl"><Seg label="Corners" options={[['sharp', 'Sharp'], ['soft', 'Soft'], ['round', 'Round']] as const} value={k.corner} disabled={k.backdrop === 'none' ? ['sharp', 'soft', 'round'] : []} onchange={(v) => set('corner', v)} /></div></div>
+        </div>
+        <h3 class="set-cat">File</h3>
+        <div class="set-group">
+          <div class="set-row"><span>Shape</span><div class="set-ctl"><Seg label="Shape" options={[['fit', 'Fit'], ['wide', '16:9'], ['square', '1:1']] as const} value={k.shape} onchange={(v) => set('shape', v)} /></div></div>
+          <div class="set-row"><span>Size</span><div class="set-ctl"><Seg label="Size" options={SCALES.map((n) => [n, `${n}×`] as const)} value={scale} disabled={SCALES.filter((n) => sc && !fits(sc.w, sc.h, n))} onchange={(v) => set('scale', v)} /></div></div>
+          <div class="set-row"><span>Format</span><div class="set-ctl"><Seg label="Format" options={FORMATS} value={k.format} onchange={(v) => set('format', v)} /></div></div>
+        </div>
       </div>
       <footer>
-        <p class="meta"><span>{#if sc}{Math.round(sc.w * scale).toLocaleString()} × {Math.round(sc.h * scale).toLocaleString()} px{/if}</span><span class="est" class:pending>{weight === null ? '' : size(weight)}</span></p>
-        <p class="note" class:bad={!!failed} role="status">{failed || notes.join(' ')}</p>
-        <div class="btns">
-          {#if canCopy()}<button class="btn" disabled={!sc} onclick={copy}>{copied ? 'Copied' : k.format === 'png' ? 'Copy' : 'Copy PNG'}</button>{/if}
-          <button class="btn solid" disabled={!sc} onclick={download}>Save {LABEL[k.format]}</button>
+        <dl class="stats">
+          <div><dt>Pixels</dt><dd>{sc ? `${Math.round(sc.w * scale).toLocaleString()} × ${Math.round(sc.h * scale).toLocaleString()}` : '–'}</dd></div>
+          <div><dt>File</dt><dd class:pending>{weight === null ? '–' : size(weight)}</dd></div>
+        </dl>
+        <p class="set-note" class:bad={!!failed} role="status">{failed || notes.join(' ')}</p>
+        <div class="set-foot">
+          {#if canCopy()}<button class="btn" class:done={copied} disabled={!sc} onclick={copy}><span class="ico-swap"><Icon name="copy" /><Icon name="check" /></span>{copied ? 'Copied' : k.format === 'png' ? 'Copy' : 'Copy PNG'}</button>{/if}
+          <button class="btn solid" disabled={!sc} onclick={download}><Icon name="download" />Save {LABEL[k.format]}</button>
         </div>
       </footer>
     </div>
