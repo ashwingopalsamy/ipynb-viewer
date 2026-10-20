@@ -1,5 +1,5 @@
-@font-face { font-family: Inter; font-weight: 100 900; font-display: block; src: url(/fonts/inter.woff2); }
-@font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: block; src: url(/fonts/jetbrains-mono.woff2); }
+@font-face { font-family: Inter; font-weight: 100 900; font-display: swap; src: url(/fonts/inter.woff2); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-display: swap; src: url(/fonts/jetbrains-mono.woff2); }
 
 :root {
   --page: #f5f5f7;
@@ -138,6 +138,11 @@ main.home { padding-bottom: 0; }
 .ask svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .ask span { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; padding-bottom: 3px; transition: background-size 350ms var(--out); }
 .ask:hover span { background-size: 100% 1px; }
+.link { display: flex; gap: 8px; width: min(100%, 420px); margin: 14px auto 0; }
+.link input { flex: 1; min-width: 0; padding: 9px 12px; font: inherit; font-size: 15px; color: var(--fg); background: var(--paper); border: 1px solid var(--well); border-radius: 10px; }
+.link button { padding: 9px 16px; font: inherit; font-size: 15px; color: var(--fg); background: var(--well-2); border: 1px solid var(--well); border-radius: 10px; cursor: pointer; }
+.link button:hover { background: var(--well); }
+.more { font-size: 14px; color: var(--fg-3); }
 
 /* a file carried over the page: the whole page says where it will go */
 .over::after {
@@ -174,6 +179,9 @@ h2 { display: flex; align-items: center; gap: 14px; font-size: clamp(24px, 3.6vw
 h2 i { flex: none; align-self: center; display: grid; place-items: center; width: 26px; height: 26px; margin-top: 0; border-radius: 50%; background: var(--well); color: var(--fg-3); font: 600 12px/1 var(--sans); font-style: normal; }
 .block p { color: var(--fg-2); text-wrap: pretty; }
 .block p b { color: var(--fg); }
+.block h3 { margin: 10px 0 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.block p a { color: var(--fg); }
+.block p code { font: 0.9em var(--mono); }
 figure { margin: 10px 0 0; }
 figcaption { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--fg-3); }
 .check { font-size: 14px; }
@@ -271,7 +279,7 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
   .next svg { animation: none; }
 }
 @media print {
-  .bar, .ask, .next { display: none; }
+  .bar, .ask, .link, .more, .next { display: none; }
   .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
   body { background: #fff; }
   .block { break-inside: avoid; }

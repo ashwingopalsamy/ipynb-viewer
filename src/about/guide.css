@@ -1,0 +1,18 @@
+/* The guide pages: prose in the landing page's own tokens and header, with no script. */
+.doc { padding-top: clamp(24px, 5vw, 56px); }
+.doc article { display: grid; gap: 14px; max-width: 720px; margin: 0 auto; }
+.doc article > * { margin: 0; }
+.doc h1 { max-width: none; font-size: clamp(30px, 5vw, 44px); }
+.doc h2 { margin-top: 24px; font-size: clamp(20px, 3vw, 26px); line-height: 1.2; letter-spacing: -0.025em; }
+.doc p, .doc li { color: var(--fg-2); text-wrap: pretty; }
+.doc ul, .doc ol { display: grid; gap: 8px; padding-left: 22px; }
+.doc a { color: var(--accent); }
+.doc code { font: 0.9em var(--mono); padding: 1px 5px; border-radius: 6px; background: var(--well); color: var(--fg); overflow-wrap: anywhere; }
+.doc pre { overflow-x: auto; padding: 14px 16px; border-radius: 12px; background: var(--sunk); font: 13px/1.6 var(--mono); }
+.doc pre code { padding: 0; background: none; overflow-wrap: normal; }
+.doc table { display: block; overflow-x: auto; border-collapse: collapse; font-size: 14px; }
+.doc th, .doc td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--fg-2); }
+.doc th { color: var(--fg); font-weight: 600; }
+.doc .cta { margin-top: 24px; }
+.doc .cta a { display: inline-block; padding: 10px 18px; border-radius: 999px; background: var(--fg); color: var(--page); text-decoration: none; font-weight: 500; }
+.bar a.name { text-decoration: none; }
