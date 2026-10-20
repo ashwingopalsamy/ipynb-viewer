@@ -95,6 +95,7 @@ b { font-weight: 600; }
   transition: transform 200ms var(--rel);
 }
 .icon:hover { color: var(--fg); }
+.demo { width: auto; padding: 0 14px; font-size: 13px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; text-decoration: none; color: var(--fg); }
 .swap .glyph {
   position: absolute;
   display: grid;
@@ -258,6 +259,9 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
   }
 }
 
+@media (max-width: 420px) {
+  .demo .lead { display: none; }
+}
 @media (max-width: 640px) {
   main, footer { padding-inline: 16px; }
   .bar .inner { padding: 8px 12px 0; }
