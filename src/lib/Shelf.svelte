@@ -2,6 +2,7 @@
   import type { Cell } from './notebook';
   import { figures, type Figure } from './shelf';
   import { jump, ui } from './ui.svelte';
+  import Icon from './Lucide.svelte';
   import './shelf.css';
 
   let {
@@ -53,7 +54,7 @@
 <div class="figs-shelf" class:on={open} role="dialog" aria-modal="true" aria-label="Figures" aria-hidden={!open} onpointerdown={(e) => e.target === e.currentTarget && (open = false)}>
   <div class="figs-sheet" tabindex="-1" bind:this={sheet} style:--n={Math.min(Math.max(list.length, 1), 2)}>
     {#if loaded}
-      <p class="figs-head">Figures · {list.length}</p>
+      <header class="dlg-head figs-head"><h2>Figures <span class="figs-n">{list.length}</span></h2><button class="x" aria-label="Close" title="Close · esc" onclick={() => (open = false)}><Icon name="x" /></button></header>
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <ul class="figs-grid" onkeydown={move}>
         {#each list as f}
@@ -63,7 +64,7 @@
             </button>
             <div class="figs-row">
               <span class="figs-no">{f.n === null ? '' : `[${f.n}]`}</span>
-              <button class="figs-jump" onclick={() => go(f.cell)}>Go to cell</button>
+              <button class="btn quiet figs-jump" onclick={() => go(f.cell)}>Go to cell</button>
             </div>
           </li>
         {/each}

@@ -37,7 +37,7 @@
 .lb .lb-x:hover, .lb .lb-go:hover:not(:disabled) { color: var(--fg); }
 .lb .lb-x:active, .lb .lb-go:active:not(:disabled) { transform: scale(0.94); transition-duration: 100ms; }
 .lb .lb-go:disabled { opacity: 0.35; cursor: default; }
-.lb .lb-x { top: 12px; right: 16px; }
+.lb .lb-x { top: 8px; right: 20px; }
 .lb .lb-go { top: 50%; margin-top: -22px; }
 .lb .lb-prev { left: 16px; }
 .lb .lb-next { right: 16px; }
@@ -46,7 +46,9 @@
 @media (max-width: 720px) {
   .lb .lb-view { padding: 64px 8px 56px; }
   .lb img { max-width: calc(100vw - 16px); }
-  .lb .lb-go { top: auto; bottom: 8px; margin: 0; }
+  .lb .lb-x { right: 12px; }
+  .lb .lb-go { top: auto; margin: 0; }
+  .lb .lb-go, .lb .lb-count { bottom: calc(8px + env(safe-area-inset-bottom)); }
   .lb .lb-prev { left: 16px; }
   .lb .lb-next { right: 16px; }
 }
