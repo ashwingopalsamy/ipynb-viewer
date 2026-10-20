@@ -156,5 +156,9 @@ if (/[?#](?:url|nb)=/.test(location.href)) {
 // The offline copy is made from this page too, for a visit that never opens a notebook.
 setTimeout(() => import('../lib/offline'), 2500)
 
+// Where the browser lets a page offer tools to an agent working with the person (WebMCP), the empty page offers one: open a link.
+const tools = (document as any).modelContext ?? (navigator as any).modelContext
+if (tools) import('../lib/agent').then((m) => m.landing(tools, signal))
+
 // A notebook opened from the operating system (an installed copy in Chromium) arrives through the launch queue.
 if ('launchQueue' in window) (window as any).launchQueue.setConsumer(async (p: any) => { const h = p.files?.[0]; if (h) open(await h.getFile(), h) })

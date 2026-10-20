@@ -28,6 +28,7 @@
   let Veil = $state<typeof import('./lib/Veil.svelte').default>();
   let changed = $state.raw<ReadonlySet<string>>(new Set());
   let stop: (() => void) | undefined;
+  let tools: AbortController | undefined;
 
   const rows = $derived(replayed && reorder ? reorder(cells) : cells);
   const language = $derived(meta ? (meta.language ?? 'python') : null);
@@ -50,6 +51,8 @@
       fresh = false;
       stop?.();
       stop = undefined;
+      tools?.abort();
+      tools = undefined;
       ready = false;
       name = file.name;
       cells = [];
@@ -91,6 +94,12 @@
       if (fresh) begin();
       flush();
       ready = true;
+      // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
+      const mc = (document as any).modelContext ?? (navigator as any).modelContext;
+      if (mc) {
+        const ctl = (tools = new AbortController());
+        import('./lib/agent').then((m) => m.reader(mc, ctl.signal, () => ({ cells, meta, name, language })));
+      }
       document.title = `${file.name} · ipynb viewer`;
       if (handle && file instanceof File) {
         const { watch } = await import('./lib/watch');
