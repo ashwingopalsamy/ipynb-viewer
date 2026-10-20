@@ -22,6 +22,7 @@ const partOf = (ids: string[]): Part =>
  */
 function finish(): Plugin {
   let out = 'dist'
+  let base = ''
   const chunks = new Map<string, Part>()
   const walk = (dir: string): string[] =>
     readdirSync(dir).flatMap((name) => {
@@ -33,14 +34,17 @@ function finish(): Plugin {
   return {
     name: 'finish',
     apply: 'build',
-    configResolved: (config) => void (out = config.build.outDir),
+    configResolved: (config) => {
+      out = config.build.outDir
+      base = config.base.replace(/^\/|\/$/g, '')
+    },
     generateBundle(_, bundle) {
       for (const [name, item] of Object.entries(bundle)) if (item.type === 'chunk' && !item.isEntry) chunks.set(name, partOf(Object.keys(item.modules)))
     },
     closeBundle() {
       const all = walk(out).map((f) => relative(out, f).split('\\').join('/'))
       const html = readFileSync(join(out, 'index.html'), 'utf8')
-      const first = [...html.matchAll(/(?:src|href)="(?:\.\.\/|\/)?([^"]+\.(?:js|css))"/g)].map((m) => m[1])
+      const first = [...html.matchAll(/(?:src|href)="(?:\.\.\/|\/)?([^"]+\.(?:js|css))"/g)].map((m) => (base && m[1].startsWith(`${base}/`) ? m[1].slice(base.length + 1) : m[1]))
       const core = gz('index.html') + first.reduce((n, f) => n + gz(f), 0)
 
       // everything else that can load later, by what loads it
