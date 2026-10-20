@@ -208,12 +208,17 @@ async function connect(url: URL, say: (text: string) => void, env: Env, kind: 'n
   let res: Response;
   let end = url;
   try {
+    // a request that is slow to answer says so, rather than leaving the first line on screen
+    const slow = setTimeout(() => say(`${host} · still waiting for a response`), 3000);
     try {
       res = await env.fetch(via.href, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'follow', signal: ctl.signal });
     } catch {
       throw lost();
+    } finally {
+      clearTimeout(slow);
     }
     watch();
+    say(`${host} · downloading`);
     if (via === url && res.url && res.url !== url.href) {
       try {
         end = new URL(res.url);
