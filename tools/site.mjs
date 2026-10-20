@@ -8,22 +8,16 @@ const mirror = process.argv.includes('--mirror');
 const ORIGIN = 'https://ipynb.ashwingopalsamy.in';
 const dist = new URL('../dist/', import.meta.url);
 
-// The home page (what the product is) and the viewer each get a canonical link (and noindex on the mirror). Each keeps one inline script (the theme, so there is no
-// flash); the policy allows those by hash, nothing else inline.
-const hashes = [];
-for (const [page, path] of [['index.html', '/'], ['viewer/index.html', '/viewer/']]) {
-  const file = new URL(page, dist);
-  let html = readFileSync(file, 'utf8');
-  if (!html.includes('</head>')) throw new Error(`dist/${page} has no </head>; run vite build first`);
-  for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) hashes.push(`'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`);
-  const head = [`<link rel="canonical" href="${ORIGIN}${path}" />`, mirror && '<meta name="robots" content="noindex" />'].filter(Boolean);
-  writeFileSync(file, html.replace('</head>', `    ${head.join('\n    ')}\n  </head>`));
-}
+// The page keeps one inline script (the theme, so there is no flash); the policy allows it by hash, nothing else inline.
+const file = new URL('index.html', dist);
+const html = readFileSync(file, 'utf8');
+if (!html.includes('</head>')) throw new Error('dist/index.html has no </head>; run vite build first');
+const hashes = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`);
+const head = [`<link rel="canonical" href="${ORIGIN}/" />`, mirror && '<meta name="robots" content="noindex" />'].filter(Boolean);
+writeFileSync(file, html.replace('</head>', `    ${head.join('\n    ')}\n  </head>`));
 
 const home = mirror ? '/ipynb-viewer/' : '/';
 
-// The About page used to live at /about; the address still lands on the home page.
-writeFileSync(new URL('about.html', dist), '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./"><link rel="canonical" href="./"><title>ipynb viewer</title>');
 writeFileSync(
   new URL('404.html', dist),
   `<!doctype html>
@@ -53,18 +47,18 @@ if (mirror) {
   process.exit(0);
 }
 
-// The app puts a stricter policy on itself once it shows notebook markup (src/lib/guard.ts). A policy can only be
-// tightened, so this one has to allow what the first screen needs: https for `?url=` downloads, the sandbox frame.
+// The viewer reads notebooks from the visitor's own device and never fetches, frames or runs anything, so the policy
+// allows only the site itself. Inline styles stay allowed for the components and KaTeX.
 const csp = [
   "default-src 'none'",
   `script-src 'self' ${hashes.join(' ')}`.trim(),
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https:",
-  "frame-src 'self'",
+  "connect-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
+  "frame-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -87,21 +81,6 @@ writeFileSync(
 /index.html
   Content-Security-Policy: ${csp}
 
-/viewer/
-  Content-Security-Policy: ${csp}
-
-/viewer/index.html
-  Content-Security-Policy: ${csp}
-
-# The worker that keeps the app's files on the device. It must be fetched fresh every time, or an update never arrives.
-/sw.js
-  Cache-Control: no-cache
-
-# The page interactive outputs run in. The app frames it with sandbox="allow-scripts"; this makes the page sandboxed
-# even when something opens it directly, and keeps other sites from framing it.
-/box.html
-  Content-Security-Policy: sandbox allow-scripts; frame-ancestors 'self'
-
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -109,5 +88,4 @@ writeFileSync(
   Cache-Control: public, max-age=604800
 `,
 );
-writeFileSync(new URL('_redirects', dist), '/about / 301\n/about.html / 301\n');
-console.log(`dist ready for Cloudflare (${hashes.length} inline scripts hashed)`);
+console.log(`dist ready for Cloudflare (${hashes.length} inline script hashed)`);
