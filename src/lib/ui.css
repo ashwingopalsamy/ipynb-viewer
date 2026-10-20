@@ -1,11 +1,12 @@
 button { -webkit-tap-highlight-color: transparent; }
-/* Popovers, the settings menu and the shortcut sheet. */
+
+/* Sheets: every popover shares one frame, 8px of padding and 18px corners, so the 10px groups inside sit concentric. */
 .pop {
   position: fixed;
   z-index: 15;
   max-width: calc(100vw - 24px);
-  padding: 6px;
-  border-radius: 14px;
+  padding: var(--pad);
+  border-radius: var(--r-sheet);
   corner-shape: squircle;
   background: var(--paper);
   box-shadow: var(--float);
@@ -21,74 +22,93 @@ button { -webkit-tap-highlight-color: transparent; }
   opacity: 1;
   visibility: visible;
   transform: none;
-  transition: opacity 200ms var(--out), transform 200ms var(--pop), visibility 0s;
+  transition: opacity 200ms var(--out), transform var(--t3) var(--pop), visibility 0s;
 }
-#pop-settings { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+#pop-settings, #pop-keys { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
 .pop hr { height: 1px; margin: 6px 4px; border: 0; background: var(--line); }
 
-/* settings: small groups, each with a symbol and a name, its rows resting in one rounded well */
-.menu { display: grid; gap: 2px; padding: 0 0 2px; }
+/* One icon size and one line weight in every sheet and dialog: 16px at 1.9 draws the 1.27px line of the 18px toolbar icons at 1.7. */
+:is(.pop, .shot .ctl, .figs-sheet) svg { flex: none; width: var(--icon); height: var(--icon); stroke-width: var(--stroke); }
+
+/* The screenshot dialog's old heading; it goes once that dialog uses .set-cat. */
 .cat { display: flex; align-items: center; gap: 8px; margin: 14px 12px 6px; font: 600 13px/1 var(--sans); color: var(--fg-2); }
-.cat svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
-.menu > div:first-child .cat { margin-top: 8px; }
-.cat .more { display: flex; align-items: center; gap: 8px; width: 100%; font: inherit; color: inherit; border-radius: 8px; }
-.chev { display: grid; margin-left: auto; transition: transform 200ms var(--io); }
-.chev.open { transform: rotate(90deg); }
-.well { display: grid; padding: 2px; border-radius: 14px; corner-shape: squircle; background: var(--well-2); }
-.well.last { margin-top: 12px; }
-.menu .sw { height: 36px; border-radius: 12px; }
-.menu .well .sw svg { flex: none; color: var(--fg-3); }
-#pop-settings { border-radius: 20px; }
-.sw.static { cursor: default; }
-.sw.static::before { display: none; }
 
-.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 36px; margin: 2px 2px 4px; padding: 2px; border-radius: 999px; background: var(--well); }
-.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; background: var(--paper); box-shadow: 0 1px 2px rgba(20, 24, 40, 0.14), 0 0 0 0.5px var(--line); transform: translateX(calc(var(--i) * 100%)); transition: transform 250ms var(--io); }
-.seg button { border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
-.seg button[aria-checked='true'] { color: var(--fg); }
+/* Segmented control: a raised thumb slides to the choice; hairlines part the others, and a press on the chosen one squeezes it. */
+.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: var(--ctl); padding: 2px; border-radius: 999px; background: var(--track); }
+.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; background: var(--thumb); box-shadow: var(--thumb-shadow); transform: translateX(calc(var(--i) * 100%)); transition: transform var(--t3) var(--pop); }
+.seg:has(> [aria-checked='true']:active) .thumb { transform: translateX(calc(var(--i) * 100%)) scale(0.95); transition-duration: var(--t1); }
+.seg button { position: relative; display: grid; place-items: center; min-width: 0; padding: 0 6px; border-radius: 999px; font: 500 var(--fs-sm)/1 var(--sans); color: var(--fg-3); white-space: nowrap; transition: color var(--t2) var(--out), opacity var(--t1) var(--out); }
+.seg button + button::before { content: ''; position: absolute; top: 30%; bottom: 30%; left: -0.5px; width: 1px; background: var(--line-2); transition: opacity var(--t2) var(--out); }
+.seg button[aria-checked='true']::before, .seg button[aria-checked='true'] + button::before { opacity: 0; }
+.seg button:hover:not(:disabled):not([aria-checked='true']) { color: var(--fg-2); }
+.seg button[aria-checked='true'] { color: var(--fg); font-weight: 600; }
+.seg button:active:not(:disabled):not([aria-checked='true']) { opacity: 0.55; }
 .seg button:disabled { opacity: 0.35; cursor: default; }
-.seg button:focus-visible { outline-offset: -2px; }
+.seg button:focus-visible { outline-offset: 0; }
 
-.step { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: var(--well); }
-.step button { display: grid; place-items: center; width: 32px; height: 28px; border-radius: 999px; color: var(--fg-2); }
-.step button:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
-.step button:disabled { opacity: 0.35; cursor: default; }
-.step button:focus-visible { outline-offset: -2px; }
-.step b { font-weight: 600; line-height: 1; }
-.step .s { font-size: 12px; }
-.step .l { font-size: 17px; }
-.step output { min-width: 40px; text-align: center; font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); }
-
-.sw {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 40px;
-  padding: 0 10px 0 12px;
-  border-radius: 10px;
-  text-align: left;
-  font-size: 13.5px;
-  color: var(--fg);
-}
-.sw::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
-.sw:hover::before { opacity: 0.08; }
+/* A switch row: icon, label with a line on what it does, then the switch. The whole row is the control. */
+.sw { position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: var(--row); padding: 0 var(--inset); text-align: left; font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
+.sw::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t1) var(--out); }
+.sw:hover::before { opacity: 0.06; }
+.sw:active::before { opacity: 0.1; }
 .sw:focus-visible { outline-offset: -2px; }
-.sw > span { flex: 1; }
+.sw > svg { color: var(--fg-3); }
+.sw > span { flex: 1; min-width: 0; }
+.sw small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); line-height: 16px; color: var(--fg-3); }
+.sw:has(small) { min-height: var(--row-2); padding-block: 10px; }
+.sw[aria-expanded] > svg:last-child { transition: transform var(--t3) var(--io); }
+.sw[aria-expanded='true'] > svg:last-child { transform: rotate(90deg); }
 kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5px/1.4 var(--mono); color: var(--fg-2); }
+.pop kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-key); background: var(--well); box-shadow: inset 0 -1px 0 var(--line-2); font: 500 var(--fs-xs)/1 var(--mono); color: var(--fg-2); }
 @media (hover: none) { .sw kbd { display: none; } }
 
-.track { position: relative; flex: none; width: 34px; height: 20px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 50%, var(--paper)); }
-.track::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity 150ms var(--out); }
-.knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: transform 200ms var(--io); }
+/* The switch: white knob on grey when off; the track fills and the knob turns paper when on; a press stretches the knob toward where it will go. */
+.track { position: relative; flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--sw-off); }
+.track::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t2) var(--out); }
+.knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--knob); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transform-origin: 0 50%; transition: transform var(--t3) var(--pop), background-color var(--t2) var(--out); }
 [aria-checked='true'] > .track::before { opacity: 1; }
-[aria-checked='true'] > .track > .knob { transform: translateX(14px); }
+[aria-checked='true'] > .track > .knob { transform: translateX(14px); transform-origin: 100% 50%; background: var(--knob-on); }
+.sw:active > .track > .knob { transform: scaleX(1.18); transition-duration: var(--t1); }
+.sw[aria-checked='true']:active > .track > .knob { transform: translateX(14px) scaleX(1.18); }
 
-.keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; margin: 0; padding: 8px 12px; font-size: 13px; }
+/* The shortcut list: key caps right-aligned in one column, so every description starts on the same line. */
+.keys { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px var(--s3); align-items: center; margin: 0; padding: var(--s1) var(--inset) var(--s2); font-size: var(--fs-sm); line-height: 18px; }
 .keys dt { display: flex; gap: 4px; justify-content: flex-end; }
 .keys dd { margin: 0; color: var(--fg-2); }
+
+/* Buttons: secondary (a tint), primary (solid), quiet (navigation). One height, one weight. */
+.btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); min-width: 0; height: var(--btn); padding: 0 var(--s4); border-radius: 999px; background: var(--btn-2); font: 600 var(--fs-sm)/1 var(--sans); color: var(--fg); white-space: nowrap; text-decoration: none; transition: transform 200ms var(--rel); }
+.btn::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.btn:hover:not(:disabled)::before { opacity: 0.07; }
+.btn:active:not(:disabled) { transform: scale(0.97); transition-duration: var(--t1); }
+.btn.solid { background: var(--fg); color: var(--paper); }
+.btn.solid:hover:not(:disabled)::before { opacity: 0.16; }
+.btn.quiet { background: none; font-weight: 500; color: var(--fg-2); }
+.btn.quiet:hover:not(:disabled) { color: var(--fg); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.done:disabled { opacity: 1; }
+.btn:focus-visible { outline-offset: 2px; }
+
+/* Success where it happened: the action's icon turns into a check and back. */
+.ico-swap { display: grid; flex: none; }
+.ico-swap > svg { grid-area: 1 / 1; transition: opacity var(--t2) var(--out), transform var(--t3) var(--pop); }
+.ico-swap > svg + svg, .done .ico-swap > svg:first-child { opacity: 0; transform: scale(0.5); }
+.done .ico-swap > svg + svg { opacity: 1; transform: none; }
+
+/* A number that changed rolls in from the side it moved toward. */
+@keyframes roll { from { opacity: 0; transform: translateY(var(--from, 0.5em)); } }
+.roll { display: inline-block; animation: roll var(--t2) var(--out) both; }
+.roll.down { --from: -0.5em; }
+
+/* A modal dialog's title bar and its close button. */
+.dlg-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-height: 52px; }
+.dlg-head h2 { margin: 0; font: 600 var(--fs-lg)/20px var(--sans); letter-spacing: -0.01em; color: var(--fg); }
+.x { position: relative; isolation: isolate; display: grid; place-items: center; flex: none; width: var(--ctl); height: var(--ctl); border-radius: 999px; color: var(--fg-3); }
+.x::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.x:hover { color: var(--fg); }
+.x:hover::before { opacity: 0.08; }
+.x:active::before { opacity: 0.12; }
+.x:focus-visible { outline-offset: -2px; }
 
 .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--page); }
 
@@ -116,12 +136,8 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
   .tools > :last-child:hover::after, .tools > :last-child:focus-visible::after { transform: none; }
 }
 
-/* a finger needs 44px */
-@media (pointer: coarse) {
-  .menu .sw, .pop .sw { height: 44px; }
-  .seg { height: 44px; }
-  .step button { width: 44px; height: 40px; }
-}
+/* iOS Safari zooms the page into a field whose text is under 16px */
+@media (pointer: coarse) { .pop input { font-size: 16px; } }
 
 /* Windows high contrast drops background colours, which is all a switch is made of */
 @media (forced-colors: active) {
@@ -139,5 +155,5 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
   .tools [data-tip]::after { display: none; }
   .tools [aria-expanded='true'] { background: var(--fg); color: var(--paper); }
   #app { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
-  #pop-settings { max-height: calc(100dvh - 140px); }
+  #pop-settings, #pop-keys { max-height: calc(100dvh - 140px); }
 }

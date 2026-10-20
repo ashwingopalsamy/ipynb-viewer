@@ -34,6 +34,49 @@
   --measure: 1120px;
   --gut: 80px;
   --jump: 96px;
+  /* The panel system: one spacing step, one inset, one set of heights, radii, type sizes and timings.
+     One left edge: a sheet's 8px padding plus a row's 12px inset puts every label, heading and note 20px in, where the dock's title starts. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --pad: 8px;
+  --inset: 12px;
+  --lab: 96px;
+  --row: 44px;
+  --row-2: 56px;
+  --ctl: 32px;
+  --btn: 36px;
+  --r-sheet: 18px;
+  --r-group: 10px;
+  --r-dialog: 22px;
+  --r-tile: 14px;
+  --r-key: 6px;
+  --fs-cap: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 15px;
+  --fs-num: 34px;
+  /* 16px at 1.9 draws the same 1.27px line as the 18px toolbar icons at 1.7 */
+  --icon: 16px;
+  --stroke: 1.9;
+  --t1: 100ms;
+  --t2: 160ms;
+  --t3: 220ms;
+  --t4: 300ms;
+  --fill: color-mix(in srgb, var(--fg) 6%, transparent);
+  --track: color-mix(in srgb, var(--fg) 7%, transparent);
+  --thumb: #ffffff;
+  --thumb-shadow: 0 1px 2px rgba(20, 24, 40, 0.12), 0 0 0 0.5px rgba(20, 24, 40, 0.08);
+  --sw-off: color-mix(in srgb, var(--fg) 45%, var(--paper));
+  --knob: #ffffff;
+  --knob-on: var(--paper);
+  --btn-2: color-mix(in srgb, var(--fg) 8%, transparent);
+  --ok: #1d8a4a;
+  --wait: #b26b00;
   color-scheme: light;
 }
 
@@ -59,8 +102,18 @@
   --accent: #4da3ff;
   --danger: #ff7b72;
   --tint: color-mix(in srgb, var(--danger) 10%, var(--paper));
+  --track: color-mix(in srgb, var(--fg) 8%, transparent);
+  --thumb: #464754;
+  --thumb-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  --sw-off: #5c5d68;
+  --btn-2: color-mix(in srgb, var(--fg) 12%, transparent);
+  --ok: #4cc38a;
+  --wait: #f0b44c;
   color-scheme: dark;
 }
+
+/* a finger needs 44px: controls and buttons grow, rows hold them */
+@media (pointer: coarse) { :root { --ctl: 44px; --btn: 44px; } }
 
 * { box-sizing: border-box; }
 
@@ -136,7 +189,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .tool-name { display: none; }
 @media (min-width: 721px) {
   .tools:has(.tool-name:not(:empty)) { min-width: 344px; }
-  .tools:has(.tool-name:not(:empty)) .tool-name { display: block; flex: 1 0 112px; padding: 0 12px 0 14px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
+  .tools:has(.tool-name:not(:empty)) .tool-name { display: block; flex: 1 0 112px; padding: 0 12px 0 16px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
   .bar:has(.tool-name:not(:empty)) [data-tip]::after { display: none; }
 }
 .icon {
@@ -202,7 +255,7 @@ main { flex: 1; }
 }
 .made img { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--well); }
 .made b { font-weight: 600; color: var(--fg-2); }
-.made:hover b { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.made:hover b { color: var(--fg); }
 
 /* notebook */
 

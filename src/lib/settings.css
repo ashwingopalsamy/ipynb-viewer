@@ -1,106 +1,119 @@
-/* Settings and Privacy, the two sheets from the header. Radii follow one rule, as in a notebook cell:
-   the card is 18, its inner cards are 10 (18 - 8 padding), and the squarish controls inside them are 8.
-   Toggles and the footer buttons stay pills. Every label, control and note starts or ends on the same 14px inset. */
-.pop#pop-settings, .pop#pop-privacy { border-radius: 18px; padding: 8px; }
+/* Every sheet is built from the same parts: a caps label over each group, rows inside it, a note under it, actions at the foot.
+   One left edge: 8px of sheet padding plus the 12px row inset puts every label, heading, note and number 20px in, where the dock's title starts. */
+.set { display: flex; flex-direction: column; gap: var(--s2); }
+.set > .rise { display: flex; flex-direction: column; gap: var(--s2); }
 
-.set { display: grid; gap: 8px; }
-/* a tab's content sits in a wrapper; it keeps the same 8px between its cards and notes as the sheet does */
-.set > .rise { display: grid; gap: 8px; }
-/* a section label: caps, a step up from the rows, nearer to its own card than to the one above */
-.set-cat { margin: 5px 0 -5px; padding: 0 8px; font: 600 13px/1.2 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-2); }
-.set-note { margin: 0; padding: 0 14px; font-size: 12.5px; line-height: 1.5; color: var(--fg-3); }
+/* section label: 16px above it, 6px to its own group */
+.set-cat { margin: var(--s2) 0 -2px; padding: 0 var(--inset); font: 600 var(--fs-cap)/14px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+.set > .set-cat:first-child { margin-top: var(--s1); }
+/* helper text: 6px under the group it explains */
+.set-note { margin: -2px 0 0; padding: 0 var(--inset); font-size: var(--fs-xs); line-height: 16px; color: var(--fg-3); text-wrap: pretty; }
 .set-note:empty { display: none; }
+.set-note.bad { color: var(--danger); }
 
-/* an inner card: rows sit flush, divided by hairlines, and the card clips them to its corners */
-.set-group { display: grid; overflow: hidden; border-radius: 10px; corner-shape: squircle; background: var(--well); }
-.set-group > * + * { border-top: 1px solid var(--line); }
-.set-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  padding: 0 14px;
-  font-size: 13.5px;
-  color: var(--fg);
+/* a group: rows flush, hairlines between them that start where the text does, corners clipped */
+.set-group { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border-radius: var(--r-group); corner-shape: squircle; background: var(--well); }
+.set-group > * { position: relative; isolation: isolate; }
+.set-group > :first-child { border-top-left-radius: inherit; border-top-right-radius: inherit; corner-shape: inherit; }
+.set-group > :last-child { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; corner-shape: inherit; }
+.set-group > * + * { background-image: linear-gradient(var(--line), var(--line)); background-repeat: no-repeat; background-position: 100% 0; background-size: calc(100% - var(--sep, var(--inset))) 1px; }
+.set-group > :has(> svg:first-child), .set-group > :has(> .ico-swap:first-child), .set-group > .set-ledger { --sep: calc(var(--inset) + var(--icon) + var(--s3)); }
+
+/* a label and its control; the label column is fixed so every control starts and ends on the same lines */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-height: max(var(--row), calc(var(--ctl) + 12px)); padding: 0 var(--inset); font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
+.set-row > svg { color: var(--fg-3); }
+.set-row > span { white-space: nowrap; }
+.set-row:has(> .set-ctl) > span { flex: 0 0 var(--lab); overflow: hidden; text-overflow: ellipsis; }
+.set-ctl { flex: 1 1 0; min-width: 176px; }
+.set-ctl.wide { width: 100%; min-width: 0; }
+.set-ctl .seg { width: 100%; }
+.set-row.warn > svg { color: var(--danger); }
+.set-verdict { justify-content: flex-start; }
+.set-verdict > span { white-space: normal; padding-block: 12px; }
+#pop-figure { --lab: 56px; }
+/* a very narrow phone: the control goes under its label */
+@media (max-width: 360px) {
+  .set-row:has(> .set-ctl) { flex-wrap: wrap; row-gap: 6px; padding-block: 10px; }
+  .set-row:has(> .set-ctl) > span, .set-ctl { flex: 1 0 100%; min-width: 0; }
 }
 
-/* a squarish control in one column, so every choice on the sheet ends on the same line */
-.set-row > span { white-space: nowrap; }
-/* a row with a control gives its label a fixed column, so every control starts and ends on the same line whatever the label's length */
-.set-row:has(> .set-ctl) > span { flex: 0 0 96px; }
-.set-ctl { flex: 1 1 0; min-width: 176px; }
-.set-ctl .seg { width: 100%; height: 38px; margin: 0; padding: 3px; border-radius: 999px; background: var(--well-2); }
-.set-ctl .seg .thumb { top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); border-radius: 999px; }
-.set-ctl .seg button { display: grid; place-items: center; padding: 0; border-radius: 999px; font-size: 12px; white-space: nowrap; }
-.set-ctl .seg button:hover:not([aria-checked='true']) { background: color-mix(in srgb, var(--fg) 8%, transparent); }
-/* the text-size stepper is drawn like the Width control: the same pill and height, three equal thirds, the readout in the middle one */
-.set-ctl.step { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; align-items: center; height: 38px; padding: 3px; border-radius: 999px; background: var(--well-2); }
-.set-ctl.step button { display: grid; place-items: center; width: 100%; height: 32px; border-radius: 999px; color: var(--fg-2); }
-.set-ctl.step button:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
+/* the text-size stepper: the segmented track, three parts, the size in the middle; a part under the pointer rises like a thumb */
+.set-ctl.step { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; height: var(--ctl); padding: 2px; border-radius: 999px; background: var(--track); }
+.set-ctl.step > * { position: relative; display: grid; place-items: center; height: 100%; }
+.set-ctl.step > * + *::before { content: ''; position: absolute; top: 30%; bottom: 30%; left: -0.5px; width: 1px; background: var(--line-2); transition: opacity var(--t2) var(--out); }
+.set-ctl.step button { border-radius: 999px; color: var(--fg-2); transition: background-color var(--t1) var(--out), color var(--t1) var(--out); }
+.set-ctl.step button:hover:not(:disabled) { background: var(--thumb); box-shadow: var(--thumb-shadow); color: var(--fg); }
+.set-ctl.step button:hover:not(:disabled)::before, .set-ctl.step button:hover:not(:disabled) + *::before { opacity: 0; }
 .set-ctl.step button:disabled { opacity: 0.35; cursor: default; }
-.set-ctl.step b { font-weight: 600; line-height: 1; }
+.set-ctl.step button:focus-visible { outline-offset: 0; }
+.set-ctl.step b { display: block; font-weight: 600; line-height: 1; transition: transform var(--t1) var(--out); }
+.set-ctl.step button:active:not(:disabled) b { transform: scale(0.86); }
 .set-ctl.step .s { font-size: 12px; }
 .set-ctl.step .l { font-size: 16px; }
-.set-ctl.step output { min-width: 0; font: 500 12px/1 var(--sans); font-variant-numeric: tabular-nums; text-align: center; color: var(--fg-2); }
+.set-ctl.step output { overflow: hidden; font: 600 var(--fs-sm)/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--fg); }
 
-/* a switch row keeps the shared pill switch and its icon, with the same 14px inset as every other row */
-.set .sw { height: 44px; padding: 0 14px; gap: 12px; border-radius: 0; }
-.set .sw > svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
-.set .sw[aria-expanded] > svg { transition: transform 200ms var(--io); }
-.set .sw[aria-expanded='true'] > svg { transform: rotate(90deg); }
+/* a read-only fact: an optional icon, its name, its value on the right */
+.set-kv { display: flex; align-items: center; gap: var(--s3); min-height: var(--row); padding: 0 var(--inset); font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
+.set-kv > svg { color: var(--fg-3); }
+.set-kv > span:first-of-type { flex: 1; min-width: 0; }
+.set-kv > b { font-weight: 400; font-size: var(--fs-sm); color: var(--fg-2); text-align: right; font-variant-numeric: tabular-nums; }
 
-/* a read-only fact: its name, then its value on the right */
-.set-kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 14px; font-size: 13.5px; color: var(--fg); }
-.set-kv b { font-size: 13px; font-weight: 600; color: var(--fg-2); text-align: right; }
+/* a status: a dot and a word, never the colour alone */
+.st { display: inline-flex; align-items: center; gap: 6px; font: 500 var(--fs-sm)/18px var(--sans); color: var(--fg-2); white-space: nowrap; }
+.st::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--fg-3); opacity: 0.55; }
+.st[data-s='ok']::before { background: var(--ok); opacity: 1; }
+.st[data-s='on']::before { background: var(--accent); opacity: 1; }
+.st[data-s='wait']::before, .st[data-s='busy']::before { background: var(--wait); opacity: 1; }
+.st[data-s='bad']::before { background: var(--danger); opacity: 1; }
+.st[data-s='busy']::before { animation: beat 1.2s var(--io) infinite; }
+@keyframes beat { 50% { opacity: 0.3; } }
 
-/* the count: the number in a fixed column, its sentence beside it */
-.set-count { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 4px 14px 0; }
-.set-count b { font: 650 40px/1 var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.set-count span { font-size: 13px; line-height: 1.4; color: var(--fg-2); }
+/* the hero numeral: the number spans two lines of text whose heights add up to its own (18 + 16 = 34) */
+.stat { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s3); padding: var(--s1) var(--inset); }
+.stat > b { grid-row: span 2; align-self: center; overflow: hidden; font: 600 var(--fs-num)/34px var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--fg); }
+.stat > span { align-self: end; font: 600 var(--fs-md)/18px var(--sans); color: var(--fg); }
+.stat > small { align-self: start; font-size: var(--fs-xs); line-height: 16px; color: var(--fg-3); }
 
-.set-ledger {
-  display: grid;
-  max-height: 150px;
-  margin: 0;
-  padding: 4px;
-  overflow-y: auto;
-  border-radius: 10px;
-  corner-shape: squircle;
-  background: var(--well-2);
-  list-style: none;
-}
-.set-ledger li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 10px; font-size: 12.5px; }
-.set-ledger b { font-weight: 600; white-space: nowrap; }
-.set-ledger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-3); }
+/* a row of small stats: the number over its name, in equal columns */
+.stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--s3); margin: 0; padding: var(--s1) var(--inset); }
+.stats > div { display: grid; gap: 2px; min-width: 0; }
+.stats dt { order: 2; font: 600 var(--fs-cap)/14px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+.stats dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 var(--fs-lg)/20px var(--sans); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--fg); transition: opacity var(--t2) var(--out); }
+.stats dd.pending { opacity: 0.45; }
 
-/* the footer buttons are pills, as the other actions are; they share the card's gap */
-.set .pills { gap: 8px; }
+/* the actions at the foot of a sheet: under a hairline, equal widths */
+.set-foot { display: flex; gap: var(--s2); margin-top: var(--s1); padding-top: var(--s2); border-top: 1px solid var(--line); }
+.set-foot > * { flex: 1 1 0; }
+.set-foot > .btn { padding-inline: var(--s2); }
 
-@media (pointer: coarse) { .set .sw, .set-kv, .set-row { min-height: 44px; } }
+/* the requests: the host first; the folder gives way before the file name, so a long address loses its middle; focus (a tap) shows it whole */
+.set-ledger { display: grid; grid-template-columns: minmax(0, 1fr); max-height: 176px; margin: 0; padding: var(--s1) 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.set-ledger li { display: flex; align-items: baseline; min-width: 0; padding: 7px var(--inset) 7px calc(var(--inset) + var(--icon) + var(--s3)); font-size: var(--fs-sm); line-height: 18px; outline-offset: -2px; }
+.set-ledger b { flex: 0 1 auto; min-width: 4ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--fg); }
+.set-ledger .dir { flex: 0 1000 auto; min-width: 1.5ch; margin-left: var(--s2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--fs-xs)/18px var(--mono); color: var(--fg-3); }
+.set-ledger .base { flex: 0 0 auto; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--fs-xs)/18px var(--mono); color: var(--fg-2); }
+.set-ledger li:focus { display: block; }
+.set-ledger li:focus > * { display: inline; margin: 0; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.set-ledger li:focus > b { display: block; }
+@media (pointer: coarse) { .set-ledger li { padding-block: 13px; } }
 
-/* the Notebook card's rows: the same rows as Settings, with finds, a code line and measures in them */
-.set-row.warn { color: var(--fg); }
-.set-row.warn > svg { color: var(--danger); }
-.set-meter { padding: 12px 14px 10px; }
-.set-find { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 14px; text-align: left; font-size: 13.5px; color: var(--fg); }
-.set-find:hover { background: color-mix(in srgb, var(--fg) 6%, transparent); }
-.set-find > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.set-find small { margin-left: 6px; font-size: 12px; color: var(--fg-3); }
-.set-find code { min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1.4 var(--mono); color: var(--fg-2); }
-.set-find .meter { flex: 0 0 84px; }
-.set-find em { flex: none; font-style: normal; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg-2); }
-.set-code { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 6px 6px 14px; }
-.set-code code { flex: 1; min-width: 0; font: 12px/1.5 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
-.set-code button { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-2); }
-.set-code button:hover { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
-
-/* a full-width control row (the Notebook tabs), and a verdict row that reads from the icon, not from the far edge */
-.set-ctl.wide { width: 100%; }
-.set-verdict { justify-content: flex-start; gap: 10px; }
-
-/* the Notebook card's actions: full-width rows, the same height, inset and hairline as the finds above them */
-.set-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 14px; text-align: left; font-size: 13.5px; color: var(--fg); }
-.set-action svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
-.set-action:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 6%, transparent); }
+/* rows that act: a find, an action; hover and press tint the row the same way a switch row does */
+.set-find, .set-action { display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: var(--row); padding: 0 var(--inset); text-align: left; font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
+.set-find::before, .set-action::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t1) var(--out); }
+.set-find:hover::before, .set-action:hover:not(:disabled)::before { opacity: 0.06; }
+.set-find:active::before, .set-action:active:not(:disabled)::before { opacity: 0.1; }
+.set-find:focus-visible, .set-action:focus-visible { outline-offset: -2px; }
+.set-action > svg, .set-action .ico-swap { color: var(--fg-3); }
 .set-action:disabled { opacity: 0.35; cursor: default; }
+.set-find > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-find small { margin-left: 6px; font: var(--fs-xs)/16px var(--mono); color: var(--fg-3); }
+.set-find code { min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--fs-xs)/16px var(--mono); color: var(--fg-2); }
+.set-find .meter { flex: 0 0 84px; }
+.set-find em { flex: none; font-style: normal; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.set-meter { padding: var(--s3) var(--inset) 10px; }
+.set-code { display: flex; align-items: center; gap: var(--s2); min-height: var(--row); padding: 6px 6px 6px var(--inset); }
+.set-code code { flex: 1; min-width: 0; font: var(--fs-xs)/16px var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.set-code button { flex: none; display: grid; place-items: center; width: var(--ctl); height: var(--ctl); border-radius: 999px; color: var(--fg-2); }
+.set-code button:hover { background: var(--fill); color: var(--fg); }
+
+@media (forced-colors: active) { .st::before { forced-color-adjust: none; background: CanvasText; opacity: 1; } }
