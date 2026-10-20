@@ -16,7 +16,7 @@
   --line: rgba(0, 0, 0, 0.09);
   --line-2: rgba(0, 0, 0, 0.16);
   --glass: rgba(255, 255, 255, 0.86);
-  --bar: color-mix(in srgb, var(--page) 72%, transparent);
+  --bar: color-mix(in srgb, var(--page) 70%, transparent);
   --lift: 0 1px 2px rgba(20, 24, 40, 0.06), 0 12px 24px -16px rgba(20, 24, 40, 0.18);
   --edge: 0 0 #0000;
   --float: 0 0 0 1px var(--line), 0 1px 2px rgba(20, 24, 40, 0.06), 0 14px 32px -10px rgba(20, 24, 40, 0.22);
@@ -37,6 +37,7 @@
   color-scheme: light;
 }
 
+:root[data-width='narrow'] { --measure: 760px; }
 :root[data-width='wide'] { --measure: 1720px; }
 
 :root[data-theme='dark'] {
@@ -69,18 +70,17 @@ body {
   color: var(--fg);
   font: 16px/1.6 var(--sans);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
 /* The platform's own scrollbars, thin: they fade away where the system lets them, and color-scheme dresses them. */
 * { scrollbar-width: thin; }
 
-button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* One hover for every control: a fill of the text colour at 8%, behind the content. */
-.icon, .handle, .row { position: relative; isolation: isolate; }
-.icon::before, .handle::before, .row::before {
+.icon, .open, .handle, .row { position: relative; isolation: isolate; }
+.icon::before, .open::before, .handle::before, .row::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -90,28 +90,29 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   opacity: 0;
   transition: opacity 100ms var(--out);
 }
-.icon:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
+.icon:hover::before, .open:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
 .row:active::before { opacity: 0.14; }
 
-/* header: a full-width bar of glass; the file on the left, the tools in one pill on the right */
+/* header: pills of glass float over the page, the file on the left, Open and the tools on the right */
 
-.bar {
-  position: fixed;
-  z-index: 10;
-  inset: 0 0 auto;
-  height: 56px;
-  background: var(--bar);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  backdrop-filter: blur(20px) saturate(1.6);
-}
-.bar .inner { display: flex; align-items: center; gap: 12px; height: 100%; padding: 0 20px; }
-
-.name {
+.bar { position: fixed; z-index: 10; inset: 0 0 auto; height: 56px; pointer-events: none; }
+.bar .inner { position: relative; display: flex; align-items: flex-start; gap: 8px; padding: 8px 20px 0; }
+.pill {
   display: flex;
   align-items: center;
-  flex: 1;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  pointer-events: auto;
+}
+
+.name {
   gap: 8px;
   min-width: 0;
+  padding: 0 18px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -120,21 +121,16 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 }
 .name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .name.idle { font-weight: 500; color: var(--fg-2); }
-.tools {
-  display: flex;
-  align-items: center;
-  flex: none;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--fg) 6%, transparent);
-}
+.open { gap: 8px; margin-left: auto; padding: 0 16px 0 13px; font-size: 13px; font-weight: 600; color: var(--fg-2); transition: transform 200ms var(--rel); }
+.open:hover { color: var(--fg); }
+.open:active { transform: scale(0.97); transition-duration: 100ms; }
+.tools { flex: none; gap: 2px; padding: 4px; }
 .icon {
   display: grid;
   place-items: center;
   flex: none;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   color: var(--fg-2);
   transition: transform 200ms var(--rel);
@@ -155,7 +151,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 /* empty state: a line of type on the page itself, the whole window being the place to drop */
 
-main { min-height: 100vh; }
+#app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+main { flex: 1; }
 
 .drop {
   position: absolute;
@@ -175,44 +172,31 @@ main { min-height: 100vh; }
 .drop span { color: var(--fg-3); font-size: 16px; }
 .drop:hover span { color: var(--fg-2); }
 
-/* footer: a small pill that floats over the page and signs it, always in view */
+/* footer: the last thing on the page, never over it */
 
 .made {
-  position: fixed;
-  z-index: 8;
-  inset: auto 0 16px;
-  margin-inline: auto;
-  width: max-content;
-  max-width: calc(100vw - 32px);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 5px 16px 5px 5px;
-  border-radius: 999px;
-  background: var(--glass);
-  box-shadow: var(--float);
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  backdrop-filter: blur(22px) saturate(1.7);
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  padding: 0 0 28px;
   color: var(--fg-3);
-  font-size: 13px;
-  line-height: 1;
+  font-size: 12.5px;
   text-decoration: none;
   white-space: nowrap;
-  transition: transform 200ms var(--rel);
-  animation: rise 300ms var(--out) 200ms backwards;
 }
-.made img { display: block; width: 28px; height: 28px; border-radius: 50%; background: var(--well); transition: transform 300ms var(--rel); }
-.made b { font-weight: 600; color: var(--fg); }
-.made:hover img { transform: rotate(-8deg) scale(1.1); }
-.made:hover b { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-.made:active { transform: scale(0.97); transition-duration: 100ms; }
+.made img { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--well); }
+.made b { font-weight: 600; color: var(--fg-2); }
+.made:hover b { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
 /* notebook */
 
 .notebook {
   width: min(var(--measure), 100%);
   margin: 0 auto;
-  padding: 88px 24px 160px;
+  padding: 88px 24px 72px;
 }
 
 /* Every cell owns half of the 16px between cells. A code cell also keeps room below it for its shadow
@@ -349,7 +333,7 @@ pre { margin: 0; font-family: var(--mono); }
   border-radius: 10px;
   corner-shape: squircle;
 }
-:root[data-theme='dark'] .out-image:not(.plate) { filter: brightness(0.9); }
+:root[data-theme='dark'] .out-image:not(.plate) { filter: brightness(0.85); }
 /* Figures saved with transparency would vanish in dark mode, so they sit on a soft light plate. */
 .out-image.plate { padding: 12px; background: #f3f3f5; }
 
@@ -369,8 +353,12 @@ pre { margin: 0; font-family: var(--mono); }
   .cell { --bleed: 8px; position: relative; grid-template-columns: minmax(0, 1fr); }
   .gutter { display: contents; }
   .cnt { position: absolute; top: 40px; left: 4px; padding: 0; font-size: 0; }
-  .bar .inner { padding: 0 12px 0 16px; }
-  .bar .icon { width: 44px; height: 44px; }
+  .bar .inner { padding: 8px 12px 0; }
+  .name { padding: 0 16px; }
+  .open { width: 44px; padding: 0; justify-content: center; }
+  .open span { display: none; }
+  .tools { padding: 2px; }
+  .bar .icon { width: 40px; height: 40px; }
   .handle { position: absolute; top: 29px; left: calc(var(--bleed) + 12px); margin: 0; z-index: 1; }
   .gutter.first .handle { top: 24px; margin: 0; }
   .card.tall .src { padding-left: 44px; }

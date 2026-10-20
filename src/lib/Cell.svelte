@@ -3,12 +3,13 @@
   import { inview } from './inview';
   import MarkdownCell from './MarkdownCell.svelte';
   import CodeCell from './CodeCell.svelte';
+  import { blank } from './blank';
 
   let { cell, index, language, fresh = false }: { cell: Cell; index: number; language: string | null; fresh?: boolean } = $props();
 
   let seen = $state(false);
 
-  const empty = $derived(!cell.source.trim() && (cell.type !== 'code' || cell.outputs.length === 0));
+  const empty = $derived(blank(cell));
 
   // A rough content height (the cell's own padding comes on top) so the scrollbar holds still until the real layout is known.
   const height = $derived.by(() => {

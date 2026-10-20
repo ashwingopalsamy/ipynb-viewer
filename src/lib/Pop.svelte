@@ -4,7 +4,7 @@
 
   // `near` hangs the card from its trigger (right edges together, flipping above when the page ends); without it
   // the card sits under the header, centred on the trigger.
-  let { id, label, width = 260, lead = true, near = false, anchor, children }: { id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; anchor: () => Element | null; children: Snippet } = $props();
+  let { id, label, width = 260, lead = true, near = false, top: first = false, anchor, children }: { id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
 
   const open = $derived(ui.pop === id);
   let box = $state<HTMLElement>();
@@ -30,7 +30,8 @@
     }
     const mid = r ? r.left + r.width / 2 : innerWidth / 2;
     left = Math.min(Math.max(12, mid - w / 2), innerWidth - w - 12);
-    top = (document.querySelector('.bar')?.getBoundingClientRect().bottom ?? 58) + 8;
+    // the header is 56px tall whether or not it has stepped aside
+    top = 64;
     origin = mid - left;
   }
 
@@ -40,7 +41,7 @@
     const from = anchor();
     const back = document.activeElement as HTMLElement | null;
     place(from);
-    (lead ? (box.querySelector<HTMLElement>('[aria-current], [role=radio][aria-checked=true]') ?? box.querySelector<HTMLElement>('button, [role=switch]') ?? box) : box).focus({ preventScroll: true });
+    (lead ? ((!first && box.querySelector<HTMLElement>('[aria-current], [role=radio][aria-checked=true]')) || box.querySelector<HTMLElement>('input, button, [role=switch]') || box) : box).focus({ preventScroll: true });
     const node = box;
     // a card hung from its trigger follows it while the page moves, and goes when the trigger leaves the screen
     const follow = () => {

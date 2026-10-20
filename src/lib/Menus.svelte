@@ -3,11 +3,15 @@
   import Seg from './Seg.svelte';
   import { ui, prefs, setKeys } from './ui.svelte';
   import { view, setCode, setOut } from './fold.svelte';
-  import { layout, toggleWidth } from './width.svelte';
-  import { theme } from './theme.svelte';
+  import { layout, setWidth, type Width } from './width.svelte';
   import { has, set, zoom, setZoom, SIZES } from './prefs.svelte';
 
   const bar = () => document.querySelector('.bar');
+  const WIDTHS: [Width, string][] = [
+    ['narrow', 'Narrow'],
+    ['normal', 'Centered'],
+    ['wide', 'Wide'],
+  ];
   const keys: [string, string][] = [
     ['j k', 'Next, previous cell'],
     ['[ ]', 'Previous, next heading'],
@@ -15,41 +19,15 @@
     ['c', 'Show or hide code'],
     ['o', 'Show or hide outputs'],
     ['s', 'Save the cell as an image'],
+    ['f', 'Trace the selected name'],
+    ['n p', 'Next, previous cell with it'],
     ['t', 'Contents'],
+    ['m', 'Copy as Markdown'],
+    ['/', 'Search'],
     ['?', 'This list'],
     ['esc', 'Close a popover'],
   ];
 
-  // The theme can follow the system, which is the same as having no stored choice.
-  type Mode = 'system' | 'light' | 'dark';
-  const MODES: [Mode, string][] = [
-    ['system', 'System'],
-    ['light', 'Light'],
-    ['dark', 'Dark'],
-  ];
-  let stamp = $state(0);
-  const mode = $derived.by<Mode>(() => {
-    stamp;
-    theme.value;
-    try {
-      const v = localStorage.getItem('theme');
-      return v === 'light' || v === 'dark' ? v : 'system';
-    } catch {
-      return theme.value;
-    }
-  });
-  function setMode(next: Mode) {
-    try {
-      if (next === 'system') localStorage.removeItem('theme');
-      else localStorage.setItem('theme', next);
-    } catch {
-      // the choice then lasts for this visit only
-    }
-    const value = next === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : next;
-    theme.value = value;
-    document.documentElement.dataset.theme = value;
-    stamp++;
-  }
   const size = $derived(SIZES.indexOf(zoom()));
   const step = (by: number) => setZoom(SIZES[Math.min(SIZES.length - 1, Math.max(0, size + by))]);
 </script>
@@ -70,18 +48,18 @@
   {@render sw(label, !has(token), () => set(token, !has(token)))}
 {/snippet}
 
-<Pop id="settings" label="Settings" width={344} anchor={() => document.querySelector('[data-pop=settings]')}>
+<Pop id="settings" label="Settings" width={344} top anchor={() => document.querySelector('[data-pop=settings]')}>
   <div class="menu">
+    <button class="sw find-row" onclick={() => (ui.pop = 'search')}><span>Search this notebook</span></button>
     <div role="group" aria-labelledby="cat-look">
       <h3 class="cat" id="cat-look">Appearance</h3>
-      <Seg label="Theme" options={MODES} value={mode} onchange={setMode} />
       {@render flag('Serif text', 'serif')}
       {@render flagOff('Copy and save buttons', 'nobtn')}
     </div>
 
     <div role="group" aria-labelledby="cat-page">
       <h3 class="cat" id="cat-page">Layout</h3>
-      {@render sw('Wide layout', layout.wide, toggleWidth)}
+      <Seg label="Width" options={WIDTHS} value={layout.value} onchange={setWidth} />
       <div class="sw static">
         <span>Text size</span>
         <div class="step" role="group" aria-label="Text size">
@@ -105,12 +83,14 @@
       <h3 class="cat" id="cat-out">Outputs</h3>
       {@render sw('Show outputs', view.out, () => setOut(!view.out), 'o')}
       {@render flagOff('Trim long outputs', 'notrim')}
+      {@render sw('Load images from the web', has('remote'), () => (set('remote', !has('remote')), import('./markdown').then((m) => m.reveal())))}
       {#if ui.scrambled}{@render sw('Run order', ui.replayed, () => (ui.replayed = !ui.replayed))}{/if}
     </div>
 
     <div role="group" aria-labelledby="cat-read">
       <h3 class="cat" id="cat-read">Reading</h3>
       {@render flag('Spotlight', 'spot')}
+      {@render flagOff('Trace names on click', 'notrace')}
       {@render flag('Hide header while scrolling', 'hush')}
       {@render flag('Calm motion', 'calm')}
       <button class="sw" onclick={() => (ui.pop = 'keys')}><span>Keyboard shortcuts</span><kbd>?</kbd></button>

@@ -10,6 +10,10 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 | `c` | Show or hide code |
 | `o` | Show or hide outputs |
 | `s` | Save the cell as an image |
+| `f` | Trace the selected name |
+| `n` `p` | Next or previous cell that uses it |
 | `t` | Contents |
+| `m` | Copy as Markdown |
+| `/` | Search the notebook (also `⌘K` or `Ctrl K`) |
 | `?` | This list |
-| `esc` | Close a popover |
+| `esc` | Close a popover or a picture |

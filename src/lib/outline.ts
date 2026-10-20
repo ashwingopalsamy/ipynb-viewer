@@ -14,6 +14,8 @@ export interface Heading {
 
 export interface Outline {
   headings: Heading[];
+  /** The heading level (1 to 6) that counts as the top of this notebook. */
+  top: number;
   /** Positions, 0 to 1, of cells that show a picture or fail. */
   figures: number[];
   errors: number[];
@@ -96,5 +98,5 @@ export function outline(cells: readonly Cell[]): Outline {
     if (f.figure) figures.push(at);
     if (f.error) errors.push(at);
   });
-  return { headings, figures, errors };
+  return { headings, top, figures, errors };
 }

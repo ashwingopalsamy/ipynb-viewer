@@ -9,21 +9,47 @@
 .md p, .md ul, .md ol, .md blockquote, .md pre, .md table, .md details { margin: 0.8em 0; }
 .md ul, .md ol { padding-left: 1.5em; }
 .md li + li { margin-top: 0.25em; }
-.md a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
-.md a:hover { text-decoration-color: var(--accent); color: var(--accent); }
+/* Links in the notebook's own content are blue, in both themes. Visited ones are left as they are. */
+.md a, .rich a { color: var(--accent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.md a:hover, .rich a:hover { color: color-mix(in srgb, var(--accent) 78%, var(--fg)); text-decoration-color: currentColor; }
 .md code { font: 0.88em var(--mono); padding: 0.15em 0.45em; border-radius: 6px; background: var(--well); }
 .md pre { padding: 14px 18px; border-radius: 10px; corner-shape: squircle; background: var(--well); overflow-x: auto; font-size: 13px; line-height: 1.65; }
 .md pre code { padding: 0; border: 0; background: none; font-size: inherit; }
 .md blockquote { padding: 0.05em 1.1em; border-radius: 10px; corner-shape: squircle; background: color-mix(in srgb, var(--well) 60%, transparent); color: var(--fg-2); }
 .md hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+/* a rule an author put before a heading would double the heading's own */
+.md hr:has(+ [data-h]) { display: none; }
 .md img { max-width: 100%; height: auto; border-radius: 10px; corner-shape: squircle; }
 .md table { display: block; width: max-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.94em; background: var(--paper); border-radius: 10px; corner-shape: squircle; }
 .md th, .md td { padding: 9px 16px; text-align: left; }
 .md th { font-weight: 600; background: var(--well); }
 .md tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--fg) 3%, var(--paper)); }
 .md .math-block { margin: 1em 0; overflow-x: auto; text-align: center; }
-.md > :is(p, ul, ol, blockquote, h3, h4, h5, h6, .math-block, hr, details) { max-width: 60ch; }
 .md .math.display { display: block; }
 .md .katex { font-size: 1.08em; }
 .md .math[data-tex] { font-family: var(--mono); font-size: 0.9em; color: var(--fg-3); }
 
+.rimg { display: inline-block; max-width: 100%; padding: 2px 10px; border-radius: 999px; background: var(--well); color: var(--fg-3); font: 12px/1.6 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+
+/* Every heading but the first opens with a hairline and room above it. The room says the step taken to reach it,
+   most when a section starts or the outline climbs back out, least when it goes one level deeper; the length of the
+   line says the heading's rank, from the full width for the top level down to a short stroke. */
+.md > [data-h] {
+  --gap: 28px;
+  --pad: 16px;
+  --len: 100%;
+  --rule: var(--line);
+  margin-top: var(--gap);
+  padding-top: var(--pad);
+  background: linear-gradient(var(--rule), var(--rule)) 0 0 / var(--len) 1px no-repeat;
+}
+.md > [data-h='top'] { --gap: 64px; --pad: 32px; }
+.md > [data-h='out'] { --gap: 48px; --pad: 24px; }
+.md > [data-h='in'] { --gap: 20px; --pad: 14px; }
+.md > [data-d='0'] { --rule: var(--line-2); }
+.md > [data-d='2'] { --len: 240px; }
+.md > [data-d='3'] { --len: 96px; }
+.md > [data-h]:first-child { margin-top: max(10px, calc(var(--gap) - 16px)); }
+
+/* a markdown or LaTeX output sits in its box like the other outputs, a little smaller than the prose around it */
+.out > .md.rendered { padding: 4px var(--pr, 20px) 4px 20px; font-size: 15px; line-height: 1.65; }

@@ -23,10 +23,11 @@
 }
 [data-pf~='ln'] .src:has(> code:not(.hl)) { padding-left: calc(20px + 3ch + 20px); }
 
-/* wrapped code: long lines break instead of scrolling; with numbers, wrapped lines hang under the first */
+/* wrapped code: long lines break instead of scrolling; with numbers, wrapped lines hang under the first.
+   The highlighted block must out-rank the code rule above, or the newline between two line boxes draws a blank line. */
 [data-pf~='wrap'] .src { overflow-x: hidden; }
 [data-pf~='wrap'] .src code { white-space: pre-wrap; overflow-wrap: anywhere; }
-[data-pf~='wrap'] .hl { white-space: normal; }
+[data-pf~='wrap'] .src .hl { white-space: normal; }
 [data-pf~='wrap'] .hl .line { display: block; min-height: 1lh; white-space: pre-wrap; overflow-wrap: anywhere; }
 [data-pf~='ln'][data-pf~='wrap'] .hl .line { padding-left: calc(3ch + 20px); text-indent: calc(-3ch - 20px); }
 
@@ -54,13 +55,13 @@
 [data-pf~='nocnt'] .cnt { font-size: 0; }
 
 /* spotlight: the cell under the reading line stays bright; the rest steps back, and a hover or focus brings it forward */
-[data-pf~='spot'] .notebook > .cell { opacity: 0.4; transition: opacity 250ms var(--out); }
+[data-pf~='spot'] .notebook > .cell { opacity: 0.55; transition: opacity 250ms var(--out); }
 [data-pf~='spot'] .notebook > .cell.lit, [data-pf~='spot'] .notebook > .cell:hover, [data-pf~='spot'] .notebook > .cell:focus-within { opacity: 1; }
 
 /* a header that gets out of the way while reading down */
 [data-pf~='hush'] .bar { transition: transform 250ms var(--io); }
 [data-pf~='hush'] .bar[data-hush] { transform: translateY(-100%); }
-[data-pf~='hush'] .bar[data-hush]::after { opacity: 0; }
+[data-pf~='hush'] .bar[data-hush]::before { opacity: 0; }
 
 [data-pf~='calm'] *, [data-pf~='calm'] *::before, [data-pf~='calm'] *::after {
   animation-duration: 0.01ms !important;

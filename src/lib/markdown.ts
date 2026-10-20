@@ -4,6 +4,8 @@ import { Marked, type Token, type Tokens } from 'marked';
 import DOMPurify from 'dompurify';
 import type { MimeBundle } from './notebook';
 import { isNum } from './tabular';
+import { guard, settle, LINKS } from './guard';
+import { has } from './prefs.svelte';
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -71,18 +73,21 @@ function attachmentUrl(name: string, attachments: Record<string, MimeBundle>): s
 }
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-  if (node.tagName === 'A' && node.getAttribute('href')?.[0] !== '#') {
-    node.setAttribute('target', '_blank');
-    node.setAttribute('rel', 'noopener noreferrer');
-  } else if (node.tagName === 'IMG') {
-    node.setAttribute('loading', 'lazy');
-    node.setAttribute('decoding', 'async');
-    node.setAttribute('referrerpolicy', 'no-referrer');
-  }
+  if (node.tagName === 'A') {
+    const href = node.getAttribute('href');
+    if (href?.[0] !== '#') {
+      node.setAttribute('target', '_blank');
+      node.setAttribute('rel', 'noopener noreferrer');
+    } else if (href.length > 1 && !href.startsWith('#user-content-')) {
+      // ids in notebook markup are prefixed so they cannot shadow the page's own; links to them follow
+      node.setAttribute('href', '#user-content-' + href.slice(1));
+    }
+  } else if (node.tagName === 'IMG') settle(node, has('remote'));
 });
 
 /** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
 export function renderMarkdown(source: string, attachments: Record<string, MimeBundle> = {}): string {
+  guard();
   const html = marked.parse(source, {
     async: false,
     walkTokens(token: Token) {
@@ -94,8 +99,12 @@ export function renderMarkdown(source: string, attachments: Record<string, MimeB
   });
   return DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
-    FORBID_TAGS: ['style'],
-    FORBID_ATTR: ['style'],
+    FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'label', 'audio', 'video', 'source', 'track', 'picture', 'iframe', 'frame', 'object', 'embed', 'meta', 'link', 'base'],
+    FORBID_ATTR: ['style', 'srcset', 'sizes', 'ping', 'poster', 'background', 'formaction', 'action'],
+    ADD_ATTR: ['data-tex'],
+    ALLOW_DATA_ATTR: false,
+    SANITIZE_NAMED_PROPS: true,
+    ALLOWED_URI_REGEXP: LINKS,
   });
 }
 
@@ -137,4 +146,35 @@ export function cleanTable(source: string): string | null {
   const holder = document.createElement('div');
   holder.append(root);
   return holder.innerHTML;
+}
+
+/**
+ * What an HTML or SVG output shows: its tables, else its plain markup, else nothing, in which case the caller keeps
+ * the text version. Scripts never run and pictures from the web wait for the reader's say-so.
+ */
+export async function outputHtml(source: string): Promise<string | null> {
+  guard();
+  const table = cleanTable(source);
+  if (table) return table;
+  const safe = await import('./safe');
+  // a drawing is one <svg> and nothing around it; anything else is markup that happens to hold one
+  return /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*(?:<!doctype[^>]*>\s*)?<svg[\s>][\s\S]*<\/svg>\s*$/i.test(source) ? safe.drawing(source) : safe.rich(source, has('remote'));
+}
+
+/** Brings the pictures from the web in or out of the page, to match the reader's setting. */
+export function reveal() {
+  const on = has('remote');
+  const page = '.notebook .md, .notebook .rich';
+  if (on) {
+    for (const note of document.querySelectorAll<HTMLElement>(`:is(${page}) .rimg`)) {
+      if (!/^https?:\/\//i.test(note.title)) continue;
+      const img = document.createElement('img');
+      img.src = note.title;
+      img.alt = note.textContent?.includes(' \u00b7 ') ? note.textContent.split(' \u00b7 ')[0] : '';
+      settle(img, true);
+      note.replaceWith(img);
+    }
+  } else {
+    for (const img of document.querySelectorAll(`:is(${page}) img[src^="http"]`)) settle(img, false);
+  }
 }

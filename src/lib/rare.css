@@ -37,3 +37,26 @@
   .chapter::before { display: none; }
 }
 @media (max-width: 720px) { .notice { margin-left: 0; } }
+
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+
+/* On paper: the page alone, in the light theme, with each cell kept whole where it fits. */
+@media print {
+  :root:root[data-theme] {
+    --page: #fff; --paper: #fff; --well: #f0f1f5; --well-2: #f7f8fa; --fg: #1d1d1f; --fg-2: #48484a; --fg-3: #636368;
+    --line: rgba(0, 0, 0, 0.12); --line-2: rgba(0, 0, 0, 0.2); --accent: #0066cc; --danger: #b3261e; --ok: #1d8a4a;
+    --a0: #1d1d1f; --a1: #b3261e; --a2: #0a6640; --a3: #8a5a00; --a4: #0b5fc5; --a5: #8a2fa0; --a6: #0b6a8a; --a7: #57606a;
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] .hl span { color: var(--shiki-light); font-style: var(--shiki-light-font-style); font-weight: var(--shiki-light-font-weight); }
+  :root[data-theme='dark'] .out-image:not(.plate) { filter: none; }
+  .bar, .rail, .made, .acts, .handle, .save, .tpill, .back, .pop, .shelf, .veil, .shot, .lb, .notice-pill { display: none !important; }
+  :root[data-pf] .notebook > .cell { zoom: 1; opacity: 1; }
+  .notebook { width: 100%; padding: 0; }
+  .cell { content-visibility: visible; }
+  .card { box-shadow: 0 0 0 1px var(--line); }
+  .card, .pic, .tbl, .out { break-inside: avoid; }
+  .md > h1, .md > h2, .md > h3 { break-after: avoid; }
+  .src, .out pre { overflow: visible; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .md a { color: inherit; }
+}

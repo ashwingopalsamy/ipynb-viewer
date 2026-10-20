@@ -1,7 +1,8 @@
 import type { CodeCell } from './notebook';
+import type { Trace } from './names';
 
 // State shared by the toolbar, the menus and the outline. It loads with the extras, never with the core.
-export type Pop = 'settings' | 'toc' | 'keys' | 'figure';
+export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search';
 
 /** The picture a reader is about to save: its data, and the button the menu hangs from. */
 export interface Figure {
@@ -21,6 +22,9 @@ export const ui = $state<{
   shelf: boolean;
   fig: Figure | null;
   shot: CodeCell | null;
+  /** The picture shown full screen, and the button it was opened from. */
+  light: { src: string; cell: string; el: HTMLElement } | null;
+  trace: Trace | null;
   file: string;
   lang: string | null;
 }>({
@@ -32,6 +36,8 @@ export const ui = $state<{
   shelf: false,
   fig: null,
   shot: null,
+  light: null,
+  trace: null,
   file: '',
   lang: null,
 });
@@ -68,6 +74,9 @@ const miss = (el: Element, block: 'start' | 'center') => {
 
 const quit = ['wheel', 'touchstart', 'keydown'];
 
+// Scrolling the contents list (its momentum outlasts the click) is not the reader taking the page back.
+const mine = (e: Event) => e.type === 'wheel' && !!(e.target as Element).closest?.('.rail, .pop');
+
 /**
  * Scrolls an element into place and keeps correcting until it rests there. Cells below the screen settle their
  * real height as they arrive, so the first aim can fall short; the reader's own input ends the correction.
@@ -82,8 +91,9 @@ export function jump(to: Element | null | undefined | (() => Element | null | un
     clearTimeout(timer);
     clearTimeout(limit);
     removeEventListener('scrollend', check);
-    quit.forEach((t) => removeEventListener(t, end));
+    quit.forEach((t) => removeEventListener(t, stop));
   };
+  const stop = (e: Event) => mine(e) || end();
   const check = () => {
     removeEventListener('scrollend', check);
     const el = find();
@@ -93,7 +103,7 @@ export function jump(to: Element | null | undefined | (() => Element | null | un
   };
   const wait = () => ('onscrollend' in window ? addEventListener('scrollend', check) : (timer = setTimeout(check, 500)));
   const limit = setTimeout(end, 3000);
-  quit.forEach((t) => addEventListener(t, end, { passive: true }));
+  quit.forEach((t) => addEventListener(t, stop, { passive: true }));
   find()?.scrollIntoView({ behavior: calm() ? 'auto' : 'smooth', block });
   wait();
 }

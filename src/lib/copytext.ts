@@ -6,7 +6,7 @@ const asText = (o: Output): boolean => {
   if (o.type === 'stream') return !!o.text.trim();
   if (o.type === 'error') return true;
   const s = describeData(o.data);
-  return s.kind === 'text' && !!s.text.trim();
+  return s.kind === 'text' && !s.chart && !!(s.md ?? s.text).trim();
 };
 
 /** True when at least one output is text a reader would want on the clipboard (a figure on its own is not). */
@@ -21,7 +21,7 @@ export function outText(outputs: readonly Output[]): string {
     else if (o.type === 'error') parts.push([`${o.ename}: ${stripAnsi(o.evalue)}`, ...o.traceback.map(stripAnsi)].join('\n'));
     else {
       const s = describeData(o.data);
-      if (s.kind === 'text') parts.push(s.text);
+      if (s.kind === 'text') parts.push(s.md ?? s.text);
     }
   }
   return stripAnsi(parts.join('\n')).replace(/\s+$/, '');

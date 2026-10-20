@@ -1,29 +1,20 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="Jupyter notebooks, without Jupyter." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>ipynb viewer</title>
-    <script>
-      (function () {
-        var t, w, p;
-        try {
-          t = localStorage.getItem('theme');
-          w = localStorage.getItem('width');
-          p = localStorage.getItem('pf');
-        } catch (e) {}
-        if (p) document.documentElement.dataset.pf = p;
-        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.dataset.theme = t;
-        document.documentElement.dataset.width = w === 'wide' ? 'wide' : 'normal';
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<meta name="description" content="Jupyter notebooks, without Jupyter." />
+<meta name="theme-color" content="#f5f5f7" />
+<link rel="icon" href="/favicon.svg" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<title>ipynb viewer · Jupyter notebooks, without Jupyter</title>
+<script>
+!function(d,t,w,p){try{t=localStorage.theme,w=localStorage.width,p=localStorage.pf}catch(e){}d=document.documentElement.dataset;p&&(d.pf=p);d.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';d.width=w=='wide'||w=='narrow'?w:'normal'}()
+</script>
+</head>
+<body>
+<div id="app"></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
 </html>

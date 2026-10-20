@@ -22,7 +22,7 @@
   transform: none;
   transition: opacity 200ms var(--out), transform 200ms var(--pop), visibility 0s;
 }
-#pop-settings { max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+#pop-settings { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
 .pop hr { height: 1px; margin: 6px 4px; border: 0; background: var(--line); }
 
 /* settings: five small groups, each with a quiet name */
@@ -83,22 +83,66 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
 
 .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--page); }
 
-/* once the page has moved, the text running under the bar fades out instead of meeting an edge */
-.bar::after {
+/* once the page has moved, the text running under the header blurs and fades out instead of meeting the pills */
+.bar::before {
   content: '';
   position: absolute;
-  inset: 100% 0 auto;
-  height: 20px;
-  background: linear-gradient(var(--page), transparent);
+  inset: 0 0 -10px;
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(#000 62%, transparent);
+  mask-image: linear-gradient(#000 62%, transparent);
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms var(--out);
 }
-:root[data-scrolled] .bar::after { opacity: 0.9; }
+:root[data-scrolled] .bar::before { opacity: 1; }
+
+/* a name for each symbol, on hover or keyboard focus only; the last one keeps to the window's edge */
+@media (hover: hover) {
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--paper);
+    box-shadow: var(--float);
+    color: var(--fg-2);
+    font: 500 12px/1 var(--sans);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -3px);
+    transition: opacity 120ms var(--out), transform 160ms var(--out);
+  }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 400ms; }
+  .tools > :last-child::after { left: auto; right: 0; transform: translate(0, -3px); }
+  .tools > :last-child:hover::after, .tools > :last-child:focus-visible::after { transform: none; }
+}
 
 /* a finger needs 44px */
 @media (pointer: coarse) {
   .menu .sw, .pop .sw { height: 44px; }
   .seg { height: 44px; }
   .step button { width: 44px; height: 40px; }
+}
+
+/* Windows high contrast drops background colours, which is all a switch is made of */
+@media (forced-colors: active) {
+  .track { forced-color-adjust: none; border: 2px solid ButtonText; background: Canvas; }
+  .knob { forced-color-adjust: none; background: ButtonText; box-shadow: none; }
+  [aria-checked='true'] > .track { background: Highlight; }
+  [aria-checked='true'] > .track::before { display: none; }
+  .seg .thumb { forced-color-adjust: none; background: Highlight; }
+  .seg button[aria-checked='true'] { color: HighlightText; }
+}
+
+/* The header has no room for a search button on a phone, so Settings carries the way in. */
+.find-row { display: none; }
+@media (max-width: 720px) {
+  .bar .icon.search-btn { display: none; }
+  .find-row { display: flex; }
 }

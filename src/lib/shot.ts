@@ -302,7 +302,7 @@ export async function prepare(src: Source): Promise<Prepared> {
           continue;
         }
       }
-      const found = await textOrTable(s.text, false);
+      const found = await textOrTable(s.chart ? '' : (s.md ?? s.text), false);
       if (s.rich && !found.some((b) => b.k === 'tbl')) skipped = true;
       blocks.push(...found);
     }

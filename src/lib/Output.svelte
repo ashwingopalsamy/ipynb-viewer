@@ -8,6 +8,8 @@
   import { describeData, type Shown } from './mime';
   import { foldBars, HEAD, LIMIT, TAIL } from './streams';
   import { hold } from './fold.svelte';
+  import { ui } from './ui.svelte';
+  import { typeset } from './math';
   import { has } from './prefs.svelte';
   import Row from './Row.svelte';
   import Save from './Save.svelte';
@@ -27,6 +29,8 @@
     const last = t.length && stripAnsi(t[t.length - 1]).trimStart().startsWith(output.ename) ? t.length - 1 : t.length;
     return short && !full ? short.slice(0, 1) : t.slice(0, last);
   });
+  // A widget or a chart object has no text worth reading: its plain version only describes the object.
+  const quiet = $derived(shown?.kind === 'text' && shown.chart);
   const raw = $derived.by(() => {
     if (output.type === 'stream') return foldBars(collapseCarriageReturns(output.text));
     if (output.type === 'error') return trace.join('\n');
@@ -62,19 +66,52 @@
     const plain = output.type !== 'error' && !colored && lines.length > 2;
     table = html || plain ? undefined : null;
     let live = true;
-    if (html) import('./markdown').then((m) => live && (table = m.cleanTable(html)));
+    if (html) import('./markdown').then((m) => m.outputHtml(html)).then((t) => live && (table = t));
     else if (plain) import('./tabular').then((m) => live && (table = m.tables(text)));
     return () => {
       live = false;
     };
   });
+  // Markdown and LaTeX outputs are drawn the way a markdown cell is, once the renderer has arrived.
+  let rendered = $state<string | null>(null);
+  let broke = $state(false);
+  const wants = $derived(shown?.kind === 'text' && !!shown.md);
+  $effect(() => {
+    const source = shown?.kind === 'text' ? shown.md : null;
+    rendered = null;
+    broke = false;
+    if (!source) return;
+    let live = true;
+    import('./markdown').then((m) => {
+      const html = m.renderMarkdown(source);
+      if (live) rendered = html;
+    }, () => live && (broke = true));
+    return () => {
+      live = false;
+    };
+  });
+  const tex = (node: HTMLElement) => void typeset(node);
+
   // A note says what was left out, once the table check has come back empty-handed.
   let note = $state('');
   $effect(() => {
-    const rich = shown?.kind === 'text' && table === null ? shown.rich : null;
+    const rich = shown?.kind === 'text' && table === null && !script ? shown.rich : null;
     note = '';
-    if (rich) import('./gist').then((m) => (note = m.richNote(rich, !!raw.trim())));
+    if (rich) import('./gist').then((m) => (note = m.richNote(rich, !!raw.trim() && !quiet)));
   });
+
+  // An output that carries scripts waits for the reader to run it, in a sandbox that loads with the first one.
+  let Live = $state<typeof import('./Live.svelte').default>();
+  const script = $derived(shown?.kind === 'text' && shown.html && /<script/i.test(shown.html) ? shown.html : '');
+  $effect(() => {
+    if (script && !Live) import('./Live.svelte').then((m) => (Live = m.default));
+  });
+
+  // The picture is named for the cell it came from, so it is more than a blank to a screen reader.
+  const name = $derived(n === null ? 'Figure' : `Figure from cell ${n}`);
+  function zoom(el: HTMLElement, src: string) {
+    ui.light = { src, cell: el.closest<HTMLElement>('[data-cell]')?.dataset.cell ?? '', el };
+  }
 
   let root = $state<HTMLElement>();
   const stderr = $derived(output.type === 'stream' && output.name === 'stderr');
@@ -85,9 +122,12 @@
 {/snippet}
 
 {#if shown?.kind === 'image'}
+  {@const src = shown.src}
   <div class="out">
     <span class="pic">
-      <img class="out-image" class:plate={shown.alpha} src={shown.src} alt="" loading="lazy" decoding="async" />
+      <button class="zoom" tabindex="-1" aria-label="Enlarge {name}" onclick={(e) => zoom(e.currentTarget, src)}>
+        <img class="out-image" class:plate={shown.alpha} src={shown.src} alt={name} loading="lazy" decoding="async" />
+      </button>
       {#if !has('nobtn')}<Save src={shown.src} alpha={shown.alpha} tag="figure{n === null ? '' : `-${n}`}{i ? `-${i + 1}` : ''}" />{/if}
     </span>
   </div>
@@ -96,6 +136,10 @@
     <!-- sanitized to table markup, or built from escaped text -->
     {@html table}
   </div>
+{:else if wants && !broke}
+  {#if rendered !== null}
+    <div class="out"><div class="md rendered" use:tex>{@html rendered}</div></div>
+  {/if}
 {:else if output.type === 'error'}
   <div class="out err">
     <p class="exc"><strong>{output.ename}</strong>{#if output.evalue}<span>{stripAnsi(output.evalue)}</span>{/if}</p>
@@ -104,7 +148,7 @@
       <Row kind="cap" open={full} lead={full ? 'Hide full traceback' : 'Show full traceback'} onclick={(e) => hold(e.currentTarget, () => (full = !full), full ? 'self' : 'cell')} />
     {/if}
   </div>
-{:else if raw.trim()}
+{:else if raw.trim() && !quiet}
   <div class="out" class:stderr bind:this={root}>
     {@render body(head)}
     {#if folded}
@@ -116,3 +160,4 @@
   </div>
 {/if}
 {#if note}<p class="note">{note}</p>{/if}
+{#if Live && script}<Live html={script} />{/if}
