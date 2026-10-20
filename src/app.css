@@ -64,7 +64,8 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* no rubber-band at the document's edges: a bounce would carry the fixed header with it */
+html { -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; }
 
 body {
   margin: 0;
@@ -81,8 +82,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* One hover for every control: a fill of the text colour at 8%, behind the content. */
-.icon, .open, .handle, .row { position: relative; isolation: isolate; }
-.icon::before, .open::before, .handle::before, .row::before {
+.icon, .handle, .row { position: relative; isolation: isolate; }
+.icon::before, .handle::before, .row::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -93,12 +94,13 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   opacity: 0;
   transition: opacity 100ms var(--out);
 }
-.icon:hover::before, .open:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
+.icon:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
 .row:active::before { opacity: 0.14; }
 
 /* header: pills of glass float over the page, the file on the left, Open and the tools on the right */
 
-.bar { position: fixed; z-index: 10; inset: 0 0 auto; height: 56px; pointer-events: none; }
+/* the header is its own layer, so the page's scroll and bounce never repaint the glass pills under it */
+.bar { position: fixed; z-index: 16; inset: 0 0 auto; height: 56px; pointer-events: none; will-change: transform; }
 .bar .inner { position: relative; display: flex; align-items: flex-start; gap: 8px; padding: 8px 20px 0; }
 .pill {
   display: flex;
@@ -126,9 +128,17 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .name.idle { font-weight: 500; color: var(--fg-2); }
 /* a file for the name, a heading for the chapter: the icons say which is which */
 .name svg { flex: none; width: 15px; height: 15px; color: var(--fg-3); }
-.file > svg { margin-right: 7px; vertical-align: -2px; }
-.open { gap: 8px; margin-left: auto; padding: 0 16px 0 13px; font-size: 13px; font-weight: 600; color: var(--fg-2); transition: transform 200ms var(--rel); }
-.tools { flex: none; gap: 2px; padding: 4px; }
+/* the app's own mark stands in front of the file name, on one line; the name keeps its ellipsis and its descenders */
+.file { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
+.tools { flex: none; gap: 2px; padding: 4px; margin-left: auto; }
+/* While a card is open the dock names it and widens to the card's width; the active tool's icon is filled. Desktop only: on a phone the dock is the bottom bar. */
+.tool-name { display: none; }
+@media (min-width: 721px) {
+  .tools:has(.tool-name:not(:empty)) { min-width: 344px; }
+  .tools:has(.tool-name:not(:empty)) .tool-name { display: block; flex: 1 0 112px; padding: 0 12px 0 14px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
+  .bar:has(.tool-name:not(:empty)) [data-tip]::after { display: none; }
+}
 .icon {
   display: grid;
   place-items: center;
@@ -139,8 +149,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   color: var(--fg-2);
   transition: transform 200ms var(--rel);
 }
-.icon:hover, .open:hover, .handle:hover { color: var(--fg); }
-.icon:active, .handle:active, .open:active { transform: scale(0.97); transition-duration: 100ms; }
+.icon:hover, .handle:hover { color: var(--fg); }
+.icon:active, .handle:active { transform: scale(0.97); transition-duration: 100ms; }
 
 .swap .glyph {
   position: absolute;
@@ -346,8 +356,6 @@ pre { margin: 0; font-family: var(--mono); }
   .cnt { position: absolute; top: 40px; left: 4px; padding: 0; font-size: 0; }
   .bar .inner { padding: 8px 12px 0; }
   .name { padding: 0 16px; }
-  .open { width: 44px; padding: 0; justify-content: center; }
-  .open span { display: none; }
   .tools { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); justify-content: space-evenly; height: 52px; padding: 0; }
   .bar .icon { width: 44px; height: 44px; }
   .handle { position: absolute; top: 29px; left: calc(var(--bleed) + 12px); margin: 0; z-index: 1; }

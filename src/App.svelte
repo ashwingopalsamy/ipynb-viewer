@@ -3,8 +3,11 @@
   import { theme, toggleTheme } from './lib/theme.svelte';
   import CellView from './lib/Cell.svelte';
   import Icon from './lib/Icon.svelte';
+  import Opener from './lib/Opener.svelte';
+  import OpenPanel from './lib/OpenPanel.svelte';
   import Lucide from './lib/Lucide.svelte';
   import { blank } from './lib/blank';
+  import { ui, type Pop } from './lib/ui.svelte';
 
   // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
   let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
@@ -28,6 +31,10 @@
 
   const rows = $derived(replayed && reorder ? reorder(cells) : cells);
   const language = $derived(meta ? (meta.language ?? 'python') : null);
+
+  // The name the dock gives the card that is open. A card with no name (the save-picture menu hangs from its picture) leaves the dock as it was.
+  const TOOL: Partial<Record<Pop, string>> = { settings: 'Settings', toc: 'Contents', search: 'Search', info: 'Notebook', md: 'Markdown', privacy: 'Privacy', keys: 'Shortcuts', compare: 'Compare' };
+  const tool = $derived(ui.shelf ? 'Figures' : ui.pop ? (TOOL[ui.pop] ?? '') : '');
 
   let sections = $state(0);
   let chapter = $state('');
@@ -165,13 +172,12 @@
 <header class="bar">
   <div class="inner">
     <span class="name pill" class:idle={!name} class:two={sections > 1}>
-      <span class="file"><Icon name="file" />{name || 'ipynb viewer'}</span>
-      {#if sections > 1}<span class="chapter"><Icon name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
+      <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span></span>
+      {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
     </span>
-    <button class="open pill" onclick={choose} aria-label="Open notebook">
-      <Icon name="open" /><span>Open notebook</span>
-    </button>
+    <Opener />
     <div class="tools pill">
+      <span class="tool-name">{tool}</span>
       {#if Actions}<Actions />{/if}
       <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
         <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>
@@ -180,6 +186,8 @@
     </div>
   </div>
 </header>
+
+<OpenPanel onfile={(f) => open(f)} onchoose={choose} />
 
 {#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
 

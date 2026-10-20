@@ -241,4 +241,4 @@
   </Pop>
 {/if}
 
-{#if head}<div class="mid pill" aria-hidden="true">{#key head}<span>{head}</span>{/key}</div>{/if}
+{#if head && ui.pop !== 'search'}<div class="mid pill" aria-hidden="true">{#key head}<span>{head}</span>{/key}</div>{/if}

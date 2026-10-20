@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { ui, type Pop } from './ui.svelte';
+  // the card's base styles arrive with the popover itself, so a card never shows unstyled while the rest loads
+  import './ui.css';
 
   // `near` hangs the card from its trigger (right edges together, flipping above when the page ends); without it
   // the card sits under the header, centred on the trigger.
-  let { id, label, width = 260, lead = true, near = false, top: first = false, span = false, bare = false, anchor, children }: { span?: boolean; bare?: boolean; id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
+  let { id, label, width = 260, lead = true, near = false, top: first = false, bare = false, inline = false, anchor, children }: { bare?: boolean; inline?: boolean; id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
 
   const open = $derived(ui.pop === id);
   let box = $state<HTMLElement>();
@@ -20,6 +22,18 @@
     // a card within a thumb of the screen's width takes all of it
     const w = innerWidth - 24 - width < 48 ? innerWidth - 24 : Math.min(width, innerWidth - 24);
     wide = w;
+    // in the header's middle: the card takes the room between the file's pill and the tools, on the header's own line
+    if (inline) {
+      const gapL = (document.querySelector('.opener') ?? document.querySelector('.name'))?.getBoundingClientRect().right ?? 0;
+      const gapR = document.querySelector('.tools')?.getBoundingClientRect().left ?? innerWidth;
+      const room = gapR - gapL - 24;
+      wide = Math.max(240, Math.min(width, room));
+      left = gapL + 12 + Math.max(0, (room - wide) / 2);
+      top = 8;
+      up = false;
+      origin = wide / 2;
+      return;
+    }
     if (near && r) {
       const h = box.offsetHeight;
       up = r.bottom + 8 + h > innerHeight - 12 && r.top - 8 - h > 12;
@@ -28,11 +42,11 @@
       origin = r.left + r.width / 2 - left;
       return;
     }
-    // a card hung from a tool shares the tools pill's right edge; Settings reaches back to the Open pill's left edge
+    // a card hung from a tool is exactly as wide as the dock it hangs from, so the two share a left edge and a right edge
     const dock = r && r.top < innerHeight / 2 && innerWidth > 720 ? from?.closest('.tools') : null;
     if (dock && r) {
       const edge = dock.getBoundingClientRect().right;
-      const lo = span ? (document.querySelector('.open')?.getBoundingClientRect().left ?? edge - w) : edge - w;
+      const lo = dock.getBoundingClientRect().left;
       wide = edge - lo;
       left = lo;
       up = false;

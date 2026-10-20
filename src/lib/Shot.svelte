@@ -4,7 +4,7 @@
   import { ui } from './ui.svelte';
   import { has } from './prefs.svelte';
   import { canCopy, canWebp, copyPng, encode, EXT, fileName, fits, LABEL, save, size, type Format } from './export';
-  import { BACKDROPS, palette, prepare, scene, type Backdrop, type Corner, type Layout, type Opts, type Pad, type Prepared, type Scene, type Shape, type Show } from './shot';
+  import { BACKDROPS, palette, prepare, raster, scene, type Backdrop, type Corner, type Layout, type Opts, type Pad, type Prepared, type Scene, type Shape, type Show } from './shot';
   import './export.css';
   import './shot.css';
   import './ansi.css';
@@ -103,33 +103,25 @@
   const fit = $derived(sc ? Math.min(1, (sw - 48) / sc.w, Math.max((sh - 48) / sc.h, 0.45)) : 1);
   $effect(() => {
     if (!sc || !canvas) return;
-    const s = Math.min(scale, 2);
     const live = sc;
     const frame = requestAnimationFrame(() => {
-      canvas!.width = Math.round(live.w * s);
-      canvas!.height = Math.round(live.h * s);
-      live.draw(canvas!.getContext('2d')!, s);
+      // always drawn at 2×: the browser shrinks it to fit, so changing the size never redraws the preview at another scale
+      const img = raster(live, 2);
+      canvas!.width = img.width;
+      canvas!.height = img.height;
+      canvas!.getContext('2d')!.drawImage(img, 0, 0);
     });
     return () => cancelAnimationFrame(frame);
   });
 
   async function make(format: Format): Promise<Blob> {
     const live = sc!;
-    const s = scale;
-    const c = document.createElement('canvas');
-    c.width = Math.round(live.w * s);
-    c.height = Math.round(live.h * s);
-    const ctx = c.getContext('2d')!;
-    if (format === 'jpeg') {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, c.width, c.height);
-    }
-    live.draw(ctx, s);
-    return encode(c, format);
+    return encode(raster(live, scale, format === 'jpeg' ? '#fff' : undefined), format);
   }
 
   // The size of the file is worked out once the choices settle.
   let weight = $state<number | null>(null);
+  let pending = $state(false);
   let cache: { key: string; blob: Promise<Blob> } | undefined;
   const key = (f: Format) => `${f}|${scale}|${JSON.stringify(opts)}|${prepared?.n}`;
   const blob = (f: Format) => {
@@ -137,12 +129,21 @@
     if (cache?.key !== id) cache = { key: id, blob: make(f) };
     return cache.blob;
   };
+  // The key is read here, so the estimate follows the size, margin, backdrop and the rest. The last estimate stays until the new one is ready.
   $effect(() => {
-    weight = null;
     if (!sc) return;
     const f = k.format;
+    void key(f);
     let live = true;
-    const timer = setTimeout(() => blob(f).then((b) => live && (weight = b.size), () => {}), 350);
+    pending = true;
+    const timer = setTimeout(
+      () =>
+        blob(f).then(
+          (b) => live && ((weight = b.size), (pending = false)),
+          () => live && (pending = false),
+        ),
+      350,
+    );
     return () => {
       live = false;
       clearTimeout(timer);
@@ -153,7 +154,7 @@
     [
       sc?.skipped ? 'Interactive output cannot be included.' : '',
       sc && (sc.cut.code || sc.cut.out) ? 'Long code and output are shortened.' : '',
-      k.format === 'jpeg' && k.backdrop === 'none' ? 'A JPEG has no transparency, so the corners turn white.' : '',
+      k.format === 'jpeg' && (k.backdrop === 'none' || k.corner !== 'sharp') ? 'A JPEG has no transparency, so the corners turn white.' : '',
     ].filter(Boolean),
   );
 
@@ -253,7 +254,7 @@
         <div class="opt"><span>Format</span><Seg label="Format" options={FORMATS} value={k.format} onchange={(v) => set('format', v)} /></div>
       </div>
       <footer>
-        <p class="meta"><span>{#if sc}{Math.round(sc.w * scale).toLocaleString()} × {Math.round(sc.h * scale).toLocaleString()} px{/if}</span><span>{#if weight !== null}{size(weight)}{/if}</span></p>
+        <p class="meta"><span>{#if sc}{Math.round(sc.w * scale).toLocaleString()} × {Math.round(sc.h * scale).toLocaleString()} px{/if}</span><span class="est" class:pending>{weight === null ? '' : size(weight)}</span></p>
         <p class="note" class:bad={!!failed} role="status">{failed || notes.join(' ')}</p>
         <div class="btns">
           {#if canCopy()}<button class="btn" disabled={!sc} onclick={copy}>{copied ? 'Copied' : k.format === 'png' ? 'Copy' : 'Copy PNG'}</button>{/if}

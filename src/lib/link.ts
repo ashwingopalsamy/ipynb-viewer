@@ -383,5 +383,20 @@ export async function start(href: string, say: (text: string) => void, done: (fi
   fetchLink(input, say).then(done, (e) => fail(e.message));
 }
 
+/**
+ * A link typed into the open page. It asks the same question as a link in the address bar, but declining keeps the notebook on screen and
+ * resolves with nothing, rather than sending the reader back to the empty page.
+ */
+export async function requested(input: string, say: (text: string) => void): Promise<File | null> {
+  const here = new URL(location.href);
+  const plan = resolve(input, here);
+  const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
+  if (target.origin !== here.origin && !(await import('./netstate.svelte')).trusted(target.host)) {
+    say('Waiting for you');
+    if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return null;
+  }
+  return fetchLink(input, say);
+}
+
 /** A link pasted on the empty screen reloads the page with it, so the download always comes before anything is drawn. */
 export const pasted = (text: string) => /^https?:\/\/\S+\s*$/i.test(text) && (location.search = 'url=' + encodeURIComponent(text));

@@ -44,5 +44,5 @@
 @media (max-width: 720px) {
   [data-pf~='hush'] .bar[data-hush] { transform: none; }
   [data-pf~='hush'] .name { transition: transform 250ms var(--io); }
-  [data-pf~='hush'] .bar[data-hush] :is(.name, .open) { transform: translateY(-64px); }
+  [data-pf~='hush'] .bar[data-hush] :is(.name, .opener) { transform: translateY(-64px); }
 }

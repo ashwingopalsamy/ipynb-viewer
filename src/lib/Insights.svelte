@@ -10,7 +10,7 @@
   import { fileName, save, size } from './export';
   import { mark } from './search';
   import './panel.css';
-  import './info.css';
+  import './settings.css';
 
   // One sheet for what a reader of someone else's notebook wants to know, and what its author wants to check first:
   // anything that looks like a secret, what it takes to run, where its bytes are, and ways to hand it on.
@@ -23,6 +23,13 @@
   const weight = $derived(open ? weigh(cells) : null);
   const secrets = $derived(hits.filter((h) => h.tier === 'secret').length);
   const label = (n: number | null, id: string) => (n !== null ? `[${n}]` : `#${cells.findIndex((c) => c.id === id) + 1}`);
+  const verdict = $derived(
+    hits.length
+      ? `${secrets ? `${secrets} possible ${secrets === 1 ? 'secret' : 'secrets'}` : ''}${secrets && hits.length > secrets ? ' and ' : ''}${hits.length > secrets ? `${hits.length - secrets} personal ${hits.length - secrets === 1 ? 'detail' : 'details'}` : ''}`
+      : 'No keys or passwords found',
+  );
+  // a kernel named after the language is shown once, as the kernel
+  const dup = $derived(!!need?.kernel && !!need?.language && need.kernel.toLowerCase().startsWith(need.language.toLowerCase()));
 
   function see(cell: string, value?: string) {
     ui.pop = null;
@@ -89,69 +96,76 @@
 
   const top = $derived(weight?.heavy[0]?.bytes || 1);
 
+  type Tab = 'share' | 'run' | 'weight';
   const TABS: [Tab, string][] = [
     ['share', 'Share'],
     ['run', 'Run'],
     ['weight', 'Weight'],
   ];
-  type Tab = 'share' | 'run' | 'weight';
   // opens on Share, which is where a secret would be reported
   let tab = $state<Tab>('share');
 </script>
 
-<Pop id="info" label="About this notebook" width={360} lead={false} anchor={() => document.querySelector('[data-pop=info]')}>
+<Pop id="info" label="About this notebook" width={344} lead={false} anchor={() => document.querySelector('[data-pop=info]')}>
   {#if open}
-    <div class="pnl info">
-      <Seg label="Notebook" options={TABS} value={tab} onchange={(t) => (tab = t)} />
+    <div class="set">
+      <div class="set-ctl wide">
+        <Seg label="Notebook" options={TABS} value={tab} onchange={(t) => (tab = t)} />
+      </div>
       {#key tab}
-        <div class="pane rise">
+        <div class="rise">
           {#if tab === 'share'}
-            <div class="verdict" class:warn={hits.length}>
-              <Icon name={hits.length ? 'alert' : 'shield'} />
-              <span>{hits.length ? `${secrets ? `${secrets} possible ${secrets === 1 ? 'secret' : 'secrets'}` : ''}${secrets && hits.length > secrets ? ' and ' : ''}${hits.length > secrets ? `${hits.length - secrets} personal ${hits.length - secrets === 1 ? 'detail' : 'details'}` : ''}` : 'No keys or passwords found'}</span>
-            </div>
-            {#if hits.length}
-              <ul class="finds">
-                {#each hits.slice(0, 4) as h}
-                  <li><button class="heavy" onclick={() => see(h.cell, h.value)}><span>{h.kind} <small>{label(h.n, h.cell)}</small></span><code>{h.shown}</code></button></li>
-                {/each}
-              </ul>
-              {#if hits.length > 4}<p class="fine">and {hits.length - 4} more.</p>{/if}
-              <div class="fld"><span>Hide them in copies</span><button class="sw switch" role="switch" aria-checked={ui.hide} aria-label="Hide them in copies" onclick={() => (ui.hide = !ui.hide)}><i class="track"><i class="knob"></i></i></button></div>
-            {/if}
-            <div class="pills">
-              <button onclick={link}><Icon name="link" />Copy link</button>
-              <button onclick={other}><Icon name="compare" />Compare</button>
-            </div>
-            <p class="fine">The link carries the notebook after the #, so no server sees it. Compare reads an earlier file here.</p>
-          {:else if tab === 'run'}
-            <div class="chips">
-              {#if need?.kernel && need.language && need.kernel.toLowerCase().startsWith(need.language.toLowerCase())}<span>{need.kernel}</span>{:else}
-                {#if need?.language}<span>{need.language}{need.version ? ` ${need.version}` : ''}</span>{/if}
-                {#if need?.kernel}<span>{need.kernel}</span>{/if}
+            <div class="set-group">
+              <div class="set-row set-verdict" class:warn={hits.length}>
+                <Icon name={hits.length ? 'alert' : 'shield'} />
+                <span>{verdict}</span>
+              </div>
+              {#each hits.slice(0, 4) as h}
+                <button class="set-find" onclick={() => see(h.cell, h.value)}><span>{h.kind} <small>{label(h.n, h.cell)}</small></span><code>{h.shown}</code></button>
+              {/each}
+              {#if hits.length}
+                <button class="sw" role="switch" aria-checked={ui.hide} onclick={() => (ui.hide = !ui.hide)}><span>Hide them in copies</span><i class="track"><i class="knob"></i></i></button>
               {/if}
-              {#if need?.format}<span>format {need.format}</span>{/if}
+            </div>
+            {#if hits.length > 4}<p class="set-note">and {hits.length - 4} more.</p>{/if}
+            <div class="set-group">
+              <button class="set-action" onclick={link}><Icon name="link" />Copy link</button>
+              <button class="set-action" onclick={other}><Icon name="compare" />Compare</button>
+            </div>
+            <p class="set-note">The link carries the notebook after the #, so no server sees it. Compare reads an earlier file here.</p>
+          {:else if tab === 'run'}
+            <div class="set-group">
+              {#if need?.language && !dup}<div class="set-kv"><span>Language</span><b>{need.language}{need.version ? ` ${need.version}` : ''}</b></div>{/if}
+              {#if need?.kernel}<div class="set-kv"><span>Kernel</span><b>{need.kernel}</b></div>{/if}
+              {#if need?.format}<div class="set-kv"><span>Format</span><b>{need.format}</b></div>{/if}
+              {#if need?.command}
+                <div class="set-code"><code>{need.command}</code><button aria-label="Copy the install command" title="Copy" onclick={() => copy(need!.command!, 'Copied the install command.')}><Icon name="copy" size={16} /></button></div>
+              {/if}
             </div>
             {#if need?.command}
-              <div class="cmd"><code>{need.command}</code><button aria-label="Copy the install command" title="Copy" onclick={() => copy(need!.command!, 'Copied the install command.')}><Icon name="copy" size={16} /></button></div>
-              {#if need.installs.length}<p class="fine">It also installs {need.installs.join(', ')} for itself.</p>{/if}
+              {#if need.installs.length}<p class="set-note">It also installs {need.installs.join(', ')} for itself.</p>{/if}
             {:else}
-              <p class="fine">{need?.installs.length ? `It installs ${need.installs.join(', ')} for itself.` : need?.language && need.language !== 'python' && need.language.toLowerCase() !== 'r' ? 'Packages are listed for Python and R notebooks.' : 'No packages beyond the standard library.'}</p>
+              <p class="set-note">{need?.installs.length ? `It installs ${need.installs.join(', ')} for itself.` : need?.language && need.language !== 'python' && need.language.toLowerCase() !== 'r' ? 'Packages are listed for Python and R notebooks.' : 'No packages beyond the standard library.'}</p>
             {/if}
           {:else if weight}
-            <div class="weigh" role="img" aria-label="Outputs are {Math.round((weight.outputs / (weight.total || 1)) * 100)} percent of the file"><i style:width="{(weight.images / (weight.total || 1)) * 100}%"></i><i style:width="{((weight.outputs - weight.images) / (weight.total || 1)) * 100}%"></i></div>
-            <p class="sums"><span>{size(weight.total)} in all</span><span>{size(weight.outputs)} outputs{weight.images ? `, ${size(weight.images)} pictures` : ''}</span></p>
-            {#each weight.heavy.slice(0, 3) as h}
-              <button class="heavy" onclick={() => see(h.cell)}><span>{h.what} <small>{label(h.n, h.cell)}</small></span><i class="meter"><i style:width="{Math.max(3, (h.bytes / top) * 100)}%"></i></i><em>{size(h.bytes)}</em></button>
-            {/each}
-            <div class="pills">
-              <button onclick={() => saveCopy('images')} disabled={!weight.images}><Icon name="download" />No pictures</button>
-              <button onclick={() => saveCopy('outputs')} disabled={!weight.outputs}><Icon name="download" />No outputs</button>
+            <div class="set-group">
+              <div class="set-meter">
+                <div class="weigh" role="img" aria-label="Outputs are {Math.round((weight.outputs / (weight.total || 1)) * 100)} percent of the file"><i style:width="{(weight.images / (weight.total || 1)) * 100}%"></i><i style:width="{((weight.outputs - weight.images) / (weight.total || 1)) * 100}%"></i></div>
+              </div>
+              <div class="set-kv"><span>In all</span><b>{size(weight.total)}</b></div>
+              <div class="set-kv"><span>Outputs</span><b>{size(weight.outputs)}{weight.images ? `, ${size(weight.images)} pictures` : ''}</b></div>
+              {#each weight.heavy.slice(0, 3) as h}
+                <button class="set-find" onclick={() => see(h.cell)}><span>{h.what} <small>{label(h.n, h.cell)}</small></span><i class="meter"><i style:width="{Math.max(3, (h.bytes / top) * 100)}%"></i></i><em>{size(h.bytes)}</em></button>
+              {/each}
+            </div>
+            <div class="set-group">
+              <button class="set-action" onclick={() => saveCopy('images')} disabled={!weight.images}><Icon name="download" />No pictures</button>
+              <button class="set-action" onclick={() => saveCopy('outputs')} disabled={!weight.outputs}><Icon name="download" />No outputs</button>
             </div>
           {/if}
         </div>
       {/key}
-      <p class="fine say" role="status">{note}</p>
+      <p class="set-note" role="status">{note}</p>
     </div>
   {/if}
 </Pop>

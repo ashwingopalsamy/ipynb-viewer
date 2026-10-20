@@ -15,6 +15,7 @@
     ['normal', 'Centered'],
     ['wide', 'Wide'],
   ];
+  const WIDTH_ICON: Record<Width, Lucide> = { narrow: 'column-narrow', normal: 'column-centre', wide: 'column-wide' };
   const keys: [string, string][] = [
     ['j k', 'Next, previous cell'],
     ['[ ]', 'Previous, next heading'],
@@ -61,13 +62,14 @@
   </button>
 {/snippet}
 
-<Pop id="settings" label="Settings" width={344} span lead={false} anchor={() => document.querySelector('[data-pop=settings]')}>
+<Pop id="settings" label="Settings" width={344} lead={false} anchor={() => document.querySelector('[data-pop=settings]')}>
   <div class="set">
+    {#snippet widthIcon(v: Width)}<Icon name={WIDTH_ICON[v]} />{/snippet}
     <p class="set-cat">Page</p>
     <div class="set-group">
       <div class="set-row">
         <span>Width</span>
-        <div class="set-ctl"><Seg label="Width" options={WIDTHS} value={layout.value} onchange={setWidth} /></div>
+        <div class="set-ctl"><Seg label="Width" options={WIDTHS} value={layout.value} onchange={setWidth} item={widthIcon} /></div>
       </div>
       <div class="set-row">
         <span>Text size</span>

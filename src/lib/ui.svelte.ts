@@ -3,7 +3,7 @@ import type { Trace } from './names';
 import type { Report } from './insight/diff';
 
 // State shared by the toolbar, the menus and the outline. It loads with the extras, never with the core.
-export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare';
+export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare' | 'open';
 
 /** The picture a reader is about to save: its data, and the button the menu hangs from. */
 export interface Figure {

@@ -38,7 +38,7 @@
 
 <svelte:window onkeydown={keys} />
 
-<Pop id="search" label="Search" width={520} bare anchor={() => document.querySelector('.bar')}>
+<Pop id="search" label="Search" width={520} bare inline anchor={() => document.querySelector('.bar')}>
   <div class="find" bind:this={box} role="search">
     <label class="field">
       <Glyph name="search" />
