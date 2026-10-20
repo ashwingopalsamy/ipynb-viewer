@@ -35,7 +35,7 @@ def window(W, H, light, dark, cut, theme, bar=72):
 
 def chip(theme):
     bg, fg, sub = ('#ffffff', '#1d1d1f', '#6e6e73') if theme == 'light' else ('#ffffff', '#1d1d1f', '#6e6e73')
-    return f'''<div class="chip"><div class="doc"><svg width="40" height="48" viewBox="0 0 40 48"><path d="{squircle(40,48,10)}" fill="#1d1d1f"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></svg></div><div><b>cooling-coffee.ipynb</b><span>65 KB</span></div></div>
+    return f'''<div class="chip"><div class="doc"><svg width="40" height="48" viewBox="0 0 40 48"><path d="{squircle(40,48,10)}" fill="#1d1d1f"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></svg></div><div><b>cooling-coffee.ipynb</b><span>261 KB</span></div></div>
 <svg class="cursor" width="44" height="56" viewBox="0 0 22 28"><path d="M2 2v20l5.2-4.6 3.4 7.6 3.6-1.6-3.4-7.4H18z" fill="#1d1d1f" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'''
 
 BASE_CSS = FONTS + '''

@@ -7,7 +7,7 @@ import { marked } from 'marked'
 import { defineConfig, type Plugin } from 'vite'
 
 // The font fallbacks (.woff, .ttf) are left out of the offline copy because every browser that can run the app takes the .woff2 files.
-const SKIP = /\.(?:map|woff|ttf)$|^(?:sw\.js|_headers|404\.html|social-preview\.png|llms(?:-full)?\.txt)$|\.md$/
+const SKIP = /\.(?:map|woff|ttf)$|^(?:sw\.js|_headers|404\.html|social-preview\.png|cooling-coffee\.ipynb|llms(?:-full)?\.txt)$|\.md$/
 
 const kb = (n: number) => `${n < 10_000 ? (n / 1000).toFixed(1) : Math.round(n / 1000)} KB`
 const mb = (n: number) => `${(n / 1_000_000).toFixed(1)} MB`
