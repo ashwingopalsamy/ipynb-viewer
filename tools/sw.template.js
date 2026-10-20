@@ -4,6 +4,7 @@ const KEY = 'ipynb-__VERSION__';
 const FILES = __FILES__;
 const scope = self.registration.scope;
 const at = (path) => new URL(path, scope).href;
+const rootPath = new URL(scope).pathname;
 
 // A new version waits until the tabs of the old one are closed (no skipWaiting), so an open tab never loses a chunk.
 // Files named by their content (assets/…-hash.js) are copied from an older copy instead of downloaded again.
@@ -38,18 +39,18 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith(new URL('link/', scope).pathname)) return;
-  // A file the app has is answered from the copy, and so is the home page at any search or address of the app. A page it does not have
+  // A file the app has is answered from the copy, and so is the home page at any search of the app. A page it does not have
   // (a guide the copy lacks) comes from the network; offline, the app itself answers.
   const page = request.mode === 'navigate';
   event.respondWith(
     (async () => {
-      const hit = (await caches.match(request, { ignoreSearch: true, ignoreVary: true })) || (page && url.pathname.endsWith('/') && (await caches.match(new URL('index.html', url).href)));
+      const hit = (await caches.match(request, { ignoreSearch: true, ignoreVary: true })) || (page && url.pathname === rootPath && (await caches.match(at('index.html'))));
       if (hit) return hit;
       if (!page) return fetch(request);
       try {
         return await fetch(request);
       } catch {
-        return (await caches.match(at('index.html'))) || Response.error();
+        return (url.pathname === rootPath && (await caches.match(at('index.html')))) || Response.error();
       }
     })(),
   );
