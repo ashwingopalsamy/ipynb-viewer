@@ -1,0 +1,32 @@
+{
+  "node": "v22.22.0",
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+  "date": "2026-10-20",
+  "chunk": 65536,
+  "results": [
+    {
+      "name": "The example notebook",
+      "bytes": 64782,
+      "cells": 8,
+      "firstMs": 4.4,
+      "totalMs": 4.8,
+      "mbPerSecond": 13
+    },
+    {
+      "name": "A 12 MB notebook",
+      "bytes": 12140192,
+      "cells": 600,
+      "firstMs": 0.5,
+      "totalMs": 96.7,
+      "mbPerSecond": 120
+    },
+    {
+      "name": "A 60 MB notebook",
+      "bytes": 60708292,
+      "cells": 3000,
+      "firstMs": 0.5,
+      "totalMs": 425,
+      "mbPerSecond": 136
+    }
+  ]
+}

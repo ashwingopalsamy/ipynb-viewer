@@ -1,0 +1,7 @@
+.sbx .sbx-bar { display: flex; align-items: center; gap: 8px; padding: 0 var(--pr) 8px 20px; font: 12px var(--sans); color: var(--fg-3); }
+.sbx .sbx-bar span { flex: 1; min-width: 0; }
+.sbx .sbx-bar button { padding: 4px 12px; border-radius: 999px; background: var(--well); font: inherit; color: var(--fg-2); }
+.sbx .sbx-bar button:hover { color: var(--fg); }
+.sbx .sbx-bar button[aria-pressed='true'] { background: var(--fg); color: var(--paper); }
+.sbx .sbx-frame { margin: 0 20px; }
+.sbx iframe { display: block; width: 100%; max-width: 100%; margin: 0; border: 0; outline: 1px solid var(--line); outline-offset: -1px; border-radius: 10px; corner-shape: squircle; background: #fff; }

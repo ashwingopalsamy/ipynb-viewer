@@ -62,6 +62,9 @@
 
 .ctl footer { display: grid; gap: 6px; padding: 12px 20px 16px; background: var(--paper); }
 .ctl .meta { display: flex; justify-content: space-between; margin: 0; font: 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); min-height: 17px; }
+/* the file size eases to its new value and dims while it is being worked out, so the readout never blanks */
+.ctl .meta .est { transition: opacity 160ms var(--out); }
+.ctl .meta .est.pending { opacity: 0.45; }
 .ctl .note { margin: 0; font: 12px/1.4 var(--sans); color: var(--fg-3); }
 .ctl .note:empty { display: none; }
 .ctl .note.bad { color: var(--danger); }

@@ -6,7 +6,7 @@ function line(o: Output): string {
   if (o.type === 'error') return `${o.ename}: ${o.evalue}`;
   if (o.type === 'stream') return collapseCarriageReturns(o.text);
   const s = describeData(o.data);
-  return s.kind === 'image' ? 'Figure' : s.text;
+  return s.kind === 'image' ? 'Figure' : s.chart ? 'Interactive output' : (s.md ?? s.text);
 }
 
 /** One line that says what a folded output holds, with a count when there are more. */
@@ -19,9 +19,9 @@ export function gist(outputs: readonly Output[]): string {
 export function richNote(mime: string, hasText: boolean): string {
   const [what, why] =
     mime === 'text/html'
-      ? ['HTML', 'only tables are rendered and scripts never run']
+      ? ['HTML', 'only plain markup and tables are shown, and scripts stay off']
       : mime === 'image/svg+xml'
-        ? ['SVG', 'not supported yet']
+        ? ['SVG', 'could not be read']
         : /widget|plotly|bokeh|vega/.test(mime)
           ? ['Interactive output', 'notebooks are never run here']
           : [mime, 'not supported'];

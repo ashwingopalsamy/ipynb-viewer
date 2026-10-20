@@ -27,3 +27,6 @@
 @keyframes lift {
   from { opacity: 0; transform: translateY(12px); }
 }
+
+/* the name-tracing pill takes the same spot */
+body:has(.tpill.on) .back { visibility: hidden; }

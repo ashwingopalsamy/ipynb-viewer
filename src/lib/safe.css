@@ -1,0 +1,11 @@
+/* HTML outputs that were made safe to show: type and tables that sit with the rest of the page. */
+.rich { min-width: 0; padding: 0 var(--pr) 0 20px; overflow-x: auto; contain: layout; font: 14px/1.55 var(--sans); overflow-wrap: anywhere; }
+.rich > :first-child { margin-top: 0; }
+.rich > :last-child { margin-bottom: 0; }
+.rich img { max-width: 100%; height: auto; border-radius: 10px; corner-shape: squircle; }
+.rich table { border-collapse: collapse; font-size: 0.94em; }
+.rich th, .rich td { padding: 6px 12px; text-align: left; }
+.rich th { font-weight: 600; background: var(--well); }
+.rich pre { margin: 0.6em 0; padding: 0; }
+.rich code { font: 0.9em var(--mono); }
+.rich blockquote { margin: 0.6em 0; padding: 0.1em 1em; border-radius: 10px; corner-shape: squircle; background: color-mix(in srgb, var(--well) 60%, transparent); color: var(--fg-2); }

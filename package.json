@@ -1,5 +1,5 @@
 {
-  "name": "ipynb-tmp",
+  "name": "ipynb-viewer",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,8 @@
     "deploy": "vite build && node tools/site.mjs && wrangler deploy",
     "deploy:dry": "vite build && node tools/site.mjs && wrangler deploy --dry-run",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bench": "BENCH=1 vitest run src/lib/notebook/bench.test.ts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

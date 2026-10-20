@@ -1,0 +1,106 @@
+/* Settings and Privacy, the two sheets from the header. Radii follow one rule, as in a notebook cell:
+   the card is 18, its inner cards are 10 (18 - 8 padding), and the squarish controls inside them are 8.
+   Toggles and the footer buttons stay pills. Every label, control and note starts or ends on the same 14px inset. */
+.pop#pop-settings, .pop#pop-privacy { border-radius: 18px; padding: 8px; }
+
+.set { display: grid; gap: 8px; }
+/* a tab's content sits in a wrapper; it keeps the same 8px between its cards and notes as the sheet does */
+.set > .rise { display: grid; gap: 8px; }
+/* a section label: caps, a step up from the rows, nearer to its own card than to the one above */
+.set-cat { margin: 5px 0 -5px; padding: 0 8px; font: 600 13px/1.2 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-2); }
+.set-note { margin: 0; padding: 0 14px; font-size: 12.5px; line-height: 1.5; color: var(--fg-3); }
+.set-note:empty { display: none; }
+
+/* an inner card: rows sit flush, divided by hairlines, and the card clips them to its corners */
+.set-group { display: grid; overflow: hidden; border-radius: 10px; corner-shape: squircle; background: var(--well); }
+.set-group > * + * { border-top: 1px solid var(--line); }
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  color: var(--fg);
+}
+
+/* a squarish control in one column, so every choice on the sheet ends on the same line */
+.set-row > span { white-space: nowrap; }
+/* a row with a control gives its label a fixed column, so every control starts and ends on the same line whatever the label's length */
+.set-row:has(> .set-ctl) > span { flex: 0 0 96px; }
+.set-ctl { flex: 1 1 0; min-width: 176px; }
+.set-ctl .seg { width: 100%; height: 38px; margin: 0; padding: 3px; border-radius: 999px; background: var(--well-2); }
+.set-ctl .seg .thumb { top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); border-radius: 999px; }
+.set-ctl .seg button { display: grid; place-items: center; padding: 0; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+.set-ctl .seg button:hover:not([aria-checked='true']) { background: color-mix(in srgb, var(--fg) 8%, transparent); }
+/* the text-size stepper is drawn like the Width control: the same pill and height, three equal thirds, the readout in the middle one */
+.set-ctl.step { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; align-items: center; height: 38px; padding: 3px; border-radius: 999px; background: var(--well-2); }
+.set-ctl.step button { display: grid; place-items: center; width: 100%; height: 32px; border-radius: 999px; color: var(--fg-2); }
+.set-ctl.step button:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
+.set-ctl.step button:disabled { opacity: 0.35; cursor: default; }
+.set-ctl.step b { font-weight: 600; line-height: 1; }
+.set-ctl.step .s { font-size: 12px; }
+.set-ctl.step .l { font-size: 16px; }
+.set-ctl.step output { min-width: 0; font: 500 12px/1 var(--sans); font-variant-numeric: tabular-nums; text-align: center; color: var(--fg-2); }
+
+/* a switch row keeps the shared pill switch and its icon, with the same 14px inset as every other row */
+.set .sw { height: 44px; padding: 0 14px; gap: 12px; border-radius: 0; }
+.set .sw > svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
+.set .sw[aria-expanded] > svg { transition: transform 200ms var(--io); }
+.set .sw[aria-expanded='true'] > svg { transform: rotate(90deg); }
+
+/* a read-only fact: its name, then its value on the right */
+.set-kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 14px; font-size: 13.5px; color: var(--fg); }
+.set-kv b { font-size: 13px; font-weight: 600; color: var(--fg-2); text-align: right; }
+
+/* the count: the number in a fixed column, its sentence beside it */
+.set-count { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 4px 14px 0; }
+.set-count b { font: 650 40px/1 var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.set-count span { font-size: 13px; line-height: 1.4; color: var(--fg-2); }
+
+.set-ledger {
+  display: grid;
+  max-height: 150px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border-radius: 10px;
+  corner-shape: squircle;
+  background: var(--well-2);
+  list-style: none;
+}
+.set-ledger li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 10px; font-size: 12.5px; }
+.set-ledger b { font-weight: 600; white-space: nowrap; }
+.set-ledger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-3); }
+
+/* the footer buttons are pills, as the other actions are; they share the card's gap */
+.set .pills { gap: 8px; }
+
+@media (pointer: coarse) { .set .sw, .set-kv, .set-row { min-height: 44px; } }
+
+/* the Notebook card's rows: the same rows as Settings, with finds, a code line and measures in them */
+.set-row.warn { color: var(--fg); }
+.set-row.warn > svg { color: var(--danger); }
+.set-meter { padding: 12px 14px 10px; }
+.set-find { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 14px; text-align: left; font-size: 13.5px; color: var(--fg); }
+.set-find:hover { background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.set-find > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-find small { margin-left: 6px; font-size: 12px; color: var(--fg-3); }
+.set-find code { min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1.4 var(--mono); color: var(--fg-2); }
+.set-find .meter { flex: 0 0 84px; }
+.set-find em { flex: none; font-style: normal; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.set-code { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 6px 6px 14px; }
+.set-code code { flex: 1; min-width: 0; font: 12px/1.5 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.set-code button { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-2); }
+.set-code button:hover { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
+
+/* a full-width control row (the Notebook tabs), and a verdict row that reads from the icon, not from the far edge */
+.set-ctl.wide { width: 100%; }
+.set-verdict { justify-content: flex-start; gap: 10px; }
+
+/* the Notebook card's actions: full-width rows, the same height, inset and hairline as the finds above them */
+.set-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 14px; text-align: left; font-size: 13.5px; color: var(--fg); }
+.set-action svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
+.set-action:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.set-action:disabled { opacity: 0.35; cursor: default; }

@@ -1,7 +1,9 @@
 import type { CodeCell } from './notebook';
+import type { Trace } from './names';
+import type { Report } from './insight/diff';
 
 // State shared by the toolbar, the menus and the outline. It loads with the extras, never with the core.
-export type Pop = 'settings' | 'toc' | 'keys' | 'figure';
+export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare' | 'open';
 
 /** The picture a reader is about to save: its data, and the button the menu hangs from. */
 export interface Figure {
@@ -21,8 +23,15 @@ export const ui = $state<{
   shelf: boolean;
   fig: Figure | null;
   shot: CodeCell | null;
+  /** The picture shown full screen, and the button it was opened from. */
+  light: { src: string; cell: string; el: HTMLElement } | null;
+  trace: Trace | null;
   file: string;
   lang: string | null;
+  /** Whether copies leave out the secrets the scan found. On unless the reader says otherwise. */
+  hide: boolean;
+  /** The other notebook being compared with this one, and what differs. */
+  cmp: { name: string; report: Report } | null;
 }>({
   pop: null,
   sections: 0,
@@ -32,8 +41,12 @@ export const ui = $state<{
   shelf: false,
   fig: null,
   shot: null,
+  light: null,
+  trace: null,
   file: '',
   lang: null,
+  hide: true,
+  cmp: null,
 });
 
 export const toggle = (id: Pop) => (ui.pop = ui.pop === id ? null : id);
@@ -59,7 +72,7 @@ export function setKeys(on: boolean) {
 export const single = (e: KeyboardEvent) =>
   prefs.keys && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target as Element).closest('input, textarea, select, [contenteditable]');
 
-export const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches || !!document.documentElement.dataset.pf?.includes('calm');
+export const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const miss = (el: Element, block: 'start' | 'center') => {
   const r = el.getBoundingClientRect();
@@ -67,6 +80,9 @@ const miss = (el: Element, block: 'start' | 'center') => {
 };
 
 const quit = ['wheel', 'touchstart', 'keydown'];
+
+// Scrolling the contents list (its momentum outlasts the click) is not the reader taking the page back.
+const mine = (e: Event) => e.type === 'wheel' && !!(e.target as Element).closest?.('.rail, .pop');
 
 /**
  * Scrolls an element into place and keeps correcting until it rests there. Cells below the screen settle their
@@ -82,8 +98,9 @@ export function jump(to: Element | null | undefined | (() => Element | null | un
     clearTimeout(timer);
     clearTimeout(limit);
     removeEventListener('scrollend', check);
-    quit.forEach((t) => removeEventListener(t, end));
+    quit.forEach((t) => removeEventListener(t, stop));
   };
+  const stop = (e: Event) => mine(e) || end();
   const check = () => {
     removeEventListener('scrollend', check);
     const el = find();
@@ -93,7 +110,7 @@ export function jump(to: Element | null | undefined | (() => Element | null | un
   };
   const wait = () => ('onscrollend' in window ? addEventListener('scrollend', check) : (timer = setTimeout(check, 500)));
   const limit = setTimeout(end, 3000);
-  quit.forEach((t) => addEventListener(t, end, { passive: true }));
+  quit.forEach((t) => addEventListener(t, stop, { passive: true }));
   find()?.scrollIntoView({ behavior: calm() ? 'auto' : 'smooth', block });
   wait();
 }

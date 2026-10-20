@@ -1,0 +1,25 @@
+/* An error keeps the paper and gains a tint; a typed header says what went wrong. */
+.out.err { padding: 16px 0 8px; background: var(--tint); }
+.exc { margin: 0 0 6px; padding: 0 var(--pr) 0 20px; font: 14px/1.5 var(--sans); overflow-wrap: anywhere; }
+.exc strong { margin-right: 0.6em; font-weight: 600; color: var(--danger); }
+.err pre { font-size: 12.5px; color: var(--fg-3); }
+.err pre [class*='fg'] { color: inherit; }
+
+/* The answer has its own mark: a return arrow in the gutter beside its first line, red when the cell ended in an error.
+   It is the card's pseudo-element placed in the output's grid row, so it follows the output wherever that sits. */
+.card:has(> .outs)::before {
+  content: '';
+  position: absolute;
+  grid-area: 2 / 1;
+  left: -40px;
+  top: 16px;
+  width: 16px;
+  height: 16px;
+  background: var(--fg-3);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m15 10 5 5-5 5'/%3E%3Cpath d='M4 4v7a4 4 0 0 0 4 4h12'/%3E%3C/svg%3E") center / 16px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m15 10 5 5-5 5'/%3E%3Cpath d='M4 4v7a4 4 0 0 0 4 4h12'/%3E%3C/svg%3E") center / 16px no-repeat;
+  pointer-events: none;
+}
+.card:has(> .outs:first-child)::before { grid-area: 1 / 1; }
+.card:has(.out.err)::before { background: var(--danger); }
+@media (max-width: 720px) { .card::before { display: none; } }

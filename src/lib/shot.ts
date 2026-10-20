@@ -6,6 +6,7 @@ import { describeData } from './mime';
 import { foldBars } from './streams';
 import { highlight } from './highlight';
 import { cols, indent, rows, wrap, type Row, type Style } from './glyphs';
+import { fits } from './export';
 
 export type Theme = 'light' | 'dark';
 export type Backdrop = 'none' | 'mist' | 'dawn' | 'dusk' | 'ink';
@@ -13,6 +14,7 @@ export type Show = 'both' | 'code' | 'out';
 export type Layout = 'stack' | 'side';
 export type Pad = 'S' | 'M' | 'L';
 export type Shape = 'fit' | 'wide' | 'square';
+export type Corner = 'sharp' | 'soft' | 'round';
 
 export interface Opts {
   show: Show;
@@ -21,6 +23,7 @@ export interface Opts {
   backdrop: Backdrop;
   pad: Pad;
   shape: Shape;
+  corner: Corner;
   lines: boolean;
   title: boolean;
 }
@@ -302,7 +305,7 @@ export async function prepare(src: Source): Promise<Prepared> {
           continue;
         }
       }
-      const found = await textOrTable(s.text, false);
+      const found = await textOrTable(s.chart ? '' : (s.md ?? s.text), false);
       if (s.rich && !found.some((b) => b.k === 'tbl')) skipped = true;
       blocks.push(...found);
     }
@@ -319,6 +322,8 @@ const GAP = 8;
 const INSET = 20;
 const CARD_R = 18;
 const PANEL_R = 10;
+/** The backdrop's corner radius for each Corners choice, in the picture's own pixels (before the size multiplier). */
+const CORNER: Record<Corner, number> = { sharp: 0, soft: 28, round: 56 };
 const TITLE_H = 36;
 const CODE = { size: 13.5, lh: 22 };
 const OUT = { size: 13, lh: 21 };
@@ -460,6 +465,62 @@ export interface Scene {
   cut: { code: number; out: number };
   skipped: boolean;
   draw: (ctx: CanvasRenderingContext2D, scale: number) => void;
+}
+
+/**
+ * The scene as pixels at `scale`. At the 1× size it is drawn twice as large and each output pixel is averaged from the four
+ * drawn beneath it, so glyph edges and gradient steps come out the way they look in a picture shown larger. The average is
+ * weighted by alpha, so transparent edges do not darken, and noise below one level is added as it goes, so 8-bit gradients do not band.
+ */
+export function raster(sc: Scene, scale: number, fill?: string): HTMLCanvasElement {
+  const hi = scale === 1 && fits(sc.w, sc.h, 2) ? 2 : 1;
+  const w = Math.round(sc.w * scale);
+  const h = Math.round(sc.h * scale);
+  const big = document.createElement('canvas');
+  big.width = w * hi;
+  big.height = h * hi;
+  const ctx = big.getContext('2d')!;
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, big.width, big.height);
+  }
+  sc.draw(ctx, scale * hi);
+  if (hi === 1) return big;
+  const src = ctx.getImageData(0, 0, big.width, big.height).data;
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const octx = out.getContext('2d')!;
+  const img = octx.createImageData(w, h);
+  const d = img.data;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let a = 0;
+      for (let j = 0; j < hi; j++) {
+        for (let i = 0; i < hi; i++) {
+          const p = ((y * hi + j) * big.width + x * hi + i) * 4;
+          const k = src[p + 3] / 255;
+          r += src[p] * k;
+          g += src[p + 1] * k;
+          b += src[p + 2] * k;
+          a += k;
+        }
+      }
+      const o = (y * w + x) * 4;
+      if (a > 0) {
+        // the array rounds and clamps what it is given, so the noise cannot leave the 0–255 range
+        d[o] = r / a + Math.random() - 0.5;
+        d[o + 1] = g / a + Math.random() - 0.5;
+        d[o + 2] = b / a + Math.random() - 0.5;
+      }
+      d[o + 3] = Math.round((a / (hi * hi)) * 255);
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  return out;
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -774,18 +835,21 @@ export function scene(p: Prepared, o: Opts): Scene {
       ctx.save();
       ctx.scale(s, s);
       ctx.textBaseline = 'alphabetic';
-      // the backdrop: a diagonal blend with a soft light in the corner
+      // the backdrop: a diagonal blend with a soft light in the corner, its corners as the Corners option says (a plain page has none)
+      const frame = bd.a ? CORNER[o.corner] : 0;
       if (bd.a) {
         const g = ctx.createLinearGradient(0, 0, w, h);
         g.addColorStop(0, bd.a);
         g.addColorStop(1, bd.b!);
+        squircle(ctx, 0, 0, w, h, frame);
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
+        ctx.fill();
         const glow = ctx.createRadialGradient(w * 0.15, h * 0.1, 0, w * 0.15, h * 0.1, Math.max(w, h) * 0.8);
         glow.addColorStop(0, 'rgba(255,255,255,0.28)');
         glow.addColorStop(1, 'rgba(255,255,255,0)');
+        squircle(ctx, 0, 0, w, h, frame);
         ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, w, h);
+        ctx.fill();
       } else if (o.shape !== 'fit') {
         ctx.fillStyle = pal.page;
         ctx.fillRect(0, 0, w, h);
