@@ -113,8 +113,13 @@ window.addEventListener(
   { signal },
 )
 
-// A notebook link in the address bar goes straight to the reader, which fetches it.
-if (/[?#](?:url|nb)=/.test(location.href)) open()
+// A notebook link in the address bar goes straight to the reader, which fetches it. The code that reads the link loads beside the
+// reader rather than after it.
+if (/[?#](?:url|nb)=/.test(location.href)) {
+  import('../lib/link')
+  import('../lib/netstate.svelte')
+  open()
+}
 
 // The offline copy is made from this page too, for a visit that never opens a notebook.
 setTimeout(() => import('../lib/offline'), 2500)

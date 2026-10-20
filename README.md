@@ -29,7 +29,7 @@
 
 Open the [viewer](https://ipynb.ashwingopalsamy.in/viewer/) and drop a `.ipynb` anywhere on the page. The [home page](https://ipynb.ashwingopalsamy.in) explains what it does and shows the numbers behind it.
 
-The file never leaves your browser. There is no server to send it to, and no code in it ever runs. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
+The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
 ## What it does
 

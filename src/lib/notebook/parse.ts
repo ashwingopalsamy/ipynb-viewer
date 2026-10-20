@@ -94,6 +94,8 @@ async function* chunksOf(source: Exclude<ChunkSource, string>): AsyncGenerator<s
         yield value;
       }
     } finally {
+      // reading that ends early (a newer file took over, or this is not a notebook) stops the source too
+      reader.cancel().catch(() => {});
       reader.releaseLock();
     }
   } else {

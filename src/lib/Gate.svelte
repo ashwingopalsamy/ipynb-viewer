@@ -2,7 +2,7 @@
   import Glyph from './Glyph.svelte';
   import './net.css';
 
-  let { host, url, answer }: { host: string; url: string; answer: (go: boolean, always: boolean) => void } = $props();
+  let { host, url, via = false, answer }: { host: string; url: string; via?: boolean; answer: (go: boolean, always: boolean) => void } = $props();
   let always = $state(false);
   const short = $derived(url.length > 90 ? url.slice(0, 60) + '…' + url.slice(-24) : url);
 </script>
@@ -11,7 +11,11 @@
   <div class="gate-card">
     <span class="mark"><Glyph name="globe" /></span>
     <h2 id="gate-title">Fetch this notebook?</h2>
-    <p>The link points to <b>{host}</b>. Fetching the notebook tells that site your address and the time. Nothing from this page is sent along.</p>
+    {#if via}
+      <p>The link points to <b>{host}</b>. This site fetches the notebook from there for you, so that site sees this site's address, not yours. Nothing from this page is sent along.</p>
+    {:else}
+      <p>The link points to <b>{host}</b>. Fetching the notebook tells that site your address and the time. Nothing from this page is sent along.</p>
+    {/if}
     <code>{short}</code>
     <label class="again"><input type="checkbox" onchange={(e) => (always = e.currentTarget.checked)} />Do not ask again for {host}</label>
     <div class="acts-net">
