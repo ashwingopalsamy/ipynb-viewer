@@ -2,9 +2,13 @@
   "name": "ipynb viewer",
   "short_name": "ipynb",
   "description": "Jupyter notebooks, without Jupyter.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "categories": ["developer", "productivity", "utilities"],
+  "file_handlers": [{ "action": "./", "accept": { "application/x-ipynb+json": [".ipynb"] } }],
+  "launch_handler": { "client_mode": "navigate-new" },
   "background_color": "#f5f5f7",
   "theme_color": "#f5f5f7",
   "icons": [

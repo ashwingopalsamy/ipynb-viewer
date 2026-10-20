@@ -138,6 +138,10 @@ main.home { padding-bottom: 0; }
 .ask svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .ask span { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; padding-bottom: 3px; transition: background-size 350ms var(--out); }
 .ask:hover span { background-size: 100% 1px; }
+.link { display: flex; gap: 8px; width: min(100%, 420px); margin: 14px auto 0; }
+.link input { flex: 1; min-width: 0; padding: 9px 12px; font: inherit; font-size: 15px; color: var(--fg); background: var(--paper); border: 1px solid var(--well); border-radius: 10px; }
+.link button { padding: 9px 16px; font: inherit; font-size: 15px; color: var(--fg); background: var(--well-2); border: 1px solid var(--well); border-radius: 10px; cursor: pointer; }
+.link button:hover { background: var(--well); }
 
 /* a file carried over the page: the whole page says where it will go */
 .over::after {
@@ -271,7 +275,7 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
   .next svg { animation: none; }
 }
 @media print {
-  .bar, .ask, .next { display: none; }
+  .bar, .ask, .link, .next { display: none; }
   .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
   body { background: #fff; }
   .block { break-inside: avoid; }

@@ -57,6 +57,15 @@ let depth = 0
 
 document.querySelectorAll<HTMLElement>('[data-choose]').forEach((el) => el.addEventListener('click', choose, { signal }))
 document.querySelector('.theme')?.addEventListener('click', toggleTheme, { signal })
+document.querySelector<HTMLFormElement>('[data-link]')?.addEventListener(
+  'submit',
+  (e) => {
+    e.preventDefault()
+    const text = ((e.currentTarget as HTMLFormElement).elements.namedItem('url') as HTMLInputElement).value.trim()
+    if (text) location.assign(`${location.pathname}?url=${encodeURIComponent(text)}`)
+  },
+  { signal },
+)
 // The cue at the foot of the first screen takes the reader down to the explainers; with reduced motion it jumps.
 document.querySelector('.next')?.addEventListener(
   'click',
@@ -129,6 +138,7 @@ window.addEventListener(
 window.addEventListener(
   'paste',
   (e) => {
+    if ((e.target as Element).closest?.('input, textarea')) return
     const text = e.clipboardData?.getData('text') ?? ''
     if (text.includes('http')) import('../lib/link').then((m) => m.pasted(text))
   },
@@ -145,3 +155,6 @@ if (/[?#](?:url|nb)=/.test(location.href)) {
 
 // The offline copy is made from this page too, for a visit that never opens a notebook.
 setTimeout(() => import('../lib/offline'), 2500)
+
+// A notebook opened from the operating system (an installed copy in Chromium) arrives through the launch queue.
+if ('launchQueue' in window) (window as any).launchQueue.setConsumer(async (p: any) => { const h = p.files?.[0]; if (h) open(await h.getFile(), h) })
