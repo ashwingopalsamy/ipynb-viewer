@@ -38,7 +38,19 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith(new URL('link/', scope).pathname)) return;
-  // A file the app has is answered from the copy. Any other page address is the home page, which is the app too.
-  const page = request.mode === 'navigate' && at('index.html');
-  event.respondWith(caches.match(request, { ignoreSearch: true, ignoreVary: true }).then((hit) => hit || (page && caches.match(page)) || fetch(request)));
+  // A file the app has is answered from the copy, and so is the home page at any search or address of the app. A page it does not have
+  // (a guide the copy lacks) comes from the network; offline, the app itself answers.
+  const page = request.mode === 'navigate';
+  event.respondWith(
+    (async () => {
+      const hit = (await caches.match(request, { ignoreSearch: true, ignoreVary: true })) || (page && url.pathname.endsWith('/') && (await caches.match(new URL('index.html', url).href)));
+      if (hit) return hit;
+      if (!page) return fetch(request);
+      try {
+        return await fetch(request);
+      } catch {
+        return (await caches.match(at('index.html'))) || Response.error();
+      }
+    })(),
+  );
 });
