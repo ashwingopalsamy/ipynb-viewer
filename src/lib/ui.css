@@ -109,9 +109,9 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
     pointer-events: none;
     opacity: 0;
     transform: translate(-50%, -3px);
-    transition: opacity 120ms var(--out), transform 160ms var(--out);
+    transition: opacity 90ms var(--out), transform 120ms var(--out);
   }
-  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 400ms; }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 120ms; }
   .tools > :last-child::after { left: auto; right: 0; transform: translate(0, -3px); }
   .tools > :last-child:hover::after, .tools > :last-child:focus-visible::after { transform: none; }
 }
