@@ -8,20 +8,16 @@ const mirror = process.argv.includes('--mirror');
 const ORIGIN = 'https://ipynb.ashwingopalsamy.in';
 const dist = new URL('../dist/', import.meta.url);
 
+// The page keeps one inline script (the theme, so there is no flash); the policy allows it by hash, nothing else inline.
 const file = new URL('index.html', dist);
-let html = readFileSync(file, 'utf8');
+const html = readFileSync(file, 'utf8');
 if (!html.includes('</head>')) throw new Error('dist/index.html has no </head>; run vite build first');
-
-// The page keeps one inline script (the theme, so there is no flash). The policy allows it by hash, nothing else inline.
-const hashes = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(
-  (m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`,
-);
-
+const hashes = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`);
 const head = [`<link rel="canonical" href="${ORIGIN}/" />`, mirror && '<meta name="robots" content="noindex" />'].filter(Boolean);
-html = html.replace('</head>', `    ${head.join('\n    ')}\n  </head>`);
-writeFileSync(file, html);
+writeFileSync(file, html.replace('</head>', `    ${head.join('\n    ')}\n  </head>`));
 
 const home = mirror ? '/ipynb-viewer/' : '/';
+
 writeFileSync(
   new URL('404.html', dist),
   `<!doctype html>
@@ -40,7 +36,7 @@ p{margin:0;opacity:.6}a{color:inherit}
 </head>
 <body>
 <h1 style="font-size:1.25rem;font-weight:600;margin:0">Nothing here</h1>
-<p><a href="${home}">Back to the viewer</a></p>
+<p><a href="${home}">Back to ipynb viewer</a></p>
 </body>
 </html>
 `,
@@ -51,18 +47,18 @@ if (mirror) {
   process.exit(0);
 }
 
-// The app puts a stricter policy on itself once it shows notebook markup (src/lib/guard.ts). A policy can only be
-// tightened, so this one has to allow what the first screen needs: https for `?url=` downloads, the sandbox frame.
+// The viewer reads notebooks from the visitor's own device and never fetches, frames or runs anything, so the policy
+// allows only the site itself. Inline styles stay allowed for the components and KaTeX.
 const csp = [
   "default-src 'none'",
   `script-src 'self' ${hashes.join(' ')}`.trim(),
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https:",
-  "frame-src 'self'",
+  "connect-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
+  "frame-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -77,17 +73,13 @@ writeFileSync(
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin
   Strict-Transport-Security: max-age=31536000
+  X-DNS-Prefetch-Control: off
 
 /
   Content-Security-Policy: ${csp}
 
 /index.html
   Content-Security-Policy: ${csp}
-
-# The page interactive outputs run in. The app frames it with sandbox="allow-scripts"; this makes the page sandboxed
-# even when something opens it directly, and keeps other sites from framing it.
-/box.html
-  Content-Security-Policy: sandbox allow-scripts; frame-ancestors 'self'
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

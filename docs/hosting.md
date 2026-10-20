@@ -1,6 +1,6 @@
 # Hosting
 
-The viewer is a static site (`dist/`) with no server code.
+The viewer is a static site (`dist/`) with no server code. Notebooks are read on the visitor's device and are never uploaded.
 
 - **ipynb.ashwingopalsamy.in** is the main site: a Cloudflare Worker that serves `dist/` as static assets, with the hostname attached as a custom domain. It is deployed from a laptop, not from CI.
 - **ashwingopalsamy.github.io/ipynb-viewer/** is a mirror published by `.github/workflows/pages.yml` on every push to `main`. It is marked `noindex` and its canonical link points at the main site.
@@ -18,12 +18,12 @@ npm run deploy        # build, add headers and the 404 page, publish
 
 ## Headers
 
-Cloudflare applies `dist/_headers` to every response. Pages cannot set headers, so the mirror relies on the policy the app puts on itself.
+Cloudflare applies `dist/_headers` to every response. Pages cannot set headers, so the mirror has none.
 
-- The page policy allows scripts from the site itself plus the hash of the theme script, and `https:` for `connect-src` so `?url=` downloads work. The app narrows it further once it renders notebook markup.
-- `Referrer-Policy: no-referrer`, because `?url=` holds a link.
-- `box.html` is served with `sandbox allow-scripts` and `frame-ancestors 'self'`, so interactive outputs stay in an opaque origin.
+- The page policy allows scripts from the site itself plus the hash of the theme script, and nothing else: no network requests, frames or plugins. Inline styles are allowed for the components and KaTeX.
+- `Referrer-Policy: no-referrer`, `nosniff`, HSTS and a locked-down `Permissions-Policy` apply everywhere.
+- Hashed files under `/assets/` are cached for a year; fonts for a week.
 
 ## Routing
 
-The app has no routes: cell links are `#hash` and notebook links are `?url=`. Unknown paths get the 404 page, not the app.
+The app has one page. Unknown paths get the 404 page, not the app.
