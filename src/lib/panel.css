@@ -1,14 +1,6 @@
 /* The shared parts of the sheets that hang from the header, the Notebook sheet most of all. Settings and Privacy have their own, in settings.css. */
-/* the icon pills at the foot of a sheet */
-.pills { display: flex; gap: 6px; }
-.pills > * { text-decoration: none; position: relative; isolation: isolate; display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 999px; background: var(--well-2); font-size: 13px; color: var(--fg-2); white-space: nowrap; }
-.pills > *:hover:not(:disabled) { background: var(--well); color: var(--fg); }
-.pills > *:disabled { opacity: 0.5; cursor: default; }
-.pills svg { flex: none; width: 16px; height: 16px; }
 .weigh { display: flex; height: 10px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
 .weigh i { display: block; height: 100%; background: var(--fg-3); }
 .weigh i + i { background: color-mix(in srgb, var(--fg-3) 45%, transparent); }
 .meter { height: 6px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
 .meter i { display: block; height: 100%; border-radius: inherit; background: var(--fg-3); }
-@media (pointer: coarse) { .pills > * { height: 44px; } }
-

@@ -25,13 +25,9 @@ button { -webkit-tap-highlight-color: transparent; }
   transition: opacity 200ms var(--out), transform var(--t3) var(--pop), visibility 0s;
 }
 #pop-settings, #pop-keys { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
-.pop hr { height: 1px; margin: 6px 4px; border: 0; background: var(--line); }
 
 /* One icon size and one line weight in every sheet and dialog: 16px at 1.9 draws the 1.27px line of the 18px toolbar icons at 1.7. */
 :is(.pop, .shot .ctl, .figs-sheet) svg { flex: none; width: var(--icon); height: var(--icon); stroke-width: var(--stroke); }
-
-/* The screenshot dialog's old heading; it goes once that dialog uses .set-cat. */
-.cat { display: flex; align-items: center; gap: 8px; margin: 14px 12px 6px; font: 600 13px/1 var(--sans); color: var(--fg-2); }
 
 /* Segmented control: a raised thumb slides to the choice; hairlines part the others, and a press on the chosen one squeezes it. */
 .seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: var(--ctl); padding: 2px; border-radius: 999px; background: var(--track); }

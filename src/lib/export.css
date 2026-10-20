@@ -28,14 +28,3 @@
   .save { opacity: 0.92; transform: none; }
   .save::after { content: ''; position: absolute; inset: -6px; }
 }
-
-.fig { display: grid; gap: 4px; padding: 4px; }
-.fig .seg { margin: 0; }
-.fig .meta { display: flex; justify-content: space-between; margin: 6px 4px 0; font: 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); min-height: 17px; }
-.fig .note { margin: 0 4px; font: 12px/1.4 var(--sans); color: var(--fg-3); }
-.fig .note:empty { display: none; }
-.fig .note.bad { color: var(--danger); }
-.fig .btns { display: flex; gap: 8px; justify-content: flex-end; }
-.fig .cat { margin: 8px 8px 2px; }
-.fig .cap { margin: 6px 8px 0; font: 12px/1.4 var(--sans); color: var(--fg-3); }
-
