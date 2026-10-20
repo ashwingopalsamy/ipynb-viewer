@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:pages": "vite build --base=/ipynb-viewer/ && node tools/site.mjs --mirror",
-    "deploy": "vite build && node tools/site.mjs && wrangler deploy",
-    "deploy:dry": "vite build && node tools/site.mjs && wrangler deploy --dry-run",
+    "deploy": "vite build --mode cloudflare && node tools/site.mjs && wrangler deploy",
+    "deploy:dry": "vite build --mode cloudflare && node tools/site.mjs && wrangler deploy --dry-run",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "vitest run",
     "bench": "BENCH=1 vitest run src/lib/notebook/bench.test.ts"

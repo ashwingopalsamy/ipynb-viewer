@@ -37,7 +37,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== 'GET' || url.origin !== location.origin) return;
+  if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith(new URL('link/', scope).pathname)) return;
   // A file the app has is answered from the copy. Any other page address is the home page, which is the app too.
   const page = request.mode === 'navigate' && at('index.html');
   event.respondWith(caches.match(request, { ignoreSearch: true, ignoreVary: true }).then((hit) => hit || (page && caches.match(page)) || fetch(request)));

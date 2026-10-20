@@ -4,8 +4,11 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "ipynb.ashwingopalsamy.in", "custom_domain": true }],
+  "main": "tools/worker.js",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/link/*"]
   }
 }

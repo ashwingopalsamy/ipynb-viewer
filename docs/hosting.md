@@ -23,6 +23,8 @@ Cloudflare applies `dist/_headers` to every response. Pages cannot set headers, 
 - The page policy allows scripts from the site itself plus the hash of the theme script, and nothing else: no network requests, frames or plugins. Inline styles are allowed for the components and KaTeX.
 - `Referrer-Policy: no-referrer`, `nosniff`, HSTS and a locked-down `Permissions-Policy` apply everywhere.
 - Hashed files under `/assets/` are cached for a year; fonts for a week.
+- `/link/*` is served by `tools/worker.js`, which relays public files from raw.githubusercontent.com, gist.githubusercontent.com and api.github.com/gists. That is why the page keeps `connect-src 'self'`. Other hosts are not opened on this copy; the mirror fetches directly.
+- Gist links without a user name need GitHub's listing API, which allows 60 requests an hour per IP and Cloudflare's addresses are shared. If those start failing with 403, set a token with no scopes: `npx wrangler secret put GITHUB_TOKEN`. The Worker sends it only to api.github.com.
 
 ## Routing
 

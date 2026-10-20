@@ -42,7 +42,7 @@
   let run = 0;
   let depth = 0;
 
-  async function open(file: File, handle?: FileSystemFileHandle) {
+  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle) {
     const mine = ++run;
     // The notebook the reader is in stays until the new file proves to be one: its first piece is what replaces it.
     let fresh = true;
@@ -72,7 +72,7 @@
 
     try {
       const notebook = await readNotebook(file.stream(), (event) => {
-        if (mine !== run) return;
+        if (mine !== run) throw new Error('superseded');
         if (fresh) begin();
         if (event.type === 'cell') {
           batch.push(event.cell);
@@ -92,7 +92,7 @@
       flush();
       ready = true;
       document.title = `${file.name} · ipynb viewer`;
-      if (handle) {
+      if (handle && file instanceof File) {
         const { watch } = await import('./lib/watch');
         if (mine === run) {
           stop = watch(handle, file, () => cells, (u) => {
@@ -108,7 +108,13 @@
       if (mine !== run) return;
       const why = e instanceof Error ? e.message : String(e);
       // a file that fails before anything of it was drawn leaves the reader where they were
-      if (fresh && cells.length) import('./lib/notice').then((m) => m.say(`${file.name} would not open. ${why}`));
+      // an error after cells were drawn (a download that stopped) keeps what arrived and says so, rather than throwing it away
+      if (!fresh) flush();
+      if (!fresh && cells.length) {
+        ready = true;
+        warnings = [...warnings, `The rest of ${file.name} did not arrive. ${why}`];
+        import('./lib/notice').then((m) => m.say(`${file.name} stopped partway. ${why}`));
+      } else if (fresh && cells.length) import('./lib/notice').then((m) => m.say(`${file.name} would not open. ${why}`));
       else (status = 'error'), (detail = why);
     }
   }
@@ -116,7 +122,7 @@
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
   if (/[?#](?:url|nb)=/.test(location.href)) {
     status = 'fetching';
-    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => run || open(file), (why) => run || ((status = 'error'), (detail = why))));
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file)), (why) => run || ((status = 'error'), (detail = why))));
   }
 
   if (file) open(file, handle);
@@ -187,7 +193,7 @@
   </div>
 </header>
 
-<OpenPanel onfile={(f) => open(f)} onchoose={choose} />
+<OpenPanel onchoose={choose} />
 
 {#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
 

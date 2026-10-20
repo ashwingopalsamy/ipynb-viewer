@@ -40,6 +40,11 @@ const INTERNAL = /(?:^|\.)(?:localhost|local|internal|lan|home|corp|intranet|pri
 const NOT_A_FILE = 'That is a GitHub page, not a file. Open the notebook there and copy the address from its page.';
 const PRIVATE = 'Addresses on a local or private network are not opened.';
 
+/** On the Cloudflare copy the page may only talk to its own site (connect-src 'self'), which fetches GitHub's files for it: tools/worker.js. */
+const RELAY = import.meta.env.MODE === 'cloudflare';
+const VIA = new Set(['raw.githubusercontent.com', 'gist.githubusercontent.com', 'api.github.com']);
+const relay = (url: URL, here: URL) => (RELAY && VIA.has(url.hostname) ? new URL(`${import.meta.env.BASE_URL}link/${url.hostname}${url.pathname}`, here) : url);
+
 const loopback = (host: string) => host === 'localhost' || host.endsWith('.localhost') || /^127\./.test(host) || host === '[::1]';
 
 function reserved(host: string): boolean {
@@ -119,6 +124,7 @@ export function resolve(input: string, here: URL): Plan {
     if (parts[0] === 'drive') throw new Fail('Notebooks in Google Drive cannot be opened from a link. Download the file and drop it here.');
   }
   if (host === 'drive.google.com') throw new Fail('Files in Google Drive cannot be opened from a link. Download the file and drop it here.');
+  if (RELAY && url.origin !== here.origin && !VIA.has(url.hostname)) throw new Fail('This site opens links to GitHub files and gists. Download the notebook and drop it here instead.');
   return { kind: 'file', url };
 }
 
@@ -129,6 +135,8 @@ const webPage = () => new Fail('That address returned a web page, not a notebook
 const bigListing = () => new Fail('GitHub sent back more than expected for that gist.');
 
 function refused(status: number, url: URL): Fail {
+  if (status === 413) return tooBig();
+  if (status === 415) return webPage();
   const gh = /(?:^|\.)github(?:usercontent)?\.com$/.test(url.hostname);
   if (status === 404) {
     return new Fail(
@@ -157,13 +165,21 @@ interface Got {
   modified: number;
 }
 
+interface Opened {
+  url: URL;
+  modified: number;
+  /** The body as it arrives, checked on the way: not a web page, under the limit, and given up on when the server goes quiet. Every failure is a Fail. */
+  body: ReadableStream<Uint8Array>;
+}
+
 /**
  * One download. Nothing is sent with it that could identify the reader or the page: no cookies, no referrer and no
  * headers of our own (so the browser never has to ask the server's permission first). The size is checked against what
  * the server announces and again against what actually arrives, and a server that goes quiet is given up on.
  * A `listing` is gist metadata: smaller allowance, and it is not expected to look like a notebook.
+ * It resolves once the headers are good; the body is checked as it is read.
  */
-async function download(url: URL, say: (text: string) => void, env: Env, kind: 'notebook' | 'listing'): Promise<Got> {
+async function connect(url: URL, say: (text: string) => void, env: Env, kind: 'notebook' | 'listing'): Promise<Opened> {
   const notebook = kind === 'notebook';
   const limit = notebook ? LIMIT : LISTING;
   const over = (n?: number) => (notebook ? tooBig(n) : bigListing());
@@ -188,16 +204,17 @@ async function download(url: URL, say: (text: string) => void, env: Env, kind: '
           );
   say(host);
   watch();
+  const via = relay(url, env.here);
+  let res: Response;
+  let end = url;
   try {
-    let res: Response;
     try {
-      res = await env.fetch(url.href, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'follow', signal: ctl.signal });
+      res = await env.fetch(via.href, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'follow', signal: ctl.signal });
     } catch {
       throw lost();
     }
     watch();
-    let end = url;
-    if (res.url && res.url !== url.href) {
+    if (via === url && res.url && res.url !== url.href) {
       try {
         end = new URL(res.url);
         admit(end, env.here);
@@ -219,46 +236,69 @@ async function download(url: URL, say: (text: string) => void, env: Env, kind: '
       res.body?.cancel().catch(() => {});
       throw webPage();
     }
-    const modified = Date.parse(res.headers.get('last-modified') ?? '') || Date.now();
-    if (!res.body) {
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+  const modified = Date.parse(res.headers.get('last-modified') ?? '') || Date.now();
+  if (!res.body) {
+    try {
       const blob = await res.blob();
       if (blob.size > limit) throw over(blob.size);
-      return { blob, url: end, modified };
+      return { body: blob.stream(), url: end, modified };
+    } finally {
+      clearTimeout(timer);
     }
-    const reader = res.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    let shown = 0;
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
+  }
+  const reader = res.body.getReader();
+  let total = 0;
+  let shown = 0;
+  const body = new ReadableStream<Uint8Array>({
+    async pull(c) {
+      try {
+        // the stall timer runs only while the server is being waited on, not while the reader is busy with what it has
         watch();
-        if (!total && notebook && /^\s*</.test(new TextDecoder().decode(value.subarray(0, 64)))) {
-          reader.cancel().catch(() => {});
-          throw webPage();
-        }
+        const { done, value } = await reader.read();
+        clearTimeout(timer);
+        if (done) return c.close();
+        if (!total && notebook && /^\s*</.test(new TextDecoder().decode(value.subarray(0, 64)))) throw webPage();
         total += value.length;
         if (total > limit) {
           reason = 'big';
           ctl.abort();
-          reader.cancel().catch(() => {});
           throw over();
         }
-        chunks.push(value);
+        c.enqueue(value);
         const now = performance.now();
         if (notebook && now - shown > 150) {
           shown = now;
           say(`${host} · ${size(total)}`);
         }
+      } catch (e) {
+        clearTimeout(timer);
+        reader.cancel().catch(() => {});
+        c.error(e instanceof Fail ? e : lost());
       }
-    } catch (e) {
-      throw e instanceof Fail ? e : lost();
-    }
-    return { blob: new Blob(chunks as BlobPart[]), url: end, modified };
-  } finally {
-    clearTimeout(timer);
+    },
+    cancel() {
+      clearTimeout(timer);
+      return reader.cancel().catch(() => {});
+    },
+  });
+  return { body, url: end, modified };
+}
+
+/** The whole of a download, for a gist listing and for fetchLink. */
+async function download(url: URL, say: (text: string) => void, env: Env, kind: 'notebook' | 'listing'): Promise<Got> {
+  const got = await connect(url, say, env, kind);
+  const reader = got.body.getReader();
+  const chunks: Uint8Array[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
   }
+  return { blob: new Blob(chunks as BlobPart[]), url: got.url, modified: got.modified };
 }
 
 /** A name that is safe to show in the header: no control or direction-changing characters, and not absurdly long. */
@@ -332,6 +372,17 @@ export async function fetchLink(input: string, say: (text: string) => void, env:
   return new File([got.blob], plan.name ?? called(got.url), { type: 'application/json', lastModified: got.modified });
 }
 
+/**
+ * The same download, handed over as it arrives so the first cells are drawn while the rest is on its way. A gist's file is found
+ * through its listing first and comes whole.
+ */
+async function streamLink(input: string, say: (text: string) => void, env: Env = live()): Promise<Pick<File, 'name' | 'stream'>> {
+  const plan = resolve(input, env.here);
+  if (plan.kind === 'gist') return fromGist(plan, say, env);
+  const got = await connect(plan.url, say, env, 'notebook');
+  return { name: plan.name ?? called(got.url), stream: () => got.body };
+}
+
 /** Asks before anything is fetched: the site named in a shared link will see the reader's address. */
 async function ask(host: string, href: string): Promise<boolean> {
   const [{ default: Gate }, { trust }] = await Promise.all([import('./Gate.svelte'), import('./netstate.svelte')]);
@@ -342,6 +393,7 @@ async function ask(host: string, href: string): Promise<boolean> {
       props: {
         host,
         url: href,
+        via: RELAY,
         answer: (go: boolean, always: boolean) => {
           box.remove();
           if (go && always) trust(host);
@@ -356,7 +408,7 @@ async function ask(host: string, href: string): Promise<boolean> {
  * The address carried `?url=` or `#nb=`. A notebook in the link opens at once; a `url` asks unless the reader already trusts that site, then fetch it and hand the file (or
  * the reason it failed) back. Saying no returns to the empty screen with nothing requested.
  */
-export async function start(href: string, say: (text: string) => void, done: (file: File) => void, fail: (why: string) => void) {
+export async function start(href: string, say: (text: string) => void, done: (file: Pick<File, 'name' | 'stream'>) => void, fail: (why: string) => void) {
   const link = new URL(href);
   // a notebook carried in the address needs no request at all
   if (link.hash.includes('nb=')) {
@@ -373,29 +425,33 @@ export async function start(href: string, say: (text: string) => void, done: (fi
     const here = new URL(location.href);
     const plan = resolve(input, here);
     const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
-    if (target.origin !== here.origin && !(await import('./netstate.svelte')).trusted(target.host)) {
+    if (target.origin !== here.origin && history.state?.asked !== input && !(await import('./netstate.svelte')).trusted(target.host)) {
       say('Waiting for you');
       if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return location.replace(location.pathname + location.hash);
     }
   } catch (e) {
     return fail((e as Error).message);
   }
-  fetchLink(input, say).then(done, (e) => fail(e.message));
+  streamLink(input, say).then(done, (e) => fail(e.message));
 }
 
 /**
- * A link typed into the open page. It asks the same question as a link in the address bar, but declining keeps the notebook on screen and
- * resolves with nothing, rather than sending the reader back to the empty page.
+ * A link typed into the open page. A page that has shown a notebook has shut its own connections (guard.ts, netstate lock) and a
+ * policy cannot be loosened, so the link opens on a fresh page, the way a shared link arrives. The question is asked here first, so
+ * declining keeps the notebook on screen; a yes travels with the new history entry so the new page does not ask again.
+ * Resolves false when declined; true when the page is reloading with the link.
  */
-export async function requested(input: string, say: (text: string) => void): Promise<File | null> {
+export async function requested(input: string, say: (text: string) => void): Promise<boolean> {
   const here = new URL(location.href);
   const plan = resolve(input, here);
   const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
   if (target.origin !== here.origin && !(await import('./netstate.svelte')).trusted(target.host)) {
     say('Waiting for you');
-    if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return null;
+    if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return false;
   }
-  return fetchLink(input, say);
+  history.pushState({ asked: input }, '', `${location.pathname}?url=${encodeURIComponent(input)}`);
+  location.reload();
+  return true;
 }
 
 /** A link pasted on the empty screen reloads the page with it, so the download always comes before anything is drawn. */
