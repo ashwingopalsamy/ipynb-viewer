@@ -4,15 +4,84 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
-<meta name="description" content="A viewer for Jupyter notebooks that runs nothing and sends nothing. Drop a file and read it." />
+<meta name="description" content="Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ipynb viewer" />
+<meta property="og:title" content="ipynb viewer: open Jupyter notebooks online, privately" />
+<meta property="og:description" content="Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="theme-color" content="#f5f5f7" />
 <link rel="icon" href="/favicon.svg" />
 <link rel="manifest" href="/manifest.webmanifest" />
 <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
-<title>ipynb viewer</title>
+<title>ipynb viewer: open Jupyter notebooks online, privately</title>
+<!--site:alt-->
 <link id="landing" rel="stylesheet" href="/src/about/about.css" />
 <script>
 !function(d,t){try{t=localStorage.theme}catch(e){}d=document.documentElement;/[?#](?:url|nb)=/.test(location.href)&&d.classList.add('opening');d.dataset.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}()
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://ipynb.ashwingopalsamy.in/#app",
+      "name": "ipynb viewer",
+      "url": "https://ipynb.ashwingopalsamy.in/",
+      "description": "Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "A current browser with JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": 0,
+        "priceCurrency": "USD"
+      },
+      "isAccessibleForFree": true,
+      "featureList": [
+        "Search across text, code and outputs",
+        "Every plot on one figures shelf, each saved as an image",
+        "Live refresh when the notebook changes on disk, in Chromium browsers",
+        "Run order view",
+        "Share by link, with the notebook after the #",
+        "Cell screenshots",
+        "Copy as Markdown",
+        "Keyboard shortcuts for every action"
+      ],
+      "image": "https://ipynb.ashwingopalsamy.in/social-preview.png",
+      "license": "https://opensource.org/licenses/MIT",
+      "author": {
+        "@type": "Person",
+        "name": "Ashwin Gopalsamy",
+        "url": "https://ashwingopalsamy.in",
+        "sameAs": "https://github.com/ashwingopalsamy"
+      },
+      "sameAs": [
+        "https://github.com/ashwingopalsamy/ipynb-viewer"
+      ],
+      "about": {
+        "@type": "Thing",
+        "name": "Jupyter Notebook",
+        "sameAs": "https://en.wikipedia.org/wiki/Project_Jupyter"
+      }
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "ipynb viewer",
+      "codeRepository": "https://github.com/ashwingopalsamy/ipynb-viewer",
+      "programmingLanguage": [
+        "TypeScript",
+        "Svelte"
+      ],
+      "license": "https://opensource.org/licenses/MIT",
+      "targetProduct": {
+        "@id": "https://ipynb.ashwingopalsamy.in/#app"
+      }
+    },
+    <!--site:faq-ld-->
+  ]
+}
 </script>
 <script type="module" src="/src/about/about.ts"></script>
 </head>
@@ -43,6 +112,7 @@
         <input name="url" type="url" inputmode="url" placeholder="Paste a GitHub or gist link to a notebook" aria-label="Link to a notebook" autocomplete="off" spellcheck="false" />
         <button type="submit">Open</button>
       </form>
+      <a class="more" href="open-from-github/">Which links work</a>
     </div>
     <a class="next" href="#how"><span>How it works</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a>
   </section>
@@ -59,7 +129,7 @@
   <section class="block reveal">
     <h2><i>2</i>Your file stays here.</h2>
     <p>After the first visit the app keeps its own files on your device, <!--fact:files--> files and about <!--fact:offline--> to download once. Open a notebook with the wifi off and it still opens.</p>
-    <p>Once a notebook is open, the page shuts its own connections. The browser enforces that, so even a bug in the app could not send your file out. A picture that lives on the web waits for your yes, and the Privacy sheet in Settings counts what the page has sent since the notebook opened.</p>
+    <p>Once a notebook is open, the page shuts its own connections. The browser enforces that, so even a bug in the app could not send your file out. A picture that lives on the web waits for your yes, and the Privacy sheet in Settings counts what the page has sent since the notebook opened. <a href="privacy/">How the privacy model works</a>.</p>
     <figure class="sheet" role="img" aria-label="The Privacy sheet: zero requests, offline copy ready, connections closed.">
       <div class="tally"><b>0</b><span>requests left this page since the notebook opened.</span></div>
       <dl>
@@ -129,6 +199,11 @@
     </dl>
   </section>
 
+  <section class="block reveal" id="faq">
+    <h2><i>8</i>Questions.</h2>
+    <!--site:faq-->
+  </section>
+
   </div>
 </main>
 <footer>
@@ -137,6 +212,12 @@
     <a href="https://github.com/ashwingopalsamy/ipynb-viewer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4M9 18c-4.51 2-5-2-7-2"/></svg>GitHub</a>
     <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/SECURITY.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Security</a>
     <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/CHANGELOG.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>Changelog</a>
+  </nav>
+  <nav class="links" aria-label="Guides">
+    <a href="open-from-github/">Open from GitHub</a>
+    <a href="privacy/">Privacy</a>
+    <a href="compare/">Compared with nbviewer, GitHub and Colab</a>
+    <a href="agents/">For agents</a>
   </nav>
   <p class="by"><a href="https://ashwingopalsamy.in" rel="noopener" referrerpolicy="no-referrer"><img src="/ashwin.webp" width="22" height="22" alt="" decoding="async" />With love by Ashwin Gopalsamy.</a> Not affiliated with Project Jupyter.</p>
 </footer>

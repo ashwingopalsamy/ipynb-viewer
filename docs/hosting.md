@@ -14,13 +14,13 @@ npm run deploy        # build, add headers and the 404 page, publish
 
 `npm run deploy:dry` builds and checks the upload without publishing. `npm run build:pages` builds the mirror copy locally.
 
-`tools/site.mjs` finishes each build: it adds the canonical link, writes `404.html`, and for the Cloudflare copy writes `dist/_headers`.
+`tools/site.mjs` finishes each build: it adds the canonical link and social tags to every page, writes `404.html`, and for the Cloudflare copy writes `dist/_headers`, `_redirects` (the old `/viewer/` address), `robots.txt` and `sitemap.xml`. The guide pages, their Markdown copies and `llms.txt` are written from `site/*.md` by the `pages` plugin in `vite.config.ts`. Set `ORIGIN_TRIAL_TOKEN` when deploying to add a Chrome origin-trial tag for the WebMCP tools.
 
 ## Headers
 
 Cloudflare applies `dist/_headers` to every response. Pages cannot set headers, so the mirror has none.
 
-- The page policy allows scripts from the site itself plus the hash of the theme script, and nothing else: no network requests, frames or plugins. Inline styles are allowed for the components and KaTeX.
+- The page policy allows scripts from the site itself plus the hash of the theme script, and nothing else: requests only to the site itself, and no frames or plugins. Inline styles are allowed for the components and KaTeX.
 - `Referrer-Policy: no-referrer`, `nosniff`, HSTS and a locked-down `Permissions-Policy` apply everywhere.
 - Hashed files under `/assets/` are cached for a year; fonts for a week.
 - `/link/*` is served by `tools/worker.js`, which relays public files from raw.githubusercontent.com, gist.githubusercontent.com and api.github.com/gists. That is why the page keeps `connect-src 'self'`. Other hosts are not opened on this copy; the mirror fetches directly.
