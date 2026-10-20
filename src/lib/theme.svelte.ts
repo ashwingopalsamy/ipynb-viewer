@@ -12,10 +12,13 @@ const stored = (): Theme | null => {
 
 export const theme = $state<{ value: Theme }>({ value: root.dataset.theme === 'dark' ? 'dark' : 'light' });
 
+// The browser's own chrome (an installed window's title bar, a phone's address bar) follows the page, not the system.
 function apply(value: Theme) {
   theme.value = value;
   root.dataset.theme = value;
+  (document.getElementsByName('theme-color')[0] as HTMLMetaElement).content = value === 'dark' ? '#0a0a0c' : '#f5f5f7';
 }
+apply(theme.value);
 
 export function toggleTheme() {
   const next: Theme = theme.value === 'dark' ? 'light' : 'dark';

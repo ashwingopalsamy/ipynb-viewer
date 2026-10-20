@@ -1,0 +1,52 @@
+/* A picture at the size of the screen. */
+.lb {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  background: color-mix(in srgb, var(--page) 88%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms var(--out), visibility 0s 200ms;
+}
+.lb.on { opacity: 1; visibility: visible; transition-delay: 0s; }
+.lb .lb-box { position: absolute; inset: 0; outline: 0; }
+.lb .lb-view { position: absolute; inset: 0; display: flex; overflow: auto; padding: 64px 24px 56px; overscroll-behavior: contain; }
+.lb .lb-pic { display: block; margin: auto; padding: 0; border-radius: 10px; corner-shape: squircle; cursor: zoom-in; transform: scale(0.97); transition: transform 220ms var(--pop); }
+.lb.on .lb-pic { transform: none; }
+.lb .full .lb-pic { cursor: zoom-out; }
+.lb img { display: block; max-width: calc(100vw - 48px); max-height: calc(100vh - 120px); max-height: calc(100dvh - 120px); border-radius: inherit; background: var(--paper); box-shadow: var(--float); }
+.lb img.plate { background: #f3f3f5; }
+.lb .full img { max-width: none; max-height: none; }
+
+.lb .lb-x, .lb .lb-go, .lb .lb-count { position: absolute; z-index: 1; }
+.lb .lb-x, .lb .lb-go {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  color: var(--fg-2);
+  transition: transform 200ms var(--rel);
+}
+.lb .lb-x:hover, .lb .lb-go:hover:not(:disabled) { color: var(--fg); }
+.lb .lb-x:active, .lb .lb-go:active:not(:disabled) { transform: scale(0.94); transition-duration: 100ms; }
+.lb .lb-go:disabled { opacity: 0.35; cursor: default; }
+.lb .lb-x { top: 12px; right: 16px; }
+.lb .lb-go { top: 50%; margin-top: -22px; }
+.lb .lb-prev { left: 16px; }
+.lb .lb-next { right: 16px; }
+.lb .lb-x:focus-visible, .lb .lb-go:focus-visible { outline-offset: 2px; }
+.lb .lb-count { left: 0; right: 0; bottom: 16px; margin: 0; text-align: center; font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-3); pointer-events: none; }
+@media (max-width: 720px) {
+  .lb .lb-view { padding: 64px 8px 56px; }
+  .lb img { max-width: calc(100vw - 16px); }
+  .lb .lb-go { top: auto; bottom: 8px; margin: 0; }
+  .lb .lb-prev { left: 16px; }
+  .lb .lb-next { right: 16px; }
+}

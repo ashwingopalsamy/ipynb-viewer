@@ -27,9 +27,9 @@
 
 ## Read a notebook
 
-Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in) and drop a `.ipynb` anywhere on the page.
+Open the [viewer](https://ipynb.ashwingopalsamy.in/viewer/) and drop a `.ipynb` anywhere on the page. The [home page](https://ipynb.ashwingopalsamy.in) explains what it does and shows the numbers behind it.
 
-The file never leaves your browser. There is no server to send it to, and no code in it ever runs. If you only want to see what a notebook says, you no longer need a kernel for it.
+The file never leaves your browser. There is no server to send it to, and no code in it ever runs. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
 ## What it does
 
@@ -39,6 +39,8 @@ The file never leaves your browser. There is no server to send it to, and no cod
 - **Puts figures first.** One tap lays every plot out on a shelf, and each one saves as an image.
 - **Shares a cell as a picture.** Press `s` and a cell becomes a clean image, ready for a post or a doc.
 - **Keeps up with your work.** In Chromium browsers, a notebook you dropped refreshes when it changes on disk.
+- **Checks before you share.** One sheet finds keys and tokens in a notebook, lists what it needs to run, shows what makes it heavy and makes a link with the notebook inside it.
+- **Compares versions.** Put two notebooks side by side, cell by cell, outputs included.
 
 Every shortcut is in [docs/shortcuts.md](docs/shortcuts.md), or press `?` in the app. To try it on something real, drop [examples/cooling-coffee.ipynb](examples/cooling-coffee.ipynb).
 

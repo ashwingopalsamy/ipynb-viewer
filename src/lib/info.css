@@ -1,0 +1,20 @@
+/* The notebook sheet and the comparison */
+#pop-info, #pop-compare { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+.pane { display: grid; gap: 8px; }
+.info .fld .switch { width: auto; height: auto; padding: 0 12px 0 0; }
+.info .fld .switch::before { display: none; }
+
+.diff { display: grid; gap: 6px; padding: 8px; }
+.diff h3 { margin: 4px 4px 2px; font: 600 14px/1.35 var(--sans); }
+.diff .tally { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 4px 6px; font-size: 13px; color: var(--fg-2); }
+.change { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; corner-shape: squircle; background: var(--well-2); text-align: left; font-size: 13px; }
+button.change:hover { background: color-mix(in srgb, var(--well-2) 100%, var(--fg) 6%); }
+.change header { display: flex; align-items: center; gap: 8px; }
+.change .kind { padding: 1px 8px; border-radius: 999px; background: var(--well); font-size: 11.5px; font-weight: 600; }
+.change .kind.added { background: color-mix(in srgb, var(--ran, #1d8a4a) 16%, transparent); }
+.change .kind.removed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.change pre { margin: 0; overflow-x: auto; font: 12px/1.5 var(--mono); white-space: pre; }
+.change pre i { display: block; font-style: normal; }
+.change pre .plus { background: color-mix(in srgb, var(--ran, #1d8a4a) 14%, transparent); }
+.change pre .minus { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.change pre .dots { color: var(--fg-3); }

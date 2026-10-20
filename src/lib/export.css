@@ -18,6 +18,8 @@
   transform: scale(0.92);
   transition: opacity 150ms var(--out), transform 200ms var(--rel);
 }
+.zoom { display: block; padding: 0; border-radius: 10px; corner-shape: squircle; cursor: zoom-in; }
+.zoom:focus-visible { outline-offset: 2px; }
 .pic:hover .save, .pic:focus-within .save, .save[aria-expanded='true'] { opacity: 1; transform: none; }
 .save:hover { color: var(--fg); }
 .save:active { transform: scale(0.94); transition-duration: 100ms; }
@@ -34,6 +36,8 @@
 .fig .note:empty { display: none; }
 .fig .note.bad { color: var(--danger); }
 .fig .btns { display: flex; gap: 8px; justify-content: flex-end; }
+.fig .cat { margin: 8px 8px 2px; }
+.fig .cap { margin: 6px 8px 0; font: 12px/1.4 var(--sans); color: var(--fg-3); }
 
 .btn {
   position: relative;

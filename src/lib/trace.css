@@ -1,0 +1,46 @@
+/* Name tracing: a ring on every cell that defines or uses the name, the name itself marked in the code,
+   and a dot on the rail beside each chapter it appears in. */
+.notebook > .t-def > .card { outline: 1.5px solid var(--accent); }
+.notebook > .t-use > .card { outline: 1.5px solid color-mix(in srgb, var(--accent) 38%, transparent); }
+::highlight(trace) { background-color: color-mix(in srgb, var(--accent) 24%, transparent); }
+
+.tr[data-t]::before { content: ''; flex: none; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; background: var(--accent); }
+.tr[data-t='use']::before { width: 4px; height: 4px; opacity: 0.55; }
+
+.tpill {
+  position: fixed;
+  z-index: 12;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  max-width: calc(100vw - 24px);
+  padding: 0 6px 0 16px;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  color: var(--fg-2);
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 8px) scale(0.97);
+  transition: opacity 150ms var(--in), transform 150ms var(--in), visibility 0s 150ms;
+}
+.tpill.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity 200ms var(--out), transform 250ms var(--pop), visibility 0s; }
+.tpill code { max-width: 16ch; overflow: hidden; text-overflow: ellipsis; font: 600 13px/1 var(--mono); color: var(--fg); }
+.tpill .key { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.tpill .key i { width: 10px; height: 10px; box-sizing: border-box; border-radius: 3px; border: 1.5px solid var(--accent); }
+.tpill .key i.use { border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
+.go { display: flex; gap: 2px; margin-left: 2px; }
+.go button { position: relative; isolation: isolate; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-3); transition: transform 200ms var(--rel); }
+.go button::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.go button:hover { color: var(--fg); }
+.go button:hover::before { opacity: 0.08; }
+.go button:active { transform: scale(0.94); transition-duration: 100ms; }
+.go button:focus-visible { outline-offset: -2px; }
+@media (pointer: coarse) { .go button { width: 44px; height: 44px; } .tpill { padding-right: 0; } }

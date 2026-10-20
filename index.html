@@ -1,29 +1,142 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="Jupyter notebooks, without Jupyter." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>ipynb viewer</title>
-    <script>
-      (function () {
-        var t, w, p;
-        try {
-          t = localStorage.getItem('theme');
-          w = localStorage.getItem('width');
-          p = localStorage.getItem('pf');
-        } catch (e) {}
-        if (p) document.documentElement.dataset.pf = p;
-        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.dataset.theme = t;
-        document.documentElement.dataset.width = w === 'wide' ? 'wide' : 'normal';
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<meta name="description" content="A viewer for Jupyter notebooks that runs nothing and sends nothing. Drop a file and read it." />
+<meta name="theme-color" content="#f5f5f7" />
+<link rel="icon" href="/favicon.svg" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+<title>ipynb viewer</title>
+<link id="landing" rel="stylesheet" href="/src/about/about.css" />
+<script>
+!function(d,t){try{t=localStorage.theme}catch(e){}d=document.documentElement;/[?#](?:url|nb)=/.test(location.href)&&d.classList.add('opening');d.dataset.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}()
+</script>
+<script type="module" src="/src/about/about.ts"></script>
+</head>
+<body>
+<div id="home">
+<header class="bar">
+  <div class="inner">
+    <span class="name pill"><img src="mark.svg" alt="" width="17" height="20" style="flex:none" />ipynb viewer</span>
+    <div class="tools pill">
+      <button class="icon swap theme" type="button" aria-label="Switch theme" title="Switch theme">
+        <span class="glyph moon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+        <span class="glyph sun"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+      </button>
+    </div>
+  </div>
+</header>
+<main class="home">
+  <section class="first">
+    <div class="hero">
+      <svg class="logo" viewBox="0 0 40 48" aria-hidden="true"><rect width="40" height="48" rx="10" fill="#1d1d1f"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></svg>
+      <h1>Jupyter notebooks, <span>without Jupyter.</span></h1>
+      <p class="lede">Drop a file and read it. Nothing runs, and nothing is sent anywhere.</p>
+      <button class="ask" type="button" data-choose aria-label="Choose a notebook, drop one here, or paste a link">
+        <svg class="up" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+        <span>Paste a link, drop a file, or click to choose</span>
+      </button>
+    </div>
+    <a class="next" href="#how"><span>How it works</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a>
+  </section>
+  <div id="how">
+  <section class="block reveal">
+    <h2><i>1</i>A notebook is a document.</h2>
+    <p>Opening one usually means starting a server, and sharing one means putting it on somebody else&rsquo;s. This viewer reads the file where it is, in your browser, and never runs a line of it.</p>
+    <figure class="paths" role="img" aria-label="Elsewhere a notebook goes to a server and then to a page. Here it goes straight to the page.">
+      <div class="lane"><b>Elsewhere</b><span class="node">notebook</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node cloud">server</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node">page</span></div>
+      <div class="lane here"><b>Here</b><span class="node">notebook</span><svg class="arrow long" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h116m-5-5 5 5-5 5"/></svg><span class="node">page</span></div>
+    </figure>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>2</i>Your file stays here.</h2>
+    <p>After the first visit the app keeps its own files on your device, <!--fact:files--> files and about <!--fact:offline--> to download once. Open a notebook with the wifi off and it still opens.</p>
+    <p>Once a notebook is open, the page shuts its own connections. The browser enforces that, so even a bug in the app could not send your file out. A picture that lives on the web waits for your yes, and the Privacy sheet in Settings counts what the page has sent since the notebook opened.</p>
+    <figure class="sheet" role="img" aria-label="The Privacy sheet: zero requests, offline copy ready, connections closed.">
+      <div class="tally"><b>0</b><span>requests left this page since the notebook opened.</span></div>
+      <dl>
+        <div><dt>Offline copy</dt><dd>Ready</dd></div>
+        <div><dt>Connections</dt><dd>Closed</dd></div>
+        <div><dt>Web pictures</dt><dd>Asked per notebook</dd></div>
+      </dl>
+      <figcaption>The Privacy sheet, in Settings.</figcaption>
+    </figure>
+    <p class="check">To check it yourself, switch the wifi off, reload, and drop a notebook.</p>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>3</i>Small on purpose.</h2>
+    <p>The first screen weighs <b><!--fact:core--></b> gzipped. Everything else, from math to code highlighting, downloads only when a notebook needs it, so a notebook with no formulas never fetches the maths.</p>
+    <figure class="chart" role="img" aria-label="Download size by part, gzipped. The first screen is the smallest part.">
+      <!--fact:chart-->
+      <figcaption>Gzipped, from this build. A notebook loads the parts it uses, and highlighting loads one language at a time.</figcaption>
+    </figure>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>4</i>Cells appear while the file is still being read.</h2>
+    <p>The parser works through the file in chunks and hands over each cell the moment it is whole. On a <!--fact:benchsize--> notebook with <!--fact:benchcells--> cells, the first cell is ready after <b><!--fact:benchfirst--></b> and the whole file is read in <b><!--fact:benchtotal--></b>.</p>
+    <figure class="stream" role="img" aria-label="A timeline: the first cell arrives almost at once and the rest follow until the file is read.">
+      <div class="rail"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div>
+      <div class="scale"><span>0</span><span>first cell, <!--fact:benchfirst--></span><span>file read, <!--fact:benchtotal--></span></div>
+      <figcaption><!--fact:benchnote--></figcaption>
+    </figure>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>5</i>A notebook is untrusted input.</h2>
+    <p>Markdown and HTML outputs are cleaned before they are shown, and styles that could fetch anything are dropped. An output that carries a script waits behind a button and runs in a sandboxed frame that cannot reach your page, or the network unless you turn that on.</p>
+    <figure class="safe" role="img" aria-label="Markup goes through a cleaner to the page. A script waits for a click and runs in a sandbox with no network.">
+      <div class="lane"><b>Markup</b><span class="node">notebook</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node keep">cleaner</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node">page</span><span class="drop">drops <code>onerror=&hellip;</code></span></div>
+      <div class="lane"><b>Scripts</b><span class="node">notebook</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node click">your click</span><svg class="arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h36m-5-5 5 5-5 5"/></svg><span class="node box">sandbox, no network</span></div>
+    </figure>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>6</i>Made for reading.</h2>
+    <ul class="tiles">
+      <li><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><b>Search</b><span>Across text, code and outputs, with each match marked in its cell.</span></li>
+      <li><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="4"/><circle cx="9" cy="10" r="1.5"/><path d="M4 16.5l4.6-4.3a1.5 1.5 0 0 1 2 0l5.4 5.1M14 15.4l1.2-1.1a1.5 1.5 0 0 1 2 0l3.3 3"/></svg><b>Figures</b><span>Every plot on one shelf, and each one saves as an image.</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M19 8a7.5 7.5 0 0 0-13.4-1.5M5 4v3h3M5 16a7.5 7.5 0 0 0 13.4 1.5M19 20v-3h-3"/></svg><b>Live refresh</b><span>Save the notebook and the view follows, in Chromium browsers.</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M7 7h1v4M7 17h2.5l-2.5 3h3M14 8h5M14 12h5M14 16h3"/></svg><b>Run order</b><span>See the cells in the order they ran, and the ones that ran out of turn.</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><b>Share by link</b><span>The link carries the notebook after the #, so no server sees it.</span></li>
+      <li><svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="12" rx="3.5"/><circle cx="12" cy="12.5" r="3"/><path d="M9 6.5l1-2h4l1 2"/></svg><b>Screenshots</b><span>Press s for a clean image of a cell, ready for a post or a doc.</span></li>
+      <li><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="3.5"/><path d="M7 15v-5l2.5 3 2.5-3v5M16 10v5m-2-2 2 2 2-2"/></svg><b>Copy as Markdown</b><span>The notebook as text, for a doc or for a model.</span></li>
+      <li><svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="11" rx="3.5"/><path d="M7.5 11h.01M11 11h.01M14.5 11h.01M8 14h8"/></svg><b>Keyboard</b><span>Every action has a key. Press ? in the app for the list.</span></li>
+    </ul>
+  </section>
+
+  <section class="block reveal">
+    <h2><i>7</i>Keys.</h2>
+    <p>Single keys, nothing to learn twice. They stand down in text fields and when you hold a modifier.</p>
+    <dl class="keys">
+      <div><dt><kbd>j</kbd><kbd>k</kbd></dt><dd>Next or previous cell</dd></div>
+      <div><dt><kbd>[</kbd><kbd>]</kbd></dt><dd>Previous or next heading</dd></div>
+      <div><dt><kbd>t</kbd></dt><dd>Contents</dd></div>
+      <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
+      <div><dt><kbd>f</kbd></dt><dd>Trace the selected name</dd></div>
+      <div><dt><kbd>s</kbd></dt><dd>Save a cell as an image</dd></div>
+      <div><dt><kbd>m</kbd></dt><dd>Copy as Markdown</dd></div>
+      <div><dt><kbd>?</kbd></dt><dd>The full list</dd></div>
+    </dl>
+  </section>
+
+  </div>
+</main>
+<footer>
+  <nav class="links" aria-label="Project">
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/LICENSE"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>MIT licence</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4M9 18c-4.51 2-5-2-7-2"/></svg>GitHub</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/SECURITY.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Security</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/CHANGELOG.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>Changelog</a>
+  </nav>
+  <p class="by"><a href="https://ashwingopalsamy.in" rel="noopener" referrerpolicy="no-referrer"><img src="/ashwin.webp" width="22" height="22" alt="" decoding="async" />With love by Ashwin Gopalsamy.</a> Not affiliated with Project Jupyter.</p>
+</footer>
+<input id="picker" type="file" accept=".ipynb,.json,application/json" hidden />
+</div>
+</body>
 </html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Interactive output</title>
+<script>
+// The page an interactive output runs in. The app opens it in an iframe with sandbox="allow-scripts" and nothing else,
+// so it has no way into the app, its storage or its notebooks. The policy goes on before any of the output is written.
+// Opened any other way, as a page of this site, it would be an open door, so it does nothing there: a page with a
+// real origin can read cookies, and a sandboxed one cannot.
+try { document.cookie; } catch (e) { var sandboxed = true; }
+if (sandboxed) addEventListener('message', function (e) {
+  var d = e.data;
+  if (e.source !== parent || !d || typeof d.html !== 'string' || d.html.length > 8e6) return;
+  var web = d.web === true;
+  var m = document.createElement('meta');
+  m.httpEquiv = 'Content-Security-Policy';
+  m.content = [
+    "default-src 'none'",
+    "script-src 'unsafe-inline' 'unsafe-eval'" + (web ? ' https:' : ''),
+    "style-src 'unsafe-inline'" + (web ? ' https:' : ''),
+    'img-src data: blob:' + (web ? ' https:' : ''),
+    'font-src data:' + (web ? ' https:' : ''),
+    'media-src data: blob:' + (web ? ' https:' : ''),
+    web ? 'connect-src https:' : "connect-src 'none'",
+    'worker-src blob:',
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'"
+  ].join('; ');
+  document.head.append(m);
+  // outputs are written for a white page, whatever the reader's theme is
+  var head = '<!doctype html><meta charset="utf-8"><style>:root{color-scheme:light}html,body{margin:0;background:#fff}' +
+    'body{padding:4px;color:#1d1d1f;font:14px/1.5 system-ui,sans-serif}</style>';
+  var size = '<script>(function(){function r(){parent.postMessage({h:document.documentElement.scrollHeight},"*")}' +
+    'addEventListener("load",r);if(window.ResizeObserver)new ResizeObserver(r).observe(document.documentElement);r()})()<\/script>';
+  document.open();
+  document.write(head + d.html + size);
+  document.close();
+});
+</script>

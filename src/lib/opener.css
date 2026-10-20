@@ -1,0 +1,10 @@
+/* The open control beside the file name, and its card: one row for a link, one row for a file on this device. */
+.opener { width: 44px; height: 44px; }
+#pop-open { padding: 8px; border-radius: 18px; }
+.opener-link { padding-right: 6px; }
+.opener-link svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--fg-3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.opener-link input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; outline: 0; font: 14px var(--sans); color: var(--fg); }
+.opener-link input::placeholder { color: var(--fg-3); opacity: 1; }
+.opener-link button { flex: none; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--fg); color: var(--paper); font-size: 13px; font-weight: 550; }
+.opener-link button:disabled { opacity: 0.35; cursor: default; }
+.set-note.bad { color: var(--danger); }

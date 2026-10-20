@@ -6,20 +6,23 @@
   right: 0;
   display: none;
   width: 40px;
-  height: calc(var(--rows) * 20px + 24px);
-  margin-top: calc(var(--rows) * -10px - 12px);
+  height: calc(var(--span) * 1px + 24px);
+  margin-top: calc(var(--span) * -0.5px - 12px);
 }
+/* While a panel is open the ticks step aside; they come back when it closes. */
+.rail.away { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 150ms var(--out), visibility 0s 150ms; }
 .stack { display: block; width: 100%; height: 100%; padding: 12px 0; cursor: default; }
 .stack:focus-visible { outline-offset: -6px; border-radius: 12px; }
-.ticks { display: block; height: 100%; clip-path: inset(0 -200px); }
+.ticks { position: relative; display: block; height: 100%; clip-path: inset(0 -200px); }
 .tr {
-  position: relative;
+  position: absolute;
+  inset: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   height: 20px;
   padding-right: 14px;
-  transform: translateY(calc(var(--shift) * -20px));
+  transform: translateY(calc(var(--y) * 1px - var(--slide) * 1px));
   transition: transform 300ms var(--io), opacity 300ms var(--out);
 }
 .tk {
@@ -37,11 +40,11 @@
 .tr.now .tk { opacity: 1; transform: scale(1.5, 1.4); }
 .tr.now .tk::after { opacity: 1; }
 
-/* Where the margin has room, the headings around the current one are named beside their ticks. */
+/* Where the margin has room, the heading being read is named beside its tick; hovering the ticks lists them all. */
 .lbl {
   position: absolute;
   right: 46px;
-  max-width: 150px;
+  max-width: 172px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -98,10 +101,16 @@
 }
 .t::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
 .t:hover::before { opacity: 0.08; }
-.t.near { color: var(--fg-2); }
+.t.near, .t.top { color: var(--fg-2); }
+.t.top { font-weight: 500; }
 .t[aria-current] { color: var(--fg); font-weight: 600; }
 .t[aria-current]::before { background: var(--fg); opacity: 0.1; }
 .t:focus-visible { outline-offset: -2px; }
+
+/* Room, and for a new top-level heading a hairline, where the outline starts something new. */
+.sep { display: block; height: 6px; }
+.sep.big { height: 17px; }
+.sep.big::before { content: ''; display: block; height: 1px; margin: 8px 10px 0; background: var(--line); }
 
 #toc-list { display: grid; max-height: min(70vh, 480px); overflow-y: auto; overscroll-behavior: contain; }
 
@@ -114,7 +123,11 @@
   :root[data-toc] .notebook { padding-right: max(24px, calc(56px - max(0px, (100% - var(--measure)) / 2))); }
 }
 @media (min-width: 1360px) {
-  .tr.near .lbl, .tr.now .lbl { opacity: 1; }
-  .tr.now .lbl { color: var(--fg); }
+  .tr.now .lbl { opacity: 1; color: var(--fg); }
   :root[data-toc] .notebook { padding-right: max(24px, calc(232px - max(0px, (100% - var(--measure)) / 2))); }
 }
+
+/* The top-level section being read, on a pill of its own in the middle of the header; it needs the room the other pills leave. */
+.mid { position: fixed; z-index: 10; top: 8px; left: 50%; display: none; max-width: calc(100vw - 40px - 816px); padding: 0 22px; transform: translateX(-50%); font: 600 14px/1 var(--sans); letter-spacing: -0.01em; color: var(--fg); pointer-events: none; }
+.mid span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; animation: swap 200ms var(--out) both; }
+@media (min-width: 1024px) { :root:not([data-width='narrow']) .mid { display: flex; } }

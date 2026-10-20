@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Cell } from './notebook';
-  import { figures } from './shelf';
-  import { jump } from './ui.svelte';
+  import { figures, type Figure } from './shelf';
+  import { jump, ui } from './ui.svelte';
   import './shelf.css';
 
   let {
@@ -24,6 +24,24 @@
     }
   });
 
+  // Arrows move across the grid by the column count it has at this width; Home and End go to the ends.
+  function move(e: KeyboardEvent) {
+    const all = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('button.figs-tile')];
+    const at = all.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    const cols = all.filter((b) => b.offsetTop === all[0].offsetTop).length || 1;
+    const to = { ArrowLeft: at - 1, ArrowRight: at + 1, ArrowUp: at - cols, ArrowDown: at + cols, Home: 0, End: all.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    all[Math.min(Math.max(to, 0), all.length - 1)].focus();
+  }
+
+  // Choosing a figure opens it at the size of the screen, the same box a picture in a cell opens.
+  function show(f: Figure, el: HTMLElement) {
+    open = false;
+    ui.light = { src: f.src, cell: f.cell, el };
+  }
+
   function go(cell: string) {
     open = false;
     jump(document.querySelector(`[data-cell="${CSS.escape(cell)}"]`), 'center');
@@ -32,17 +50,21 @@
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && (open = false)} />
 
-<div class="shelf" class:on={open} role="dialog" aria-modal="true" aria-label="Figures" aria-hidden={!open} onpointerdown={(e) => e.target === e.currentTarget && (open = false)}>
-  <div class="sheet" tabindex="-1" bind:this={sheet}>
+<div class="figs-shelf" class:on={open} role="dialog" aria-modal="true" aria-label="Figures" aria-hidden={!open} onpointerdown={(e) => e.target === e.currentTarget && (open = false)}>
+  <div class="figs-sheet" tabindex="-1" bind:this={sheet} style:--n={Math.min(Math.max(list.length, 1), 2)}>
     {#if loaded}
-      <p class="head">Figures · {list.length}</p>
-      <ul>
+      <p class="figs-head">Figures · {list.length}</p>
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <ul class="figs-grid" onkeydown={move}>
         {#each list as f}
-          <li>
-            <button onclick={() => go(f.cell)} aria-label={f.n === null ? 'Go to figure' : `Go to figure in cell ${f.n}`}>
-              <img class:plate={f.alpha} src={f.src} alt="" loading="lazy" decoding="async" />
-              {#if f.n !== null}<span>[{f.n}]</span>{/if}
+          <li class="figs-item">
+            <button class="figs-tile" onclick={(e) => show(f, e.currentTarget)} aria-label={f.n === null ? 'Open figure' : `Open figure from cell ${f.n}`}>
+              <span class="figs-thumb" class:figs-alpha={f.alpha}><img src={f.src} alt="" loading="lazy" decoding="async" /></span>
             </button>
+            <div class="figs-row">
+              <span class="figs-no">{f.n === null ? '' : `[${f.n}]`}</span>
+              <button class="figs-jump" onclick={() => go(f.cell)}>Go to cell</button>
+            </div>
           </li>
         {/each}
       </ul>

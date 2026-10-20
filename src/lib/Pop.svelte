@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { ui, type Pop } from './ui.svelte';
+  // the card's base styles arrive with the popover itself, so a card never shows unstyled while the rest loads
+  import './ui.css';
 
   // `near` hangs the card from its trigger (right edges together, flipping above when the page ends); without it
   // the card sits under the header, centred on the trigger.
-  let { id, label, width = 260, lead = true, near = false, anchor, children }: { id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; anchor: () => Element | null; children: Snippet } = $props();
+  let { id, label, width = 260, lead = true, near = false, top: first = false, bare = false, inline = false, anchor, children }: { bare?: boolean; inline?: boolean; id: Pop; label: string; width?: number; lead?: boolean; near?: boolean; top?: boolean; anchor: () => Element | null; children: Snippet } = $props();
 
   const open = $derived(ui.pop === id);
   let box = $state<HTMLElement>();
@@ -20,6 +22,18 @@
     // a card within a thumb of the screen's width takes all of it
     const w = innerWidth - 24 - width < 48 ? innerWidth - 24 : Math.min(width, innerWidth - 24);
     wide = w;
+    // in the header's middle: the card takes the room between the file's pill and the tools, on the header's own line
+    if (inline) {
+      const gapL = (document.querySelector('.opener') ?? document.querySelector('.name'))?.getBoundingClientRect().right ?? 0;
+      const gapR = document.querySelector('.tools')?.getBoundingClientRect().left ?? innerWidth;
+      const room = gapR - gapL - 24;
+      wide = Math.max(240, Math.min(width, room));
+      left = gapL + 12 + Math.max(0, (room - wide) / 2);
+      top = 8;
+      up = false;
+      origin = wide / 2;
+      return;
+    }
     if (near && r) {
       const h = box.offsetHeight;
       up = r.bottom + 8 + h > innerHeight - 12 && r.top - 8 - h > 12;
@@ -28,9 +42,23 @@
       origin = r.left + r.width / 2 - left;
       return;
     }
+    // a card hung from a tool is exactly as wide as the dock it hangs from, so the two share a left edge and a right edge
+    const dock = r && r.top < innerHeight / 2 && innerWidth > 720 ? from?.closest('.tools') : null;
+    if (dock && r) {
+      const edge = dock.getBoundingClientRect().right;
+      const lo = dock.getBoundingClientRect().left;
+      wide = edge - lo;
+      left = lo;
+      up = false;
+      top = 64;
+      origin = r.left + r.width / 2 - lo;
+      return;
+    }
     const mid = r ? r.left + r.width / 2 : innerWidth / 2;
     left = Math.min(Math.max(12, mid - w / 2), innerWidth - w - 12);
-    top = (document.querySelector('.bar')?.getBoundingClientRect().bottom ?? 58) + 8;
+    // the header is 56px tall whether or not it has stepped aside; a trigger in the phone's dock opens its card upward
+    up = !!r && r.top > innerHeight / 2;
+    top = up ? Math.max(12, r!.top - 8 - box.offsetHeight) : 64;
     origin = mid - left;
   }
 
@@ -40,7 +68,7 @@
     const from = anchor();
     const back = document.activeElement as HTMLElement | null;
     place(from);
-    (lead ? (box.querySelector<HTMLElement>('[aria-current], [role=radio][aria-checked=true]') ?? box.querySelector<HTMLElement>('button, [role=switch]') ?? box) : box).focus({ preventScroll: true });
+    (lead ? ((!first && box.querySelector<HTMLElement>('[aria-current], [role=radio][aria-checked=true]')) || box.querySelector<HTMLElement>('input, button, [role=switch]') || box) : box).focus({ preventScroll: true });
     const node = box;
     // a card hung from its trigger follows it while the page moves, and goes when the trigger leaves the screen
     const follow = () => {
@@ -50,7 +78,7 @@
     };
     if (near) addEventListener('scroll', follow, { passive: true });
     // a note appearing or going changes the card's height, and a card that opens upward must stay on its trigger
-    const grow = near ? new ResizeObserver(() => place(from)) : undefined;
+    const grow = near || (from && from.getBoundingClientRect().top > innerHeight / 2) ? new ResizeObserver(() => place(from)) : undefined;
     grow?.observe(node);
     return () => {
       removeEventListener('scroll', follow);
@@ -60,6 +88,6 @@
   });
 </script>
 
-<div class="pop" class:on={open} class:up id="pop-{id}" role="dialog" aria-label={label} tabindex="-1" bind:this={box} style:left="{left}px" style:top="{top}px" style:width="{wide || width}px" style:--ox="{origin}px">
+<div class="pop" class:on={open} class:up class:bare id="pop-{id}" role="dialog" aria-label={label} tabindex="-1" bind:this={box} style:left="{left}px" style:top="{top}px" style:width="{wide || width}px" style:--ox="{origin}px">
   {@render children()}
 </div>

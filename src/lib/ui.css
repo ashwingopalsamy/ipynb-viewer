@@ -1,3 +1,4 @@
+button { -webkit-tap-highlight-color: transparent; }
 /* Popovers, the settings menu and the shortcut sheet. */
 .pop {
   position: fixed;
@@ -22,20 +23,28 @@
   transform: none;
   transition: opacity 200ms var(--out), transform 200ms var(--pop), visibility 0s;
 }
-#pop-settings { max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+#pop-settings { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
 .pop hr { height: 1px; margin: 6px 4px; border: 0; background: var(--line); }
 
-/* settings: five small groups, each with a quiet name */
-.menu { display: grid; padding: 2px 0 6px; }
-.cat { margin: 14px 12px 4px; font: 600 12px/1 var(--sans); letter-spacing: 0.01em; color: var(--fg-3); }
-.menu > div:first-child .cat { margin-top: 10px; }
-.menu .sw { height: 34px; }
+/* settings: small groups, each with a symbol and a name, its rows resting in one rounded well */
+.menu { display: grid; gap: 2px; padding: 0 0 2px; }
+.cat { display: flex; align-items: center; gap: 8px; margin: 14px 12px 6px; font: 600 13px/1 var(--sans); color: var(--fg-2); }
+.cat svg { flex: none; width: 16px; height: 16px; color: var(--fg-3); }
+.menu > div:first-child .cat { margin-top: 8px; }
+.cat .more { display: flex; align-items: center; gap: 8px; width: 100%; font: inherit; color: inherit; border-radius: 8px; }
+.chev { display: grid; margin-left: auto; transition: transform 200ms var(--io); }
+.chev.open { transform: rotate(90deg); }
+.well { display: grid; padding: 2px; border-radius: 14px; corner-shape: squircle; background: var(--well-2); }
+.well.last { margin-top: 12px; }
+.menu .sw { height: 36px; border-radius: 12px; }
+.menu .well .sw svg { flex: none; color: var(--fg-3); }
+#pop-settings { border-radius: 20px; }
 .sw.static { cursor: default; }
 .sw.static::before { display: none; }
 
-.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 32px; margin: 4px 6px 6px; padding: 2px; border-radius: 10px; corner-shape: squircle; background: var(--well); }
-.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 8px; corner-shape: squircle; background: var(--paper); box-shadow: 0 1px 2px rgba(20, 24, 40, 0.14), 0 0 0 0.5px var(--line); transform: translateX(calc(var(--i) * 100%)); transition: transform 250ms var(--io); }
-.seg button { border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
+.seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 36px; margin: 2px 2px 4px; padding: 2px; border-radius: 999px; background: var(--well); }
+.seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; background: var(--paper); box-shadow: 0 1px 2px rgba(20, 24, 40, 0.14), 0 0 0 0.5px var(--line); transform: translateX(calc(var(--i) * 100%)); transition: transform 250ms var(--io); }
+.seg button { border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--fg-3); }
 .seg button[aria-checked='true'] { color: var(--fg); }
 .seg button:disabled { opacity: 0.35; cursor: default; }
 .seg button:focus-visible { outline-offset: -2px; }
@@ -83,22 +92,52 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
 
 .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--page); }
 
-/* once the page has moved, the text running under the bar fades out instead of meeting an edge */
-.bar::after {
-  content: '';
-  position: absolute;
-  inset: 100% 0 auto;
-  height: 20px;
-  background: linear-gradient(var(--page), transparent);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms var(--out);
+/* a name for each symbol, on hover or keyboard focus only; the last one keeps to the window's edge */
+@media (hover: hover) {
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--paper);
+    box-shadow: var(--float);
+    color: var(--fg-2);
+    font: 500 12px/1 var(--sans);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -3px);
+    transition: opacity 120ms var(--out), transform 160ms var(--out);
+  }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 400ms; }
+  .tools > :last-child::after { left: auto; right: 0; transform: translate(0, -3px); }
+  .tools > :last-child:hover::after, .tools > :last-child:focus-visible::after { transform: none; }
 }
-:root[data-scrolled] .bar::after { opacity: 0.9; }
 
 /* a finger needs 44px */
 @media (pointer: coarse) {
   .menu .sw, .pop .sw { height: 44px; }
   .seg { height: 44px; }
   .step button { width: 44px; height: 40px; }
+}
+
+/* Windows high contrast drops background colours, which is all a switch is made of */
+@media (forced-colors: active) {
+  .track { forced-color-adjust: none; border: 2px solid ButtonText; background: Canvas; }
+  .knob { forced-color-adjust: none; background: ButtonText; box-shadow: none; }
+  [aria-checked='true'] > .track { background: Highlight; }
+  [aria-checked='true'] > .track::before { display: none; }
+  .seg .thumb { forced-color-adjust: none; background: Highlight; }
+  .seg button[aria-checked='true'] { color: HighlightText; }
+}
+
+/* On a phone the controls sit in a dock at the bottom: what floats above it clears it, and a card opens upward. */
+@media (max-width: 720px) {
+  :root .back, :root .tpill, :root .notice-pill { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .tools [data-tip]::after { display: none; }
+  .tools [aria-expanded='true'] { background: var(--fg); color: var(--paper); }
+  #app { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  #pop-settings { max-height: calc(100dvh - 140px); }
 }

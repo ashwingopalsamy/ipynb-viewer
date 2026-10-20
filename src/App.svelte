@@ -3,13 +3,21 @@
   import { theme, toggleTheme } from './lib/theme.svelte';
   import CellView from './lib/Cell.svelte';
   import Icon from './lib/Icon.svelte';
+  import Opener from './lib/Opener.svelte';
+  import OpenPanel from './lib/OpenPanel.svelte';
+  import Lucide from './lib/Lucide.svelte';
+  import { blank } from './lib/blank';
+  import { ui, type Pop } from './lib/ui.svelte';
+
+  // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
+  let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
 
   let cells = $state.raw<Cell[]>([]);
   let meta = $state.raw<NotebookMeta | null>(null);
   let warnings = $state.raw<string[]>([]);
   let name = $state('');
-  let status = $state<'empty' | 'ready' | 'error'>('empty');
-  let error = $state('');
+  let status = $state<'empty' | 'fetching' | 'ready' | 'error'>(file ? 'fetching' : 'empty');
+  let detail = $state('');
   let dragging = $state(false);
   let picker: HTMLInputElement;
   let reorder = $state<typeof import('./lib/replay').reorder>();
@@ -19,11 +27,14 @@
   let Actions = $state<typeof import('./lib/Extras.svelte').Actions>();
   let Veil = $state<typeof import('./lib/Veil.svelte').default>();
   let changed = $state.raw<ReadonlySet<string>>(new Set());
-  let live = $state(false);
   let stop: (() => void) | undefined;
 
   const rows = $derived(replayed && reorder ? reorder(cells) : cells);
   const language = $derived(meta ? (meta.language ?? 'python') : null);
+
+  // The name the dock gives the card that is open. A card with no name (the save-picture menu hangs from its picture) leaves the dock as it was.
+  const TOOL: Partial<Record<Pop, string>> = { settings: 'Settings', toc: 'Contents', search: 'Search', info: 'Notebook', md: 'Markdown', privacy: 'Privacy', keys: 'Shortcuts', compare: 'Compare' };
+  const tool = $derived(ui.shelf ? 'Figures' : ui.pop ? (TOOL[ui.pop] ?? '') : '');
 
   let sections = $state(0);
   let chapter = $state('');
@@ -33,18 +44,21 @@
 
   async function open(file: File, handle?: FileSystemFileHandle) {
     const mine = ++run;
-    stop?.();
-    stop = undefined;
-    ready = false;
-    live = !!handle;
-    name = file.name;
-    cells = [];
-    meta = null;
-    warnings = [];
-    error = '';
-    status = 'ready';
-    import('./lib/Extras.svelte').then((m) => ((Extras = m.default), (Actions = m.Actions)));
-    document.title = `${file.name} · ipynb viewer`;
+    // The notebook the reader is in stays until the new file proves to be one: its first piece is what replaces it.
+    let fresh = true;
+    const begin = () => {
+      fresh = false;
+      stop?.();
+      stop = undefined;
+      ready = false;
+      name = file.name;
+      cells = [];
+      meta = null;
+      warnings = [];
+      detail = '';
+      status = 'ready';
+      import('./lib/Extras.svelte').then((m) => ((Extras = m.default), (Actions = m.Actions)));
+    };
 
     // Cells arrive faster than frames; hand them to the view once per frame.
     let batch: Cell[] = [];
@@ -59,6 +73,7 @@
     try {
       const notebook = await readNotebook(file.stream(), (event) => {
         if (mine !== run) return;
+        if (fresh) begin();
         if (event.type === 'cell') {
           batch.push(event.cell);
           if (!scheduled) {
@@ -72,9 +87,11 @@
         }
       });
       if (mine !== run) return;
+      if (notebook.cells.every(blank)) throw new Error('This notebook is empty.');
+      if (fresh) begin();
       flush();
-      if (!notebook.cells.length) throw new Error('This notebook has no cells.');
       ready = true;
+      document.title = `${file.name} · ipynb viewer`;
       if (handle) {
         const { watch } = await import('./lib/watch');
         if (mine === run) {
@@ -89,10 +106,26 @@
       }
     } catch (e) {
       if (mine !== run) return;
-      status = 'error';
-      error = e instanceof Error ? e.message : String(e);
+      const why = e instanceof Error ? e.message : String(e);
+      // a file that fails before anything of it was drawn leaves the reader where they were
+      if (fresh && cells.length) import('./lib/notice').then((m) => m.say(`${file.name} would not open. ${why}`));
+      else (status = 'error'), (detail = why);
     }
   }
+
+  // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
+  if (/[?#](?:url|nb)=/.test(location.href)) {
+    status = 'fetching';
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => run || open(file), (why) => run || ((status = 'error'), (detail = why))));
+  }
+
+  if (file) open(file, handle);
+
+  // A link pasted on the empty screen reloads the page with it, the same way a shared link would arrive.
+  const paste = (e: ClipboardEvent) => {
+    const text = e.clipboardData?.getData('text') ?? '';
+    if (status !== 'ready' && text.includes('http')) import('./lib/link').then((m) => m.pasted(text));
+  };
 
   function pick() {
     const file = picker.files?.[0];
@@ -132,40 +165,41 @@
   }
 </script>
 
-<svelte:window ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} />
+<svelte:window onkeydown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'o' && (e.preventDefault(), choose())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
 <input bind:this={picker} type="file" accept=".ipynb,.json,application/json" hidden onchange={pick} />
 
 <header class="bar">
   <div class="inner">
-    <span class="name" class:idle={!name} class:two={sections > 1}>
-      <span class="file">{#if live}<i class="live" title="Updates when the file changes"></i>{/if}{name || 'ipynb viewer'}</span>
-      {#if sections > 1}<span class="chapter">{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
+    <span class="name pill" class:idle={!name} class:two={sections > 1}>
+      <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span></span>
+      {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
     </span>
-    <div class="tools">
+    <Opener />
+    <div class="tools pill">
+      <span class="tool-name">{tool}</span>
       {#if Actions}<Actions />{/if}
-      <button class="icon" onclick={choose} title="Open">
-        <Icon name="open" />
-      </button>
-      <button class="icon swap" onclick={toggleTheme} title={theme.value === 'dark' ? 'Light' : 'Dark'}>
-        <span class="glyph" class:on={theme.value === 'light'}><Icon name="moon" /></span>
-        <span class="glyph" class:on={theme.value === 'dark'}><Icon name="sun" /></span>
+      <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+        <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>
+        <span class="glyph" class:on={theme.value === 'dark'}><Lucide name="sun" /></span>
       </button>
     </div>
   </div>
 </header>
 
-{#if Extras}<Extras cells={rows} raw={cells} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
+<OpenPanel onfile={(f) => open(f)} onchoose={choose} />
+
+{#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
 
 <main>
-  {#if status === 'empty' || status === 'error'}
+  {#if status !== 'ready'}
     <button class="drop" onclick={choose}>
-      {#if status === 'error'}
-        <strong>That one would not open</strong>
-        <span>{error}</span>
-      {:else}
+      {#if status === 'empty'}
         <strong>Jupyter notebooks, without Jupyter.</strong>
         <span>Drop a .ipynb here, or click to choose one.</span>
+      {:else}
+        <strong>{status === 'error' ? 'That one would not open' : 'Fetching the notebook'}</strong>
+        <span>{detail || '\u00a0'}</span>
       {/if}
     </button>
   {:else}
@@ -184,8 +218,8 @@
 </main>
 
 <a class="made" href="https://ashwingopalsamy.in" target="_blank" rel="noopener" referrerpolicy="no-referrer">
-  <img src="/ashwin.webp" width="28" height="28" alt="" decoding="async" />
-  <span>Built by <b>Ashwin Gopalsamy</b></span>
+  <img src="ashwin.webp" width="22" height="22" alt="" decoding="async" />
+  <span>With love by <b>Ashwin Gopalsamy</b></span>
 </a>
 
 {#if Veil}<Veil on={dragging} />{/if}

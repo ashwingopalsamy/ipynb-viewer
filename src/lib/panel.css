@@ -1,0 +1,41 @@
+/* The shared parts of the sheets that hang from the header, the Notebook sheet most of all. Settings and Privacy have their own, in settings.css. */
+.pnl { display: grid; gap: 8px; padding: 6px; }
+.pnl .seg { margin: 0; }
+.pnl .fine { margin: 0; padding: 0 12px; font-size: 12.5px; line-height: 1.45; color: var(--fg-3); }
+.pnl .fine:empty, .pnl .say:empty { display: none; }
+
+/* a label and its control in one pill */
+.fld { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 4px 4px 4px 16px; border-radius: 999px; background: var(--well-2); font-size: 13.5px; color: var(--fg); }
+.fld .seg { width: 196px; flex: none; height: 36px; background: var(--well); }
+.fld .step { background: var(--well); }
+
+/* the icon pills at the foot of a sheet */
+.pills { display: flex; gap: 6px; }
+.pills > * { text-decoration: none; position: relative; isolation: isolate; display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 999px; background: var(--well-2); font-size: 13px; color: var(--fg-2); white-space: nowrap; }
+.pills > *:hover:not(:disabled) { background: var(--well); color: var(--fg); }
+.pills > *:disabled { opacity: 0.5; cursor: default; }
+.pills svg { flex: none; width: 16px; height: 16px; }
+
+/* a verdict row, chips, and a command in a recessed box */
+.verdict { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 16px; border-radius: 22px; corner-shape: squircle; background: var(--well-2); font-size: 13.5px; }
+.verdict svg { flex: none; color: var(--fg-3); }
+.verdict.warn svg { color: var(--danger); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { padding: 8px 14px; border-radius: 999px; background: var(--well-2); font-size: 13px; color: var(--fg-2); }
+.cmd { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 18px; corner-shape: squircle; background: var(--sunk); box-shadow: var(--dip); }
+.cmd code { flex: 1; min-width: 0; font: 12px/1.5 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.cmd button { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 999px; background: var(--well-2); color: var(--fg-2); }
+.weigh { display: flex; height: 10px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
+.weigh i { display: block; height: 100%; background: var(--fg-3); }
+.weigh i + i { background: color-mix(in srgb, var(--fg-3) 45%, transparent); }
+.sums { display: flex; justify-content: space-between; gap: 12px; padding: 0 4px; font-size: 12.5px; color: var(--fg-3); }
+.heavy { text-align: left; display: grid; grid-template-columns: minmax(0, 96px) minmax(0, 1fr) 60px; gap: 10px; align-items: center; height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; }
+.heavy em { font-style: normal; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.heavy small { font-size: 12px; color: var(--fg-3); }
+.meter { height: 6px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: inherit; background: var(--fg-3); }
+.finds { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.finds .heavy { grid-template-columns: minmax(0, 1fr) auto; }
+.finds code { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1.4 var(--mono); color: var(--fg-2); }
+@media (pointer: coarse) { .pills > * { height: 44px; } }
+.heavy:hover { background: var(--well-2); }

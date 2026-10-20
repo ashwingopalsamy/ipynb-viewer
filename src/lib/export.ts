@@ -82,9 +82,9 @@ export const canCopy = () => typeof ClipboardItem !== 'undefined' && !!navigator
 export const copyPng = (png: Promise<Blob>) => navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
 
 /** `notes.ipynb` and a tag become `notes-figure-12`, safe to use as a file name. */
-export function fileName(file: string, tag: string): string {
+export function fileName(file: string, tag = ''): string {
   const stem = file.replace(/\.[^.]*$/, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '') || 'notebook';
-  return `${stem}-${tag}`;
+  return tag ? `${stem}-${tag}` : stem;
 }
 
 export function size(n: number): string {
