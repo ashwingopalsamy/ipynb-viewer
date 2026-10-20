@@ -57,15 +57,6 @@ let depth = 0
 
 document.querySelectorAll<HTMLElement>('[data-choose]').forEach((el) => el.addEventListener('click', choose, { signal }))
 document.querySelector('.theme')?.addEventListener('click', toggleTheme, { signal })
-document.querySelector<HTMLFormElement>('[data-link]')?.addEventListener(
-  'submit',
-  (e) => {
-    e.preventDefault()
-    const text = ((e.currentTarget as HTMLFormElement).elements.namedItem('url') as HTMLInputElement).value.trim()
-    if (text) location.assign(`${location.pathname}?url=${encodeURIComponent(text)}`)
-  },
-  { signal },
-)
 // The cue at the foot of the first screen takes the reader down to the explainers; with reduced motion it jumps.
 document.querySelector('.next')?.addEventListener(
   'click',
