@@ -17,7 +17,8 @@ self.addEventListener('install', (event) => {
           const old = /-[\w-]{8}\.\w+$/.test(path) && (await caches.match(url));
           const res = old || (await fetch(url, { cache: 'reload' }));
           if (!res.ok) throw new Error(`${path}: ${res.status}`);
-          await cache.put(url, res);
+          // A redirected response (Cloudflare sends /index.html to /) cannot answer a page load; the browser fails it.
+          await cache.put(url, res.redirected ? new Response(res.body, res) : res);
         }),
       );
     })(),
