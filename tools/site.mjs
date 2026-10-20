@@ -88,4 +88,6 @@ writeFileSync(
   Cache-Control: public, max-age=604800
 `,
 );
+// The viewer used to be its own page; links already shared keep working.
+writeFileSync(new URL('_redirects', dist), '/viewer / 301\n/viewer/* / 301\n');
 console.log(`dist ready for Cloudflare (${hashes.length} inline script hashed)`);
