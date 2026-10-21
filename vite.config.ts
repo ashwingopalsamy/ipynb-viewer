@@ -111,7 +111,7 @@ function finish(): Plugin {
 
 /** The guide pages, written in Markdown under site/, become static pages with no script, plus Markdown copies, llms.txt and the FAQ on the home page. */
 function pages(): Plugin {
-  const GUIDES = ['open-from-github', 'privacy', 'compare', 'agents']
+  const GUIDES = ['open-from-github', 'privacy', 'compare', 'agents', 'design']
   let base = '/'
   const source = (name: string) => readFileSync(join('site', name), 'utf8')
   const guide = (slug: string) => {
@@ -159,7 +159,7 @@ function pages(): Plugin {
       if (!theme || !footer || !sheet) throw new Error('index.html is missing its theme script or footer, or the home stylesheet was not built')
       const style = this.getFileName(this.emitFile({ type: 'asset', name: 'guide.css', source: readFileSync('src/about/guide.css', 'utf8') }))
       // links to the guides are written for the home page; from a guide they go up one level
-      const foot = footer.replace(/href="(?=(?:open-from-github|privacy|compare|agents)\/")/g, 'href="../').replace('src="/ashwin.webp"', `src="${base}ashwin.webp"`)
+      const foot = footer.replace(/href="(?=(?:open-from-github|privacy|compare|agents|design)\/")/g, 'href="../').replace('src="/ashwin.webp"', `src="${base}ashwin.webp"`)
       const all = GUIDES.map(guide)
 
       for (const g of all) {
