@@ -19,7 +19,7 @@ The Privacy sheet in Settings shows the result. It counts the requests the page 
 
 ## Links are the exception, and are asked about
 
-A notebook opened from a link has to be downloaded. The viewer names the site first and fetches only when you say yes. The download happens before anything is drawn, so the lock can follow. On ipynb.ashwingopalsamy.in the download goes through a small Worker on the same site, which allows only GitHub files and gists, passes the bytes through, and keeps no record of the address. The Cloudflare setting that stores logs is left off. The GitHub Pages mirror fetches directly from the browser.
+A notebook opened from a link has to be downloaded. The viewer names the site first and fetches only when you say yes. The download happens before anything is drawn, so the lock can follow. On ipynb.ashwingopalsamy.in the download goes through a small Worker on the same site, which allows only GitHub files and gists, passes the bytes through, and keeps no record of the address. The Cloudflare setting that stores logs is left off. The Worker keeps only aggregate counts of how each download ended, by GitHub host and country, with no address, IP or identifier. The GitHub Pages mirror fetches directly from the browser.
 
 ## Outputs are cleaned and scripts are boxed
 

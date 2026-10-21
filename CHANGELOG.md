@@ -6,6 +6,8 @@ Versions follow [semantic versioning](https://semver.org). Each release lists wh
 
 First public version, in progress.
 
+- Link downloads are rate limited per IP, time out, and are capped by size as they stream; aggregate server-side counts of outcomes, with no addresses or identifiers.
+- Extra response headers and a `security.txt`.
 - Drop a `.ipynb` and read it, in light or dark.
 - Streaming parser for nbformat 3 and 4 that opens damaged files where it can.
 - Chapter rail and keyboard navigation.

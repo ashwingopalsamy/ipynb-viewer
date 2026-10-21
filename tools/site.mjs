@@ -2,7 +2,7 @@
 //   node tools/site.mjs           the Cloudflare copy at ipynb.ashwingopalsamy.in (writes dist/_headers)
 //   node tools/site.mjs --mirror  the GitHub Pages copy (noindex; Pages cannot set headers, so no headers file)
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const mirror = process.argv.includes('--mirror');
 const ORIGIN = 'https://ipynb.ashwingopalsamy.in';
@@ -138,6 +138,8 @@ writeFileSync(
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Frame-Options: DENY
   Strict-Transport-Security: max-age=31536000
   X-DNS-Prefetch-Control: off
 
@@ -155,6 +157,11 @@ ${guides}
 /fonts/*
   Cache-Control: public, max-age=604800
 `,
+);
+mkdirSync(new URL('.well-known/', dist), { recursive: true });
+writeFileSync(
+  new URL('.well-known/security.txt', dist),
+  `Contact: https://github.com/ashwingopalsamy/ipynb-viewer/security/advisories/new\nPolicy: https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/SECURITY.md\nExpires: ${new Date(Date.now() + 365 * 864e5).toISOString()}\nCanonical: ${ORIGIN}/.well-known/security.txt\n`,
 );
 // Search and answer engines and assistants fetching a page for a person are welcome, and so are crawlers that train models: the pages are
 // public documentation. The relay is not for crawlers; its own checks are what actually protect it.
