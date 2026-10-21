@@ -2,6 +2,7 @@
   "name": "ipynb-viewer",
   "compatibility_date": "2026-04-01",
   "workers_dev": false,
+  "observability": { "enabled": false },
   "preview_urls": false,
   "routes": [{ "pattern": "ipynb.ashwingopalsamy.in", "custom_domain": true }],
   "main": "tools/worker.js",
