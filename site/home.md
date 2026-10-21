@@ -11,4 +11,4 @@ ipynb viewer is a free, open source (MIT) web page at https://ipynb.ashwingopals
 - A notebook is untrusted input. Markdown and HTML outputs are cleaned, and scripts wait behind a button in a sandbox with no network.
 - Made for reading: search, a figures shelf, live refresh in Chromium browsers, run order, share by link, cell screenshots, Copy as Markdown and keyboard shortcuts.
 
-Pages: [open from GitHub](open-from-github/index.md), [privacy](privacy/index.md), [comparison](compare/index.md), [for agents](agents/index.md).
+Pages: [open from GitHub](open-from-github/index.md), [privacy](privacy/index.md), [comparison](compare/index.md), [for agents](agents/index.md), [design](design/index.md).
