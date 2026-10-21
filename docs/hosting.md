@@ -26,6 +26,12 @@ Cloudflare applies `dist/_headers` to every response. Pages cannot set headers, 
 - `/link/*` is served by `tools/worker.js`, which relays public files from raw.githubusercontent.com, gist.githubusercontent.com and api.github.com/gists. That is why the page keeps `connect-src 'self'`. Other hosts are not opened on this copy; the mirror fetches directly.
 - Gist links without a user name need GitHub's listing API, which allows 60 requests an hour per IP and Cloudflare's addresses are shared. If those start failing with 403, set a token with no scopes: `npx wrangler secret put GITHUB_TOKEN`. The Worker sends it only to api.github.com.
 
+## Abuse limits and analytics
+
+- `/link/*` is limited per IP by the `LINKS` rate-limit binding in `wrangler.jsonc` (60 a minute). Add a Cloudflare WAF rate-limiting rule on `/link/*` as well so abuse is stopped before the Worker runs. Turn on Bot Fight Mode, Always Use HTTPS and a TLS 1.2 minimum; leave Logpush and request logs off.
+- Traffic, countries and cache ratios come from Cloudflare's zone analytics, which need no script. Do not turn on Web Analytics auto-injection: it adds a script the page policy forbids.
+- The Worker writes one row per `/link/*` request to the `ipynb_viewer` Analytics Engine dataset: outcome, which of the three GitHub hosts, country, status, bytes and milliseconds. It never records the path, repo, IP or headers. Query it with the Analytics Engine SQL API, for example `SELECT blob1 AS outcome, count() FROM ipynb_viewer GROUP BY outcome`.
+
 ## Routing
 
 The app has one page. Unknown paths get the 404 page, not the app.
