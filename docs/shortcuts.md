@@ -13,6 +13,7 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 | `f` | Trace the selected name |
 | `n` `p` | Next or previous cell that uses it |
 | `t` | Contents |
+| `e` | Edit this cell (notebooks opened from a file) |
 | `m` | Copy as Markdown |
 | `i` | Notebook sheet: secrets, requirements, weight |
 | `/` | Search the notebook (also `⌘K` or `Ctrl K`) |
@@ -26,9 +27,12 @@ A notebook opened from a file on your computer can be edited in the text cells: 
 | Key | Does |
 |---|---|
 | double-click | Edit that block in place |
-| `⌘B` `⌘I` `⌘E` `⌘K` `⌘⇧X` | Bold, italic, code, link, strikethrough |
+| `e` | Edit the first block of the cell you are reading |
+| `⌘B` `⌘I` `⌘E` `⌘K` `⌘⇧X` | Bold, italic, code, link, strikethrough (or select text for the toolbar) |
 | `Enter` | Split the paragraph or heading here; at the end, start a new one |
 | `⇧Enter` | Line break inside the block |
+| `↑` `↓` | At the first or last line, move to the neighbouring block |
+| `⌫` `Del` | At the start or end, join the neighbouring paragraph |
 | `⌘/` | Switch the block between writing and its markdown |
 | `esc` or `⌘Enter` | Finish the block |
 | `⌘Z` | Undo while writing; after the block is finished, undo it |

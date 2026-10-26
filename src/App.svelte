@@ -62,6 +62,7 @@
       loaded = null;
       session.on = false;
       session.why = '';
+      session.told = false;
       session.active = null;
       session.flush = null;
       reset();
@@ -118,6 +119,7 @@
       session.why = why;
       if (!why && file instanceof File) loaded = { name: file.name, file, handle, stamp: `${file.lastModified}:${file.size}`, text: null, bom: false, original: notebook.cells.map((c) => c.source) };
       session.on = !!loaded;
+      if (loaded) hint();
       // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
       const mc = (document as any).modelContext ?? (navigator as any).modelContext;
       if (mc) {
@@ -139,6 +141,17 @@
       } else if (fresh && cells.length) import('./lib/notice').then((m) => m.say(`${file.name} would not open. ${why}`));
       else (status = 'error'), (detail = why);
     }
+  }
+
+  // Said once, ever, the first time a notebook opens that can be edited.
+  function hint() {
+    try {
+      if (localStorage.getItem('edit-hint')) return;
+      localStorage.setItem('edit-hint', '1');
+    } catch {
+      return;
+    }
+    setTimeout(() => import('./lib/notice').then((m) => m.say('Double-click any text to edit it.')), 1200);
   }
 
   // Reads the file again whenever it changes on disk, unless edits here would be lost by it.

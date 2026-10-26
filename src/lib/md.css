@@ -53,3 +53,13 @@
 
 /* a markdown or LaTeX output sits in its box like the other outputs, a little smaller than the prose around it */
 .out > .md.rendered { padding: 4px var(--pr, 20px) 4px 20px; font-size: 15px; line-height: 1.65; }
+
+/* Editing: the blocks of a notebook that can be edited say so under the pointer, and a cell with unsaved edits has a bar in its gutter */
+.md [data-b] { cursor: text; }
+.md [data-b] a { cursor: pointer; }
+@media (hover: hover) {
+  .md [data-b]:hover { border-radius: 4px; background: color-mix(in srgb, var(--fg) 4%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--fg) 4%, transparent); }
+}
+.md .placeholder { margin: 0; color: var(--fg-3); cursor: text; }
+.cell:focus { outline: none; }
+.cell.edited > .gutter { box-shadow: inset -2px 0 0 var(--accent); }

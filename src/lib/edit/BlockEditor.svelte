@@ -5,7 +5,8 @@
   import type { MimeBundle } from '../notebook';
   import { blocksOf, replaceBlock, type Block } from './blocks';
   import { blockMarkdown, blockText, plainLength, toMarkdown, type Inline } from './inline';
-  import { caretAt, fromDom, mark, pointAt, textOffset, toDom } from './dom';
+  import { atEdge, caretAt, fromDom, mark, pointAt, textOffset, toDom } from './dom';
+  import Bubble from './Bubble.svelte';
   import { typeset } from '../math';
   import { session } from './session.svelte';
   import { say } from '../notice';
@@ -135,9 +136,14 @@
     if (!c || c === 'end' || (typeof c === 'object' && 'find' in c)) return caretAt(node, Infinity);
     if (c === 'start') return caretAt(node, 0);
     if ('offset' in c) return caretAt(node, c.offset);
-    const p = 'word' in c ? c.word : (c as { x: number; y: number });
+    let p: { x: number; y: number };
+    if ('word' in c) p = c.word;
+    else if ('edge' in c) {
+      const box = node.getBoundingClientRect();
+      p = { x: c.x, y: c.edge === 'bottom' ? box.bottom - 4 : box.top + 4 };
+    } else p = c as { x: number; y: number };
     const pos = pointAt(p.x, p.y);
-    if (!pos || !node.contains(pos.node)) return caretAt(node, Infinity);
+    if (!pos || !node.contains(pos.node)) return caretAt(node, c && 'edge' in c && c.edge === 'top' ? 0 : Infinity);
     const sel = getSelection()!;
     sel.collapse(pos.node, pos.offset);
     if ('word' in c) {
@@ -251,6 +257,17 @@
       if (ghost) (own(), finish(compute()));
       else if (shape && shape.kind !== 'list') (own(), split());
     } else if ((k === 'Backspace' || k === 'Delete') && join(k === 'Backspace')) own();
+    else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && block) {
+      // on the first or last line, the arrow goes on into the neighbouring block
+      const up = k === 'ArrowUp';
+      if (!atEdge(el, up ? 'top' : 'bottom')) return;
+      const all = blocksOf(source);
+      const i = all ? all.findIndex((b) => b.start === block.start) : -1;
+      if (!all?.[up ? i - 1 : i + 1] || i < 0) return;
+      own();
+      const x = getSelection()?.getRangeAt(0).getClientRects()[0]?.left ?? el.getBoundingClientRect().left;
+      finish(compute(), { to: up ? 'prev' : 'next', at: { edge: up ? 'bottom' : 'top', x } });
+    }
   }
 
   function paste(e: ClipboardEvent) {
@@ -290,6 +307,7 @@
     if (caret === 'end') i = node.value.length;
     else if (caret && typeof caret === 'object' && 'offset' in caret) i = Math.min(caret.offset, node.value.length);
     else if (caret && typeof caret === 'object' && 'find' in caret) i = Math.max(0, node.value.indexOf(caret.find));
+    else if (caret && typeof caret === 'object' && 'edge' in caret) i = caret.edge === 'bottom' ? node.value.length : 0;
     node.setSelectionRange(i, i);
     return {
       destroy() {
@@ -368,4 +386,5 @@
       onclick={(e: MouseEvent) => (e.target as Element).closest('a') && e.preventDefault()}
     ></svelte:element>
   {/key}
+  <Bubble root={() => el} onmark={fmt} />
 {/if}

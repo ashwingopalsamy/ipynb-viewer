@@ -38,3 +38,32 @@
   white-space: pre;
   tab-size: 4;
 }
+
+/* the toolbar floats over a selection */
+.fmt {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--glass);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border-radius: var(--r-group);
+  box-shadow: var(--float);
+  transform: translate(-50%, calc(-100% - 8px));
+}
+.fmt.below { transform: translate(-50%, 8px); }
+.fmt button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.fmt button:hover { background: var(--fill); color: var(--fg); }
+.fmt button[aria-pressed='true'] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }

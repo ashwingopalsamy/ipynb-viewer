@@ -14,6 +14,8 @@ export const session = $state({
   on: false,
   /** Why not, in a sentence, when `on` is false. */
   why: '',
+  /** The reason has been shown once for this notebook. */
+  told: false,
   dirty: false,
   saving: false,
   /** The file changed on disk after the edits began, so saving goes to a new file. */

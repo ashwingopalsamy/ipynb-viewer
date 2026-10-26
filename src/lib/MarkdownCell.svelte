@@ -42,29 +42,58 @@
     session.active = cell.id;
   };
 
-  async function edit(e: MouseEvent) {
+  let starting = false;
+
+  // Opens an editor: on the block under `target`, on the first block when there is no target (the `e` key), on a new
+  // paragraph in a cell with nothing in it, or on the whole cell when it could not be split into blocks.
+  async function begin(target: Element | null, point: { x: number; y: number } | null) {
     if (!session.on) {
-      if (session.why) import('./notice').then((m) => m.say(session.why));
+      if (session.why && !session.told) {
+        session.told = true;
+        import('./notice').then((m) => m.say(session.why));
+      }
       return;
     }
-    const hit = e.target as Element;
     // a block drawn again since the click is no longer in the page
-    if (open || !page || !root?.contains(hit) || hit.closest('a')) return;
-    const whole = page.blocks === null;
-    const el = hit.closest<HTMLElement>('[data-b]');
-    if (!whole && (!el || !root.contains(el))) return;
-    const b = whole ? -1 : Number(el!.dataset.b);
-    const [x, y] = [e.clientX, e.clientY];
+    if (starting || open || !page || (target && (!root?.contains(target) || target.closest('a')))) return;
+    const hit = target?.closest<HTMLElement>('[data-b]') ?? null;
+    if (target && page.blocks?.length && !hit) return;
     // the TeX of the formula under the pointer, which opens the block as text with the caret on it
-    const tex = hit.closest('.math')?.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? null;
-    if (!(await current()?.ensureBase())) return;
-    Editor ??= (await import('./edit/BlockEditor.svelte')).default;
-    const now = page;
-    if (!root?.contains(hit) || (!whole && !now.blocks?.[b])) return;
-    if (whole) return activate({ kind: 'whole', b, mode: 'source', at: tex ? { find: tex } : null });
-    const source = now.blocks![b].kind === 'source' || tex !== null;
-    activate({ kind: 'block', b, mode: source ? 'source' : 'rich', at: tex ? { find: tex } : source ? null : { word: { x, y } } });
+    const tex = target?.closest('.math')?.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? null;
+    starting = true;
+    try {
+      if (!(await current()?.ensureBase())) return;
+      Editor ??= (await import('./edit/BlockEditor.svelte')).default;
+      if (!page || (target && !root?.contains(target))) return;
+      const blocks = page.blocks;
+      if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? { find: tex } : null });
+      if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start' });
+      const b = hit ? Number(hit.dataset.b) : 0;
+      if (!blocks[b]) return;
+      const text = blocks[b].kind === 'source' || tex !== null;
+      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: tex ? { find: tex } : text ? null : point ? { word: point } : 'start' });
+    } finally {
+      starting = false;
+    }
   }
+
+  // Touch has no double-click that can be relied on, so two quick taps in one place count as one.
+  let tap: { at: number; x: number; y: number } | null = null;
+  function touched(e: PointerEvent) {
+    if (e.pointerType !== 'touch') return;
+    const near = tap && e.timeStamp - tap.at < 350 && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 24;
+    tap = near ? null : { at: e.timeStamp, x: e.clientX, y: e.clientY };
+    if (near) begin(e.target as Element, { x: e.clientX, y: e.clientY });
+  }
+
+  // The `e` key reaches the cell as an event, since the keys are handled at the window.
+  $effect(() => {
+    const cellEl = root?.closest('[data-cell]');
+    if (!cellEl) return;
+    const go = () => begin(null, null);
+    cellEl.addEventListener('edit', go);
+    return () => cellEl.removeEventListener('edit', go);
+  });
 
   async function done(next: string | null, follow?: Follow) {
     const was = open;
@@ -104,7 +133,7 @@
   {/if}
 {/snippet}
 
-<div class="md" bind:this={root} ondblclick={edit} role="presentation">
+<div class="md" bind:this={root} ondblclick={(e) => begin(e.target as Element, { x: e.clientX, y: e.clientY })} onpointerup={touched} role="presentation">
   {#if page}
     {#if open?.kind === 'whole' && Editor}
       {#key open.id}
@@ -112,6 +141,9 @@
       {/key}
     {:else}
       {#if open?.kind === 'ghost' && open.b === -1}{@render ghost()}{/if}
+      {#if session.on && page.blocks?.length === 0 && open?.kind !== 'ghost'}
+        <p class="placeholder">Empty cell · double-click to write</p>
+      {/if}
       {#each page.parts as part, i}
         {#if open?.kind === 'block' && open.b === i && Editor}
           {#key open.id}
