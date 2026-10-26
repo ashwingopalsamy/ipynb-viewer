@@ -57,7 +57,7 @@ export function watch(handle: Handle, first: File, current: () => Cell[], apply:
         if (told !== now) (told = now), held();
         return;
       }
-      const notebook = await readNotebook(file.stream());
+      const notebook = /\.(?:md|markdown)$/i.test(file.name) ? await (await import('./edit/mdfile')).readMarkdown(file) : await readNotebook(file.stream());
       // A half-written file parses as a short notebook; wait for the next tick instead.
       if (notebook.warnings.some((w) => w.startsWith('The file ends early'))) return;
       seen = now;
@@ -95,7 +95,7 @@ export interface Opened {
 export async function pick(): Promise<Opened | null> {
   try {
     const [handle] = await window.showOpenFilePicker!({
-      types: [{ description: 'Notebook', accept: { 'application/json': ['.ipynb', '.json'] } }],
+      types: [{ description: 'Notebook or Markdown', accept: { 'application/json': ['.ipynb', '.json'], 'text/markdown': ['.md', '.markdown'] } }],
     });
     return { file: await handle.getFile(), handle };
   } catch {

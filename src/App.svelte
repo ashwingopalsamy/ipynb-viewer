@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { readNotebook, type Cell, type NotebookMeta } from './lib/notebook';
+  import { readNotebook, type Cell, type NotebookEvent, type NotebookMeta } from './lib/notebook';
   import { theme, toggleTheme } from './lib/theme.svelte';
   import CellView from './lib/Cell.svelte';
   import Icon from './lib/Icon.svelte';
@@ -87,7 +87,7 @@
     };
 
     try {
-      const notebook = await readNotebook(file.stream(), (event) => {
+      const on = (event: NotebookEvent) => {
         if (mine !== run) throw new Error('superseded');
         if (fresh) begin();
         if (event.type === 'cell') {
@@ -101,7 +101,10 @@
         } else {
           meta = event.meta;
         }
-      });
+      };
+      // a Markdown file is a notebook of one text cell
+      const markdown = file instanceof File && /\.(?:md|markdown)$/i.test(file.name);
+      const notebook = markdown ? await (await import('./lib/edit/mdfile')).readMarkdown(file as File, on) : await readNotebook(file.stream(), on);
       if (mine !== run) return;
       if (notebook.cells.every(blank)) throw new Error('This notebook is empty.');
       if (fresh) begin();
@@ -117,7 +120,7 @@
               ? ''
               : 'Editing is off for this file.';
       session.why = why;
-      if (!why && file instanceof File) loaded = { name: file.name, file, handle, stamp: `${file.lastModified}:${file.size}`, text: null, bom: false, original: notebook.cells.map((c) => c.source) };
+      if (!why && file instanceof File) loaded = { name: file.name, file, handle, stamp: `${file.lastModified}:${file.size}`, text: null, bom: false, kind: markdown ? 'md' : 'ipynb', crlf: false, original: notebook.cells.map((c) => c.source) };
       session.on = !!loaded;
       if (loaded) hint();
       // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
@@ -259,7 +262,7 @@
         const mod = await import('./lib/edit/save');
         if (!(await mod.readBase(loaded))) return say('Not saved: this notebook changed on disk. Your edits are still here.');
         const was = loaded.name;
-        const r = await mod.save({ name: was, handle: loaded.handle, stamp: loaded.stamp, text: loaded.text!, bom: loaded.bom, original: loaded.original, cells }, asNew);
+        const r = await mod.save({ name: was, handle: loaded.handle, stamp: loaded.stamp, text: loaded.text!, bom: loaded.bom, kind: loaded.kind, crlf: loaded.crlf, original: loaded.original, cells }, asNew);
         if (r.how === 'none') return say('Nothing to save.');
         if (r.how === 'cancelled') return;
         if (r.how === 'failed') return say(`Not saved: ${r.why}.`);
@@ -303,7 +306,7 @@
 
 <svelte:window onkeydown={keys} onbeforeunload={(e) => (session.dirty || session.saving) && e.preventDefault()} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
-<input bind:this={picker} type="file" accept=".ipynb,.json,application/json" hidden onchange={pick} />
+<input bind:this={picker} type="file" accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
 
 <header class="bar">
   <div class="inner">

@@ -12,6 +12,10 @@ export interface Loaded {
   /** The file's text, read when the first editor opens. */
   text: string | null;
   bom: boolean;
+  /** A Markdown file, which is one cell and is written back whole. */
+  kind: 'ipynb' | 'md';
+  /** A Markdown file that uses \r\n; its cell holds \n. */
+  crlf: boolean;
   /** Every cell's source as parsed, in file order. */
   original: string[];
 }
@@ -26,8 +30,13 @@ export async function readBase(l: Loaded): Promise<boolean> {
     const file = l.handle ? await l.handle.getFile() : l.file;
     const head = new Uint8Array(await file.slice(0, 3).arrayBuffer());
     const text = await file.text();
-    const found = locateSources(text);
-    if (!found || found.length !== l.original.length || found.some((f, k) => f.value !== l.original[k])) return false;
+    if (l.kind === 'md') {
+      if (text.replace(/\r\n?/g, '\n') !== l.original[0]) return false;
+      l.crlf = text.includes('\r\n');
+    } else {
+      const found = locateSources(text);
+      if (!found || found.length !== l.original.length || found.some((f, k) => f.value !== l.original[k])) return false;
+    }
     l.text = text;
     l.bom = head[0] === 0xef && head[1] === 0xbb && head[2] === 0xbf;
     l.stamp = stamp(file);
@@ -43,6 +52,8 @@ export interface Target {
   stamp: string;
   text: string;
   bom: boolean;
+  kind: 'ipynb' | 'md';
+  crlf: boolean;
   original: string[];
   cells: readonly Cell[];
 }
@@ -90,7 +101,8 @@ export async function save(t: Target, asNew: boolean): Promise<Saved> {
   const edits = new Map<number, string>();
   t.cells.forEach((c, k) => c.source !== t.original[k] && edits.set(k, c.source));
   if (!edits.size) return { how: 'none' };
-  const text = patch(t.text, t.original, edits);
+  const mime = t.kind === 'md' ? 'text/markdown' : 'application/json';
+  const text = t.kind === 'md' ? (t.crlf ? edits.get(0)!.replace(/\n/g, '\r\n') : edits.get(0)!) : patch(t.text, t.original, edits);
   if (text === null) return { how: 'failed', why: 'the file does not match what was opened' };
   const out = (s: string) => (t.bom ? '﻿' + s : s);
 
@@ -119,7 +131,7 @@ export async function save(t: Target, asNew: boolean): Promise<Saved> {
   const name = t.name.replace(/(\.[^./\\]+)?$/, ' (edited)$1');
   if (window.showSaveFilePicker) {
     try {
-      const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Notebook', accept: { 'application/json': ['.ipynb'] } }] });
+      const handle = await window.showSaveFilePicker({ suggestedName: name, types: [t.kind === 'md' ? { description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown'] } } : { description: 'Notebook', accept: { 'application/json': ['.ipynb'] } }] });
       await write(handle, out(text));
       return { how: 'as-new', name: handle.name, text, handle, file: await handle.getFile(), why };
     } catch (e) {
@@ -127,7 +139,7 @@ export async function save(t: Target, asNew: boolean): Promise<Saved> {
       // the picker needs a click that is still fresh; a download needs nothing
     }
   }
-  const url = URL.createObjectURL(new Blob([out(text)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([out(text)], { type: mime }));
   const link = document.createElement('a');
   link.href = url;
   link.download = name;
