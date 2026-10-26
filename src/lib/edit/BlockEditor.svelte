@@ -374,6 +374,7 @@
       class="editing"
       contenteditable="true"
       role="textbox"
+      tabindex="0"
       aria-multiline="true"
       aria-label="Edit {label}"
       spellcheck="true"
