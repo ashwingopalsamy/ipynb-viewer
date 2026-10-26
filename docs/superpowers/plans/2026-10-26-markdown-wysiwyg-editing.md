@@ -1,6 +1,8 @@
 # Markdown WYSIWYG Editing Implementation Plan
 
 > **For agentic workers:** Execute inline with superpowers:executing-plans, one task at a time, in order. No subagents. Steps use checkbox (`- [ ]`) syntax. Each task lists every file it touches; read only those (and only the line ranges named) before editing.
+>
+> **Execution decision (user, 2026-10-26):** skip every step that writes or runs tests (`*.test.ts` files, `npx vitest run`). Keep the test code blocks as the behavioral spec for each module. `npm run check` is also skipped unless the user asks for it.
 
 **Goal:** Double-click a rendered markdown block in a locally opened notebook to edit it in place, rich (no markdown syntax shown) for prose, raw source for everything else, then save back to the same file with a byte-minimal diff.
 
@@ -33,7 +35,8 @@
 | `Mod+/` | Toggle the active block between rich and source. |
 | `Esc`, blur, `Mod+Enter` | Commit and leave. Empty text deletes the block. |
 | `Mod+Z` inside the editor | Native undo. Outside any editor: undo the last committed block edit (stack of 100). |
-| `Mod+S` | Save (see Persistence). Swallowed (no browser "save page") whenever editing is on. |
+| `Mod+S` / Save button | Save (see Persistence). Swallowed (no browser "save page") whenever editing is on. |
+| `Mod+Shift+S` / `Shift`+click Save | Save as new file. |
 
 Inline content the rich editor cannot represent (inline math, images, inline HTML) appears as an **atom**: a `contenteditable="false"` chip showing the sanitized rendering; it is preserved byte-for-byte. To change one, `Mod+/` into source.
 
@@ -46,15 +49,26 @@ Out of scope for v1: arrow-key navigation across blocks, markdown input rules (t
 4. Literal text stays literal: serialization escapes only characters that would otherwise change meaning in that position (rules in Task 2).
 5. Soft line breaks (`\n` inside a paragraph) are kept as `\n` in the DOM text nodes and in the model; never read text with `innerText`.
 6. Save rewrites only the `"source"` value of edited cells, in the file's existing shape (string vs array, indentation, line ending). Everything else in the file is untouched.
-7. Save never overwrites a file that changed on disk since it was loaded or last saved.
+7. Save never overwrites a file that changed on disk since it was loaded or last saved. In that case it writes a new file instead.
+8. Every byte outside edited markdown cells' `"source"` values, including all outputs and their images, is identical in the saved file. No code path writes a notebook built from `Cell[]`.
 
 ### Trust boundary
 The editor DOM is built only with `createElement` / `textContent` from the model. The only HTML strings inserted come from `renderMarkdown`-family functions (DOMPurify-sanitized). Paste inserts `text/plain` only. Drops onto an editor are prevented. Nothing is fetched.
 
 ### Persistence
-- With a `FileSystemFileHandle`: on `Mod+S`, re-read the file, refuse if its `lastModified:size` stamp differs from the one recorded at load/last save, patch, `requestPermission({ mode: 'readwrite' })`, write via `createWritable()`. Tell the watcher the new stamp so it does not echo-reload.
-- Without a handle (input fallback, Safari/Firefox): `Mod+S` downloads the patched file under the same name.
-- While there are unsaved edits: the watcher does not apply disk changes; it raises one notice ("<name> changed on disk. Save will not overwrite it; reopen to load the new version."). `beforeunload` warns. Opening another file (pick, drop, `Mod+O`) asks `confirm('Discard unsaved edits to <name>?')`.
+
+**Outputs are never at risk.** Saving never re-serializes the notebook from the parsed `Cell[]`, because the parser normalizes, drops and reformats things. The file written is always *the original file text* with only the edited cells' `"source"` values replaced (`patch`, Task 3). Code-cell outputs, images, execution counts, widget state, metadata, key order and formatting are copied byte for byte. The original text is read into memory at load (`loaded.text`), so a safe base is always available even if the file on disk changes or disappears.
+
+**Save button.** Once a markdown cell has been edited (`session.dirty`), a **Save** button with the Lucide `save` icon appears in the header tools pill, before the other actions. Tooltip `Save · ⌘S`; `aria-label="Save edits"`. While saving it is disabled. It hides again after a successful save. `Shift`+click or `Mod+Shift+S` always does *Save as new file*.
+
+**Save (button / `Mod+S`), in order:**
+1. **In place.** Only with a `FileSystemFileHandle` (Chrome/Edge picker or drop). Re-read the file. If its `lastModified:size` stamp still matches the one recorded at load or last save, patch that text, get `readwrite` permission (`queryPermission`, then `requestPermission`), and write with `createWritable()`. Tell the watcher the new stamp so it does not reload our own write.
+2. **As a new file**, when there is no handle, the stamp differs (changed on disk), permission is denied, or the user asked for it. Patch `loaded.text` (the bytes we opened, so nothing written by someone else is lost or merged). Use `showSaveFilePicker({ suggestedName: '<base> (edited).ipynb' })` and write there. That file then becomes the save target: `loaded.handle`, `loaded.text` and the stamp switch to it, and the watcher is restarted on the new handle. If the picker is missing (Safari/Firefox) or throws anything except `AbortError` (e.g. the user activation expired after the permission prompt), download a Blob under the same suggested name. `AbortError` (the user cancelled) leaves everything dirty, with no notice.
+3. If `patch` returns `null`, refuse with a notice and stay dirty. Never fall back to rebuilding the JSON.
+
+The notice says where the edits went: `Saved <name>`, `Saved as <newname>`, `Downloaded <newname>`, or `<name> changed on disk, so your edits were saved as a new file.`
+
+**While there are unsaved edits:** the watcher does not apply disk changes. It raises one notice: `<name> changed on disk. Saving will keep both: your edits go to a new file.` `beforeunload` warns. Opening another file (pick, drop, `Mod+O`) asks `confirm('Discard unsaved edits to <name>?')`.
 
 ---
 
@@ -72,7 +86,8 @@ The editor DOM is built only with `createElement` / `textContent` from the model
 1. **Cells the lexer cannot map** (CRLF source, top-level HTML block like `<div align="center">`, a duplicate link definition): must fall back to whole-cell source mode, never splice at a wrong offset. → test `blocksOf returns null for \r and html` (Task 1).
 2. **Markdown-significant characters typed as text** (`2 * 3`, `snake_case`, `$5 and $6`, a line starting `# ` or `1. `): must render literally after commit with no gratuitous escapes. → tests `escapes only where meaning changes` (Task 2).
 3. **Lenient notebooks** (`NaN` in metadata, trailing commas, a non-object entry in `cells`): patch must target the right cell or refuse. → tests `skips non-object cells`, `tolerates NaN`, `refuses on mismatch` (Task 3).
-4. **Disk changed while dirty** (Jupyter autosave): no silent overwrite in either direction. → stamp check in `save()` (Task 6); manual check listed there.
+4. **Disk changed while dirty** (Jupyter autosave): no silent overwrite in either direction. Edits land in a new file. → stamp check in `save()` (Task 6); manual check listed there.
+6. **Outputs survive a save** (a notebook with plots, HTML tables, an error traceback): the saved file differs from the original only inside edited `"source"` values. → `rewrites only the edited source` test (Task 3); `git diff` manual check (Task 6).
 5. **Whitespace at mark edges** (user bolds `"bold "` including the trailing space): must serialize `**bold** ` not `**bold **` (which would not parse as bold). → test `moves edge whitespace outside marks` (Task 2).
 
 ---
@@ -341,8 +356,8 @@ it('refuses on mismatch', () => {
 - Produces:
   ```ts
   // session.svelte.ts
-  export const session: { on: boolean; dirty: boolean };
-  export interface Host { apply(id: string, source: string): void; save(): Promise<void>; }
+  export const session: { on: boolean; dirty: boolean; saving: boolean };
+  export interface Host { apply(id: string, source: string): void; save(asNew?: boolean): Promise<void>; }
   export function host(h: Host | null): void;
   export function commit(id: string, before: string, after: string): void; // no-op when before === after; pushes undo, calls apply, sets dirty
   export function undo(): boolean;                                         // false when the stack is empty
@@ -359,12 +374,14 @@ it('refuses on mismatch', () => {
 - [ ] **Step 2: Add `renderParts` / `renderInline`** to `markdown.ts` as specified. `renderMarkdown`'s output must not change.
 
 - [ ] **Step 3: Wire `App.svelte`.**
-  - Keep `let loaded: { file: File; handle?: FileSystemFileHandle; stamp: string; original: string[] } | null` set in `open` after a successful read when `file instanceof File && !link && meta.nbformat >= 4 && !warnings.some(w => w.startsWith('The file ends early'))`; `original = notebook.cells.map(c => c.source)`. Link-opened files pass a flag (the `link.start` callback path) so they stay read-only. Set `session.on = !!loaded`; `reset()`.
+  - Keep `let loaded: { name: string; file: File; handle?: FileSystemFileHandle; stamp: string; text: string; original: string[] } | null`, set in `open` after a successful read when `file instanceof File && !link && meta.nbformat >= 4 && !warnings.some(w => w.startsWith('The file ends early'))`. Use `original = notebook.cells.map(c => c.source)`. For `text`, start `file.text()` at the top of `open` (only when `file instanceof File`) so it reads the same snapshot as the parser, and await it here. A `File` from a handle stops being readable once the file changes on disk. Use `stamp` from `stamp(file)` (exported by `watch.ts` in Task 6; until then inline `` `${file.lastModified}:${file.size}` ``). Link-opened files pass a flag (the `link.start` callback path) so they stay read-only. Set `session.on = !!loaded`; `reset()`.
   - `host({ apply: (id, source) => (cells = cells.map(c => c.id === id ? { ...c, source } : c)), save: () => import('./lib/edit/save').then(m => m.save(...)) })` — `save` args per Task 6; leave it as `async () => {}` until Task 6.
   - At the top of `open`, `pick`, `choose`, `drop`: `if (session.dirty && !confirm(\`Discard unsaved edits to ${name}?\`)) return;`.
-  - Window keydown: `Mod+S` → when `session.on`, `preventDefault()` and `host.save`; `Mod+Z` without Shift, when the target is not inside `input, textarea, [contenteditable]` and `session.on` → `if (undo()) preventDefault()`.
+  - Window keydown: `Mod+S` → when `session.on`, `preventDefault()` and `host.save(e.shiftKey)`; `Mod+Z` without Shift, when the target is not inside `input, textarea, [contenteditable]` and `session.on` → `if (undo()) preventDefault()`.
   - `<svelte:window onbeforeunload={(e) => session.dirty && e.preventDefault()} />`.
   - Name pill: append `<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>` when `session.dirty`.
+  - Save button, in the `.tools` pill before `{#if Actions}`, using the same markup pattern as `src/lib/Actions.svelte:11`: `{#if session.dirty}<button class="icon" aria-label="Save edits" data-tip="Save · ⌘S" disabled={session.saving} onclick={(e) => host.save(e.shiftKey)}><Lucide name="save" /></button>{/if}`. `host` here is the object passed to `host()`; keep a local reference to it.
+  - Add the Lucide `save` icon to `PATHS` in `src/lib/Lucide.svelte`: `save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>'`.
 
 - [ ] **Step 4: Run** `npx vitest run` and `npm run check` — expect both clean.
 
@@ -427,7 +444,7 @@ it('refuses on mismatch', () => {
 
 **Files:**
 - Create: `src/lib/edit/save.ts`
-- Modify: `src/lib/watch.ts:31-70` (`watch` signature), `src/App.svelte` (call sites of `watch` and `host.save`), `docs/shortcuts.md`
+- Modify: `src/lib/watch.ts:31-70` (`watch` signature), `src/App.svelte` (call sites of `watch` and `host.save`), `src/fs.d.ts` (if types are missing), `docs/shortcuts.md`
 
 **Interfaces:**
 - Consumes: `patch` (T3), `session`, `reset` (T4), `say` from `../notice`.
@@ -437,21 +454,34 @@ it('refuses on mismatch', () => {
   export interface Watching { stop(): void; saved(f: File): void }
   export function watch(handle, first, current, apply, hold: () => boolean): Watching;
   // save.ts
-  export interface Target { name: string; file: File; handle?: FileSystemFileHandle; stamp: string; original: string[]; cells: Cell[] }
-  export async function save(t: Target): Promise<{ ok: true; file?: File } | { ok: false; why: string }>;
+  export interface Target { name: string; handle?: FileSystemFileHandle; stamp: string; text: string; original: string[]; cells: Cell[] }
+  export type Saved =
+    | { how: 'none' }                                                                   // nothing edited
+    | { how: 'in-place' | 'as-new'; name: string; text: string; handle: FileSystemFileHandle; file: File }
+    | { how: 'download'; name: string; text: string }
+    | { how: 'cancelled' }
+    | { how: 'failed'; why: string };
+  export async function save(t: Target, asNew: boolean): Promise<Saved>;
   ```
 
 - [ ] **Step 1: `watch.ts`.** Add the `hold` parameter: when the stamp changed and settled but `hold()` is true, do not `apply`; call `say(\`${name} changed on disk. Save will not overwrite it; reopen to load the new version.\`)` once per distinct stamp (keep `seen` unchanged so it stays detectable). Return `{ stop, saved }` where `saved(f)` sets `seen = stamp(f)`. Export `stamp`.
 
-- [ ] **Step 2: `save.ts`.**
-  - `edits`: for each `k`, `cells[k].source !== original[k]` → `edits.set(k, cells[k].source)`. None → `{ ok: true }`.
-  - Read current text: `handle ? await handle.getFile() : file`. With a handle, `stamp(current) !== t.stamp` → `{ ok: false, why: 'changed on disk' }`.
-  - `patched = patch(text, original, edits)`; `null` → `{ ok: false, why: 'the file does not match what was opened' }`.
-  - Handle: `(await handle.queryPermission?.({ mode: 'readwrite' })) === 'granted' || (await handle.requestPermission({ mode: 'readwrite' })) === 'granted'`, else fall through to download. Write with `createWritable()`, `write(patched)`, `close()`; return `{ ok: true, file: await handle.getFile() }`.
-  - Download: `Blob([patched], { type: 'application/json' })` (`text/markdown` for Task 7), object URL, temporary `<a download={name}>`, click, revoke. Return `{ ok: true }`.
-  - Add the two permission methods to `src/fs.d.ts` if the types are missing.
+- [ ] **Step 2: `save.ts`.** Follows the Persistence order in the Design section exactly.
+  - `edits`: for each `k`, when `cells[k].source !== original[k]`, `edits.set(k, cells[k].source)`. If there are none → `{ how: 'none' }`.
+  - **In place** (only when `!asNew && handle`): `current = await handle.getFile()`. If `stamp(current) === t.stamp`, `patched = patch(await current.text(), original, edits)`. With `patched` and permission granted (`queryPermission`, then `requestPermission`, both `{ mode: 'readwrite' }`), write it (`createWritable`, `write`, `close`) and return `in-place` with `await handle.getFile()`. Any other outcome (stamp differs, permission denied, `getFile` throws because the file is gone) falls through to *as new*. Remember the reason, so the App can say `changed on disk`.
+  - **As new:** `patched = patch(t.text, original, edits)`. `null` → `{ how: 'failed', why: 'the file does not match what was opened' }`. The suggested name is `t.name` with ` (edited)` inserted before the extension. With `window.showSaveFilePicker`: open it with `suggestedName` and `types: [{ description: 'Notebook', accept: { 'application/json': ['.ipynb'] } }]`, write, return `as-new`. `AbortError` → `cancelled`. Any other error, or no picker → **download**: `Blob([patched], { type: 'application/json' })`, object URL, temporary `<a download>`, click, `URL.revokeObjectURL` on the next tick, return `download`.
+  - `text` in every success result is `patched`. It becomes the new base.
+  - Add `showSaveFilePicker`, `queryPermission`, `requestPermission` and `createWritable` to `src/fs.d.ts` where the types are missing.
 
-- [ ] **Step 3: App wiring.** `stop = w.stop` with `w = watch(..., () => session.dirty)`. `host.save` builds the `Target` from `loaded` and current `cells`, calls `save`; on success: `loaded.original = cells.map(c => c.source)`, `loaded.stamp`/`loaded.file` updated from the returned file, `w.saved(file)`, `reset()`, `say(\`Saved ${name}\`)` (or `Downloaded ${name}`); on failure: `say(\`Not saved: ${why}.\`)` and leave dirty.
+- [ ] **Step 3: App wiring.**
+  - `w = watch(handle, file, () => cells, apply, () => session.dirty)`, then `stop = w.stop`.
+  - `host.save(asNew)`: return if `session.saving`. Set `session.saving = true` and build the `Target` from `loaded` and the current `cells`. Then `const r = await (await import('./lib/edit/save')).save(target, asNew)`, and `finally` set `session.saving = false`.
+    - `in-place`: `w.saved(r.file)`.
+    - `as-new`: stop the old watcher and start `watch` on `r.handle`. Set `name = r.name` and `document.title`.
+    - `download`: no watcher change. `loaded.handle` stays, but `loaded.text` becomes `r.text`, so a later in-place save still patches from the bytes on disk.
+    - For all three: `loaded.text = r.text`, `loaded.original = cells.map(c => c.source)`, `loaded.stamp = stamp(r.file)` when there is a file, then `reset()`, then the notice from the Design section.
+    - `cancelled`: nothing. `failed`: `say(\`Not saved: ${r.why}.\`)`, stays dirty.
+  - `none`: `say('Nothing to save.')`.
 
 - [ ] **Step 4: `docs/shortcuts.md`.** Add an "Editing" table: double-click, `⌘S`/`Ctrl S`, `⌘B` `⌘I` `⌘E` `⌘K` `⌘⇧X`, `Enter`, `Shift Enter`, `⌘/`, `Esc`, `⌘Z`. Note editing is only for notebooks opened from disk. If `src/lib/Menus.svelte` renders the `?` sheet from its own list (line ~25), add the same rows there.
 
@@ -459,7 +489,14 @@ it('refuses on mismatch', () => {
 
 - [ ] **Step 6: Commit** `feat(edit): save edits back to the notebook file`.
 
-- [ ] **Step 7: Manual checks for the user** (do not automate): open `examples/cooling-coffee.ipynb` from disk in Chrome; double-click a paragraph, bold a word, `Esc`, `⌘S`; `git diff examples/` shows only that cell's source lines changed. Repeat: Enter-split, list item add, code fence in source mode, `⌘Z` after commit, edit then touch the file externally then `⌘S` (must refuse), Safari (download path). Then `git checkout examples/`.
+- [ ] **Step 7: Manual checks for the user** (do not automate). Open `examples/cooling-coffee.ipynb` from disk in Chrome. Double-click a paragraph, bold a word, `Esc`; the Save button appears. Click it.
+  - `git diff examples/` shows only that cell's `"source"` lines. Every output, plot and image block is unchanged.
+  - Reopen the file in the viewer; the plots render.
+  - Repeat with Enter-split, adding a list item, a code fence in source mode, and `⌘Z` after a commit.
+  - Edit, then change the file externally, then `⌘S`. The original is not overwritten: the picker offers `cooling-coffee (edited).ipynb`, which holds your edit and every output.
+  - `⇧`+click Save → save as a new file.
+  - In Safari, Save downloads `cooling-coffee (edited).ipynb`.
+  - Then run `git checkout examples/`.
 
 ---
 
