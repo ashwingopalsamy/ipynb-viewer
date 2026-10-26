@@ -8,6 +8,8 @@
   import Lucide from './lib/Lucide.svelte';
   import { blank } from './lib/blank';
   import { ui, type Pop } from './lib/ui.svelte';
+  import { session, host, undo, reset, type Host } from './lib/edit/session.svelte';
+  import type { Loaded } from './lib/edit/save';
 
   // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
   let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
@@ -29,6 +31,8 @@
   let changed = $state.raw<ReadonlySet<string>>(new Set());
   let stop: (() => void) | undefined;
   let tools: AbortController | undefined;
+  // What the notebook on screen was read from, when it can be edited and saved back.
+  let loaded: Loaded | null = null;
 
   const rows = $derived(replayed && reorder ? reorder(cells) : cells);
   const language = $derived(meta ? (meta.language ?? 'python') : null);
@@ -43,7 +47,7 @@
   let run = 0;
   let depth = 0;
 
-  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle) {
+  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle, linked = false) {
     const mine = ++run;
     // The notebook the reader is in stays until the new file proves to be one: its first piece is what replaces it.
     let fresh = true;
@@ -53,6 +57,12 @@
       stop = undefined;
       tools?.abort();
       tools = undefined;
+      loaded = null;
+      session.on = false;
+      session.why = '';
+      session.active = null;
+      session.flush = null;
+      reset();
       ready = false;
       name = file.name;
       cells = [];
@@ -94,6 +104,18 @@
       if (fresh) begin();
       flush();
       ready = true;
+      const why = linked
+        ? 'Opened from a link, so it is read-only. Download it and open the file to edit.'
+        : notebook.nbformat < 4
+          ? 'This notebook uses format v3, so editing is off.'
+          : notebook.warnings.some((w) => w.startsWith('The file ends early'))
+            ? 'This notebook is incomplete, so editing is off.'
+            : file instanceof File
+              ? ''
+              : 'Editing is off for this file.';
+      session.why = why;
+      if (!why && file instanceof File) loaded = { name: file.name, file, handle, stamp: `${file.lastModified}:${file.size}`, text: null, bom: false, original: notebook.cells.map((c) => c.source) };
+      session.on = !!loaded;
       // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
       const mc = (document as any).modelContext ?? (navigator as any).modelContext;
       if (mc) {
@@ -131,7 +153,7 @@
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
   if (/[?#](?:url|nb)=/.test(location.href)) {
     status = 'fetching';
-    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file)), (why) => run || ((status = 'error'), (detail = why))));
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file, undefined, true)), (why) => run || ((status = 'error'), (detail = why))));
   }
 
   if (file) open(file, handle);
@@ -142,14 +164,18 @@
     if (status !== 'ready' && text.includes('http')) import('./lib/link').then((m) => m.pasted(text));
   };
 
+  // Leaving a notebook with unsaved edits asks first.
+  const keep = () => session.dirty && !confirm(`Discard unsaved edits to ${name}?`);
+
   function pick() {
     const file = picker.files?.[0];
     picker.value = '';
-    if (file) open(file);
+    if (file && !keep()) open(file);
   }
 
   // Where the browser allows it, keep a handle so the file can be watched.
   async function choose() {
+    if (keep()) return;
     if (!window.showOpenFilePicker) return picker.click();
     const got = await (await import('./lib/watch')).pick();
     if (got) open(got.file, got.handle);
@@ -175,24 +201,54 @@
     e.preventDefault();
     depth = 0;
     dragging = false;
+    if (keep()) return;
     const got = await (await import('./lib/watch')).dropped(e.dataTransfer!);
     if (got) open(got.file, got.handle);
   }
+
+  // Editing: the notebook's own file is saved back, and a committed edit can be taken back from anywhere but a field.
+  const editing: Host = {
+    apply(id, source) {
+      cells = cells.map((c) => (c.id === id ? ({ ...c, source } as Cell) : c));
+    },
+    source: (id) => cells.find((c) => c.id === id)?.source,
+    async ensureBase() {
+      if (!loaded) return false;
+      const ok = await (await import('./lib/edit/save')).readBase(loaded);
+      if (!ok) import('./lib/notice').then((m) => m.say('This notebook changed on disk. Reopen it to edit.'));
+      return ok;
+    },
+    async save() {},
+  };
+  host(editing);
+
+  function keys(e: KeyboardEvent) {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key === 'o') return e.preventDefault(), choose();
+    if (!session.on || !mod || e.altKey) return;
+    if (e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      editing.save(e.shiftKey);
+    } else if (e.key === 'z' && !e.shiftKey && !(e.target as Element | null)?.closest?.('input, textarea, [contenteditable]')) {
+      if (undo()) e.preventDefault();
+    }
+  }
 </script>
 
-<svelte:window onkeydown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'o' && (e.preventDefault(), choose())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
+<svelte:window onkeydown={keys} onbeforeunload={(e) => (session.dirty || session.saving) && e.preventDefault()} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
 <input bind:this={picker} type="file" accept=".ipynb,.json,application/json" hidden onchange={pick} />
 
 <header class="bar">
   <div class="inner">
     <span class="name pill" class:idle={!name} class:two={sections > 1}>
-      <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span></span>
+      <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span>{#if session.dirty}<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>{/if}</span>
       {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
     </span>
     <Opener />
     <div class="tools pill">
       <span class="tool-name">{tool}</span>
+      {#if session.dirty}<button class="icon" aria-label="Save edits" data-tip={session.conflict ? 'Save as new file · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>{/if}
       {#if Actions}<Actions />{/if}
       <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
         <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>

@@ -6,6 +6,7 @@ import type { MimeBundle } from './notebook';
 import { isNum } from './tabular';
 import { guard, settle, LINKS } from './guard';
 import { marked } from './mdlex';
+import { blocksOf, lexOf, type Block } from './edit/blocks';
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
@@ -32,19 +33,8 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   } else if (node.tagName === 'IMG') settle(node, remote);
 });
 
-/** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
-export function renderMarkdown(source: string, attachments: Record<string, MimeBundle> = {}): string {
-  guard();
-  const html = marked.parse(source, {
-    async: false,
-    walkTokens(token: Token) {
-      if (token.type === 'image' && token.href.startsWith('attachment:')) {
-        const url = attachmentUrl(token.href.slice('attachment:'.length), attachments);
-        if (url) token.href = url;
-      }
-    },
-  });
-  return DOMPurify.sanitize(html, {
+const clean = (html: string): string =>
+  DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'label', 'audio', 'video', 'source', 'track', 'picture', 'iframe', 'frame', 'object', 'embed', 'meta', 'link', 'base'],
     FORBID_ATTR: ['style', 'srcset', 'sizes', 'ping', 'poster', 'background', 'formaction', 'action'],
@@ -53,6 +43,50 @@ export function renderMarkdown(source: string, attachments: Record<string, MimeB
     SANITIZE_NAMED_PROPS: true,
     ALLOWED_URI_REGEXP: LINKS,
   });
+
+// Pictures a cell carries itself are shown from the data it holds.
+const attached = (attachments: Record<string, MimeBundle>) => (token: Token) => {
+  if (token.type === 'image' && token.href.startsWith('attachment:')) {
+    const url = attachmentUrl(token.href.slice('attachment:'.length), attachments);
+    if (url) token.href = url;
+  }
+};
+
+/** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
+export function renderMarkdown(source: string, attachments: Record<string, MimeBundle> = {}): string {
+  guard();
+  return clean(marked.parse(source, { async: false, walkTokens: attached(attachments) }));
+}
+
+/**
+ * The same page as renderMarkdown, one piece per top-level block and each piece's elements numbered (`data-b`) so a
+ * double-click can tell which block it landed in. Null blocks mean the source could not be mapped; the page is then one piece.
+ */
+export function renderParts(source: string, attachments: Record<string, MimeBundle> = {}): { parts: string[]; blocks: Block[] | null } {
+  guard();
+  const whole = () => ({ parts: [renderMarkdown(source, attachments)], blocks: null });
+  if (source.includes('\r')) return whole();
+  const tokens = lexOf(source);
+  const blocks = blocksOf(source, tokens);
+  if (!blocks) return whole();
+  marked.walkTokens(tokens, attached(attachments));
+  const parts = blocks.map((b, i) => {
+    const box = document.createElement('template');
+    box.innerHTML = clean(marked.parser([b.token]));
+    for (const el of box.content.children) el.setAttribute('data-b', String(i));
+    return box.innerHTML;
+  });
+  if (import.meta.env.DEV) {
+    const same = parts.join('').replace(/ data-b="\d+"/g, '') === renderMarkdown(source, attachments);
+    if (!same) console.warn('renderParts differs from renderMarkdown for this cell');
+  }
+  return { parts, blocks };
+}
+
+/** One line of markdown as sanitized inline HTML, for the parts of a block the editor leaves alone. */
+export function renderInline(raw: string, attachments: Record<string, MimeBundle> = {}): string {
+  guard();
+  return clean(marked.parseInline(raw, { async: false, walkTokens: attached(attachments) }));
 }
 
 const TABLE = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'b', 'strong', 'i', 'em', 'code', 'br', 'p'];

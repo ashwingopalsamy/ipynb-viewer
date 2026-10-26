@@ -183,6 +183,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .name svg { flex: none; width: 15px; height: 15px; color: var(--fg-3); }
 /* the app's own mark stands in front of the file name, on one line; the name keeps its ellipsis and its descenders */
 .file { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* a dot after the name says there are edits not yet saved */
+.dirty { flex: none; color: var(--accent); font-size: 18px; line-height: 1; }
 .fname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
 .tools { flex: none; gap: 2px; padding: 4px; margin-left: auto; }
 /* While a card is open the dock names it and widens to the card's width; the active tool's icon is filled. Desktop only: on a phone the dock is the bottom bar. */

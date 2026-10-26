@@ -31,11 +31,11 @@ function kindOf(t: Token): Kind {
  * The top-level blocks of a cell with their spans, or null when the source cannot be mapped with confidence
  * (carriage returns, raw HTML blocks, anything the lexer rewrote); the caller then edits the whole cell as text.
  */
-export function blocksOf(source: string): Block[] | null {
+export function blocksOf(source: string, tokens?: TokensList): Block[] | null {
   if (source.includes('\r')) return null;
   const out: Block[] = [];
   let from = 0;
-  for (const t of lexOf(source)) {
+  for (const t of tokens ?? lexOf(source)) {
     if (t.type === 'space') continue;
     if (t.type === 'html') return null;
     const i = source.indexOf(t.raw, from);
