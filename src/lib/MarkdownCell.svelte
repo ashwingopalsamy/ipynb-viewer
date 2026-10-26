@@ -103,8 +103,11 @@
     if (next !== null) commit(cell.id, cell.source, next);
     const blocks = page?.blocks ?? null;
     if (!follow || !was) {
-      // the reader stays where they were rather than falling to the top of the page
-      tick().then(() => root?.closest<HTMLElement>('[data-cell]')?.focus({ preventScroll: true }));
+      // the reader stays where they were rather than falling to the top of the page, unless they clicked on something else
+      tick().then(() => {
+        const now = document.activeElement;
+        if (!now || now === document.body) root?.closest<HTMLElement>('[data-cell]')?.focus({ preventScroll: true });
+      });
       return;
     }
     await tick();
