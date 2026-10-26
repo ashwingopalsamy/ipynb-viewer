@@ -49,7 +49,7 @@
   let run = 0;
   let depth = 0;
 
-  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle, linked = false) {
+  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle) {
     const mine = ++run;
     // The notebook the reader is in stays until the new file proves to be one: its first piece is what replaces it.
     let fresh = true;
@@ -104,24 +104,41 @@
       };
       // a Markdown file is a notebook of one text cell
       const markdown = file instanceof File && /\.(?:md|markdown)$/i.test(file.name);
-      const notebook = markdown ? await (await import('./lib/edit/mdfile')).readMarkdown(file as File, on) : await readNotebook(file.stream(), on);
+      // A notebook fetched from a link arrives as a stream that can be read once; its text is kept so edits can be patched into it and saved as a new file.
+      let kept: Promise<string | null> | undefined;
+      let notebook;
+      if (markdown) notebook = await (await import('./lib/edit/mdfile')).readMarkdown(file as File, on);
+      else {
+        let body = file.stream();
+        if (!(file instanceof File)) {
+          const [a, b] = body.tee();
+          body = a;
+          kept = new Response(b).text().catch(() => null);
+        }
+        notebook = await readNotebook(body, on);
+      }
+      const text = kept ? await kept : null;
       if (mine !== run) return;
       if (notebook.cells.every(blank)) throw new Error('This notebook is empty.');
       if (fresh) begin();
       flush();
       ready = true;
-      const why = linked
-        ? 'Opened from a link, so it is read-only. Download it and open the file to edit.'
-        : notebook.nbformat < 4
+      const why =
+        notebook.nbformat < 4
           ? 'This notebook uses format v3, so editing is off.'
           : notebook.warnings.some((w) => w.startsWith('The file ends early'))
             ? 'This notebook is incomplete, so editing is off.'
-            : file instanceof File
+            : file instanceof File || text !== null
               ? ''
               : 'Editing is off for this file.';
       session.why = why;
-      if (!why && file instanceof File) loaded = { name: file.name, file, handle, stamp: `${file.lastModified}:${file.size}`, text: null, bom: false, kind: markdown ? 'md' : 'ipynb', crlf: false, original: notebook.cells.map((c) => c.source) };
+      if (!why) {
+        const own = file instanceof File ? file : new File([text!], file.name, { type: 'application/json' });
+        loaded = { name: own.name, file: own, handle, stamp: `${own.lastModified}:${own.size}`, text: null, bom: false, kind: markdown ? 'md' : 'ipynb', crlf: false, original: notebook.cells.map((c) => c.source) };
+      }
       session.on = !!loaded;
+      // without a file to write to, saving makes a copy
+      session.detached = !handle;
       if (loaded) hint();
       // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
       const mc = (document as any).modelContext ?? (navigator as any).modelContext;
@@ -187,7 +204,7 @@
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
   if (/[?#](?:url|nb)=/.test(location.href)) {
     status = 'fetching';
-    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file, undefined, true)), (why) => run || ((status = 'error'), (detail = why))));
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file)), (why) => run || ((status = 'error'), (detail = why))));
   }
 
   if (file) open(file, handle);
@@ -275,6 +292,7 @@
         } else if (r.how === 'as-new') {
           Object.assign(loaded, { file: r.file, handle: r.handle, name: r.name, stamp: `${r.file.lastModified}:${r.file.size}` });
           name = r.name;
+          session.detached = false;
           document.title = `${r.name} · ipynb viewer`;
           stop?.();
           await follow(run, r.handle, r.file);
@@ -317,7 +335,7 @@
     <Opener />
     <div class="tools pill">
       <span class="tool-name">{tool}</span>
-      {#if session.dirty}<button class="icon" aria-label="Save edits" data-tip={session.conflict ? 'Save as new file · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>{/if}
+      {#if session.dirty}<button class="icon" aria-label="Save edits" data-tip={session.conflict || session.detached ? 'Save a copy · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>{/if}
       {#if Actions}<Actions />{/if}
       <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
         <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>

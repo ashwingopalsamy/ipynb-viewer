@@ -22,7 +22,7 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 
 ## Editing
 
-A notebook opened from a file on your computer can be edited in the text cells: double-click a paragraph, heading or list and write. Code and outputs are never touched. A notebook opened from a link is read-only.
+A notebook can be edited in its text cells: double-click a paragraph, heading or list and write. Code and outputs are never touched.
 
 | Key | Does |
 |---|---|
@@ -38,4 +38,4 @@ A notebook opened from a file on your computer can be edited in the text cells: 
 | `⌘Z` | Undo while writing; after the block is finished, undo it |
 | `⌘S` or the Save button | Save into the file; `⇧` with either saves a new file instead |
 
-Edits are visible everywhere on the page (Contents, Search, Copy as Markdown, share links) before they are saved. Saving changes only the text of the cells you edited; outputs and pictures stay as they were. If the file changed on disk after you started editing, your edits go to a new file, `name (edited).ipynb`, and the original is left alone. Browsers that cannot write files offer a download instead.
+Edits are visible everywhere on the page (Contents, Search, Copy as Markdown, share links) before they are saved. Saving changes only the text of the cells you edited; outputs and pictures stay as they were. If the file changed on disk after you started editing, your edits go to a new file, `name (edited).ipynb`, and the original is left alone. A notebook opened from a link has no file to write to, so saving makes a copy; so do browsers that cannot write files, by download.

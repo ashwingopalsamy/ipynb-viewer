@@ -17,6 +17,8 @@ export const session = $state({
   /** The reason has been shown once for this notebook. */
   told: false,
   dirty: false,
+  /** There is no file to write to (a notebook from a link), so saving makes a copy. */
+  detached: false,
   saving: false,
   /** The file changed on disk after the edits began, so saving goes to a new file. */
   conflict: false,
