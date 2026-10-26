@@ -19,7 +19,7 @@
 ### Scope
 - In: markdown cells of a notebook opened from disk (picker, drop, or the home page hand-off: anything that reaches `App.open` with a `File`), nbformat ≥ 4, not truncated.
 - Out (read-only, double-click does nothing): notebooks opened from a link (`?url=`/`#nb=`), nbformat 3 (its heading cells were rewritten to `#` markdown by `normalize.ts:169`, so the file text no longer matches), files with an "ends early" warning, code and raw cells.
-- Task 7 adds standalone `.md` / `.markdown` files through the same machinery. It is separable; stop after Task 6 if not wanted.
+- Task 7 is editing polish and accessibility. Task 8 adds standalone `.md` / `.markdown` files through the same machinery. It is separable; stop after Task 7 if not wanted.
 
 ### Interaction
 | Gesture | Result |
@@ -72,9 +72,108 @@ The notice says where the edits went: `Saved <name>`, `Saved as <newname>`, `Dow
 
 ---
 
+### Edge cases and decisions
+
+Every row is a decision, not a suggestion. **Owner** is the task that implements it, in a step named "Edge cases" placed just before that task's commit step. Rows are numbered `E1…` so commits and reviews can cite them.
+
+#### Entering an edit
+| # | Case | Decision | Owner |
+|---|---|---|---|
+| E1 | Nobody knows double-click edits. | In editable docs, a hovered `[data-b]` block gets `cursor: text` and a faint background tint (`color-mix` of the text variable at ~4%). The first time an editable doc opens, `say('Double-click any text to edit it.')` once, remembered in `localStorage` key `edit-hint` (wrapped in try/catch). | T7 |
+| E2 | A keyboard user has no double-click. | Single key `e` (through the existing `single()` guard in `Extras.svelte` keys) edits the first block of the cell `picked()` returns, if it is a markdown cell. MarkdownCell listens for a `CustomEvent('edit')` dispatched on its `[data-cell]` article. Add `e` to `docs/shortcuts.md` and the `?` sheet in `Menus.svelte`. | T7 |
+| E3 | Touch screens fire no reliable `dblclick` (iOS). | MarkdownCell also treats two `pointerup` events with `pointerType === 'touch'` within 350 ms and 24 px on the same `[data-b]` as a double-click. | T7 |
+| E4 | A native double-click selects a word, and the editor swap loses it. | After the editor mounts at a point, re-select the word under it: collapse the caret at the point, then `sel.modify('move','backward','word')` and `sel.modify('extend','forward','word')` (skip when `modify` is missing). Typing then replaces the word, as in every text editor. | T5 |
+| E5 | Double-clicking a link: the first click already opened it in a new tab. | Links keep single-click navigation, the reader's expectation. MarkdownCell's dblclick handler ignores targets inside `a`. A link's text is edited by double-clicking elsewhere in the block, or with `e`. | T5 |
+| E6 | Double-clicking rendered math (`.math` / `.katex`). | Open that block in **source** mode, caret at the start of the TeX source (search the raw block for the `data-tex` value). | T5 |
+| E7 | A cell not drawn yet (`.pending` placeholder) or a code/raw cell. | Ignored. The handler is attached to the `.md` root only, and acts only when `closest('[data-b]')` exists or the cell is in whole-cell mode. | T5 |
+| E8 | Double-clicking another block of the *same* cell while one is open. | The open editor commits on `pointerdown` outside it (E12), and the cell re-renders before `dblclick`. The handler drops the event when `!root.contains(target)` (a detached node), so a stale index is never used. | T5 |
+| E9 | A read-only doc (opened from a link, or nbformat 3). | Double-click says why, once per document: `Opened from a link, so it is read-only. Download it and open the file to edit.` or `This notebook uses format v3, so editing is off.` | T7 |
+
+#### Inside the editor
+| # | Case | Decision | Owner |
+|---|---|---|---|
+| E10 | IME composition (CJK, dead keys) or autocorrect. | All key handlers return early when `e.isComposing \|\| e.keyCode === 229`. Enter during composition never splits; Esc never commits. | T5 |
+| E11 | Switching apps or tabs (window blur) fires `focusout`. | Do **not** commit on window blur. Commit on `focusout` only if, after `setTimeout(0)`, `document.hasFocus()` is true and `document.activeElement` is outside the editor. Also commit on a document `pointerdown` outside the editor and the format bubble. | T5 |
+| E12 | `⌘S`, the Save button or `⌘⇧S` while the caret is still in the editor. | `session.flush` (set by the active editor, `null` otherwise) commits *without closing*. Save calls `session.flush?.()` first. After a flush, BlockEditor reads `block`/`source` from props at commit time (never captured at mount), so the refreshed spans are used. If a source-mode flush changes the cell's block count, the editor closes instead. | T4, T5 |
+| E13 | Chrome leaves a placeholder `<br>` in an emptied block, or adds `<div>`s on Enter inside a list item. | `fromDom` drops a trailing `br` that is the last node of the block or of an `li`. A `div`/`p` inside an `li` becomes a `br` boundary. | T5 |
+| E14 | `&nbsp;` and other entities in the source; nbsp that the browser inserts for typed double spaces. | `fromTokens` decodes every HTML entity in text to characters, using a `textarea` element's `innerHTML` → `value` (inert RCDATA, nothing runs). `fromDom` turns U+00A0 into a space only when it sits next to a space or at a text-node edge. The serializer writes any remaining U+00A0 as `&nbsp;`. | T2, T5 |
+| E15 | Hard breaks written as two trailing spaces. | The `br` node carries `raw` too (`{ t: 'br'; raw?: string }`). An unchanged break re-emits its raw; a new one is `\` + newline. | T2 |
+| E16 | `Enter` at the very end of a paragraph or heading (Notion's "new block"). Markdown cannot hold an empty paragraph. | Open a **ghost block**: BlockEditor with `block: null`, `insertAt: b.end`, kind paragraph, mounted right after the current part. Commit with text → insert `'\n\n' + text` at `insertAt`. Empty → no change. | T5 |
+| E17 | `Enter` at the very start of a block. | No-op (an empty block above cannot be represented). | T5 |
+| E18 | `Backspace` at offset 0 / `Delete` at the end, with a collapsed caret, next to a paragraph or heading. | Merge: replace `[prev.start, cur.end]` with `blockMarkdown(prev, [prevInlines ++ curInlines])`, then reopen the merged block with the caret at the join (`{ offset: plainLength(prevInlines) }`). Next to any other kind: native behavior. | T5 |
+| E19 | `Tab` in the rich editor would move focus away, committing by accident. | `preventDefault` (no-op). Nested lists stay source-only. `Esc` always exits, so there is no keyboard trap (WCAG 2.1.2). | T5 |
+| E20 | `Tab` / `Shift+Tab` in source mode. | Indent or outdent the selected lines by 4 spaces in a fenced code block, otherwise by 2. Insert with `execCommand('insertText')` so native undo keeps working. | T5 |
+| E21 | Dropping onto the editor. | Files: `preventDefault` plus `stopPropagation` (App must not open it). Text: `preventDefault`, then insert `text/plain` at `caretPositionFromPoint` with `insertText`. | T5 |
+| E22 | `⌘K` (global search), `⌘E` (Safari find), `⌘B` (Firefox bookmarks) collide with formatting keys. | The editor handles them on its own element, then calls `preventDefault` and `stopPropagation`, so the window handlers in `Extras.svelte`/`App.svelte` never see them. | T5 |
+| E23 | A link URL typed into the prompt. | Accept only URLs that match `LINKS` from `src/lib/guard.ts` or start with `#`. Anything else → `say('That link was not added: only web, mail and in-page links are allowed.')`. | T5 |
+| E24 | Formatting on touch, or without knowing the shortcuts. | A **format bubble** appears above a non-collapsed selection in rich mode: bold, italic, strikethrough, code, link (Lucide `bold`, `italic`, `strikethrough`, `code`, `link`; add the three missing paths to `Lucide.svelte`). Buttons use `onpointerdown={e => e.preventDefault()}` so the editor keeps focus. `role="toolbar"`, each button has `aria-label`, with `aria-pressed` reflecting `document.queryCommandState`. | T7 |
+| E25 | Arrow keys at a block edge (Notion flow). | `ArrowUp` on the first visual line / `ArrowDown` on the last (caret rect within half a line-height of the editor's top/bottom) commits and opens the previous/next block of the same cell at `{ x: caretRect.left, y: edge }`. At the cell's first/last block: native. | T7 |
+| E26 | Spellcheck and grammar extensions. | `spellcheck="true"` in rich mode, `false` plus `data-gramm="false"` in source mode. `fromDom` unwraps unknown elements and keeps their text. | T5 |
+
+#### Cell and document state
+| # | Case | Decision | Owner |
+|---|---|---|---|
+| E27 | The disk changes (watch tick) while an editor is open but nothing is committed yet. Offsets would go stale. | The watcher holds while `session.dirty \|\| session.active !== null`. | T6 |
+| E28 | A commit races any other change to that cell. | `commit(id, before, after)` is compare-and-swap: when the cell's current source !== `before`, refuse, copy `after` to the clipboard, and `say('That cell changed while you were editing. Your text is on the clipboard.')`. It returns `boolean`. `undo()` checks `current === after` the same way. | T4 |
+| E29 | A cell emptied by an edit disappears, because `Cell.svelte` hides blank cells and there is no way back. | `session.edited: ReadonlySet<string>` (ids committed this session). `Cell.svelte` renders a blank markdown cell that is in `edited`; MarkdownCell shows `<p class="placeholder">Empty cell · double-click to write</p>`, which opens a ghost block with `insertAt: 0`. | T4, T7 |
+| E30 | Which cells have unsaved edits? | An `edited` class on the article for ids in `session.edited` while dirty. md.css-style rule: the existing `.gutter` shows a 2 px accent bar. Cleared on save. | T7 |
+| E31 | Our own commit triggers the green "fresh" flash meant for disk changes. | Commits never touch `changed`. Only watch updates do. | T4 |
+| E32 | After an Esc exit, focus drops to `<body>` and a keyboard user loses their place. | On exit, focus the cell article (`tabindex="-1"`, `focus({ preventScroll: true })`). | T7 |
+| E33 | The editor is invisible to assistive tech. | Rich: `role="textbox" aria-multiline="true" aria-label="Edit {kind}"`. Source: `aria-label="Edit markdown source"`. Save notices already use `role="status"` (`notice.ts`). | T5 |
+| E34 | The per-block render drifts from `renderMarkdown`, and editable docs look different. | In `import.meta.env.DEV` only, compare `parts.join('')` with `data-b` attributes stripped against `renderMarkdown(source)`, and `console.warn` on a mismatch. | T4 |
+| E35 | Atoms that reference attachments (`![](attachment:a.png)`). | `renderInline(raw, attachments)` applies the same attachment rewrite. BlockEditor gets `attachments` from the cell. KaTeX atoms are typeset with `typeset(editorEl)` after `toDom`. | T4, T5 |
+| E36 | Copy as Markdown, share link, Contents, Search, the notebook sheet and the WebMCP reader all read `cells`. | Intended: they show unsaved edits (what you see is what you share). No change. Note it in the user docs. | T6 |
+| E37 | Persisting drafts to survive a crash. | **Deliberately not done.** `docs/architecture.md` promises nothing about the notebook is stored. The `beforeunload` guard and explicit Save are the safety net. | — |
+
+#### Saving
+| # | Case | Decision | Owner |
+|---|---|---|---|
+| E38 | Holding the whole file text in memory from load doubles memory on 100 MB notebooks. | Read the base text lazily, on the **first activation** in the document (`ensureBase()`): `loaded.file.text()`, falling back to `handle.getFile()` when the snapshot throws `NotReadableError`. Verify with `locateSources` + the `original` comparison. If that fails, refuse to open the editor: `say('This notebook changed on disk. Reopen it to edit.')`. A failure appears before any typing, never at save time. | T4 |
+| E39 | A UTF-8 BOM. | `ensureBase` checks `file.slice(0, 3)` for `EF BB BF` and records `loaded.bom`. `save` prepends `﻿` when it writes. The scanner skips a leading BOM. | T3, T6 |
+| E40 | A write fails partway (disk full, permission revoked). | `createWritable` writes to a swap file and replaces the original only on `close`. On any error, `await writable.abort()`, return `{ how: 'failed', why: e.message }`, and stay dirty. The original stays intact. | T6 |
+| E41 | The watcher applies a disk update while not dirty: `cells` change, so `original`/`text` are stale. | `Update` gains `file: File`. On apply, App sets `loaded.file`, `loaded.stamp`, `loaded.original = cells.map(c => c.source)` and `loaded.text = null` (re-read lazily by E38). | T6 |
+| E42 | Disk changed while dirty (Jupyter autosave). | Already designed: save goes to a new file. Additionally `session.conflict = true` changes the Save tooltip to `Save as new file · ⌘S`. | T6 |
+| E43 | `beforeunload` during a save. | Guard on `session.dirty \|\| session.saving`. | T4 |
+| E44 | Jupyter's line splitting (`splitlines(keepends=True)`) also splits on `\r`, `\v`, `\f`, U+2028 and others. | Keep `\n`-only splitting. Both are valid nbformat, so Jupyter rewrites it on its next save. Listed as a known, harmless diff. | — |
+| E45 | Saving after the CSP is narrowed (`docs/architecture.md`). | `<a download>` with a `blob:` URL and `showSaveFilePicker` are not governed by `connect-src`. Manual check: Safari download works on an opened notebook (Task 6 step 7). | T6 |
+
+#### Interface deltas (these override the earlier task blocks)
+```ts
+// session.svelte.ts (T4)
+export const session: {
+  on: boolean; dirty: boolean; saving: boolean; conflict: boolean;
+  active: string | null;                 // id of the cell with an open editor
+  edited: ReadonlySet<string>;           // replaced immutably on every commit, cleared by reset()
+  flush: (() => void) | null;            // set by the open editor
+};
+export function commit(id: string, before: string, after: string): boolean;   // E28 compare-and-swap
+export function undo(): boolean;
+// Host.ensureBase is called by MarkdownCell before opening an editor (E38); false = do not open.
+export interface Host { apply(id: string, source: string): void; save(asNew?: boolean): Promise<void>; ensureBase(): Promise<boolean>; source(id: string): string | undefined }
+
+// inline.ts (T2)
+| { t: 'br'; raw?: string }
+
+// markdown.ts (T4)
+export function renderInline(raw: string, attachments?: Record<string, MimeBundle>): string;
+
+// BlockEditor.svelte props (T5)
+type Caret = { x: number; y: number } | 'start' | 'end' | { offset: number } | { word: { x: number; y: number } };
+{ block: Block | null; insertAt?: number; source: string; attachments: Record<string, MimeBundle>;
+  mode: 'rich' | 'source'; at: Caret | null;
+  onDone: (next: string | null, follow?: { to: 'prev' | 'same' | 'next' | 'ghost'; at: Caret }) => void }
+// block === null && insertAt === undefined → whole-cell source mode; block === null && insertAt !== undefined → ghost paragraph (E16, E29)
+
+// watch.ts (T6)
+export interface Update { notebook: Notebook; cells: Cell[]; changed: Set<string>; file: File }
+
+// App `loaded` (T4/T6)
+{ name: string; file: File; handle?: FileSystemFileHandle; stamp: string; text: string | null; bom: boolean; original: string[] }
+```
+
 ## Global Constraints
 - No new dependencies. `package.json` is not modified.
-- Every new module under `src/lib/edit/` is loaded with dynamic `import()` on first double-click or first save, never statically from `App.svelte`/`MarkdownCell.svelte`, except `src/lib/edit/session.svelte.ts` (must stay under ~60 lines; it is in the core chunk). The core reader must stay under 30 KB gzipped (`docs/architecture.md`).
+- Every new module under `src/lib/edit/` is loaded with dynamic `import()` on first double-click or first save, never statically from `App.svelte`/`MarkdownCell.svelte`, except `src/lib/edit/session.svelte.ts` (must stay under ~90 lines; it is in the core chunk). The core reader must stay under 30 KB gzipped (`docs/architecture.md`).
 - Viewer-only documents (link-opened, nbformat 3) render exactly as today through the unchanged `renderMarkdown` path.
 - Svelte 5 runes only (`$state`, `$derived`, `$effect`, `$props`); no stores.
 - Match repo voice: short plain-English comments, only where the why is not obvious; no JSDoc boilerplate.
@@ -105,6 +204,7 @@ The notice says where the edits went: `Saved <name>`, `Saved as <newname>`, `Dow
 | `src/lib/edit/dom.ts` (new) | Model ↔ contenteditable DOM; formatting commands. |
 | `src/lib/edit/BlockEditor.svelte` (new) | The active-block editor (rich + source modes). |
 | `src/lib/edit/edit.css` (new) | Editor styles. |
+| `src/lib/edit/Bubble.svelte` (new) | Format bubble over a selection (E24). |
 | `src/lib/edit/save.ts` (new) | Stamp check, patch, write or download. |
 | `src/lib/MarkdownCell.svelte` (modify) | Per-block render when editable; double-click activation. |
 | `src/App.svelte` (modify) | Wires session (apply, undo, save, dirty guards). |
@@ -283,6 +383,8 @@ it('keeps setext style for a setext heading', () => {
 
 - [ ] **Step 4: Run** `npx vitest run src/lib/edit/inline.test.ts` — expect PASS.
 
+- [ ] **Edge cases:** implement rows E14 (decoding), E15 of the Edge cases table exactly as decided there.
+
 - [ ] **Step 5: Commit** `feat(edit): inline model and minimal-diff markdown serializer`.
 
 ---
@@ -341,6 +443,8 @@ it('refuses on mismatch', () => {
 
 - [ ] **Step 4: Run** the test file — expect PASS.
 
+- [ ] **Edge cases:** implement rows E39 (skip a leading BOM) of the Edge cases table exactly as decided there.
+
 - [ ] **Step 5: Commit** `feat(edit): patch notebook cell sources in place`.
 
 ---
@@ -384,6 +488,8 @@ it('refuses on mismatch', () => {
   - Add the Lucide `save` icon to `PATHS` in `src/lib/Lucide.svelte`: `save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>'`.
 
 - [ ] **Step 4: Run** `npx vitest run` and `npm run check` — expect both clean.
+
+- [ ] **Edge cases:** implement rows E12 (`flush` field), E28, E29 (`edited` set), E31, E34, E35 (`renderInline` signature), E38, E43 of the Edge cases table exactly as decided there.
 
 - [ ] **Step 5: Commit** `feat(edit): editing session and per-block rendering`.
 
@@ -436,6 +542,8 @@ it('refuses on mismatch', () => {
 
 - [ ] **Step 5: `npm run check`** — expect clean. Hand to the user for manual checks (see Task 6 checklist).
 
+- [ ] **Edge cases:** implement rows E4–E8, E10–E23, E26, E33, E35 of the Edge cases table exactly as decided there.
+
 - [ ] **Step 6: Commit** `feat(edit): double-click to edit markdown blocks in place`.
 
 ---
@@ -487,6 +595,8 @@ it('refuses on mismatch', () => {
 
 - [ ] **Step 5: `npm run check` and `npx vitest run`** — expect clean.
 
+- [ ] **Edge cases:** implement rows E27, E36 (docs note), E39 (write the BOM), E40–E42, E45 of the Edge cases table exactly as decided there.
+
 - [ ] **Step 6: Commit** `feat(edit): save edits back to the notebook file`.
 
 - [ ] **Step 7: Manual checks for the user** (do not automate). Open `examples/cooling-coffee.ipynb` from disk in Chrome. Double-click a paragraph, bold a word, `Esc`; the Save button appears. Click it.
@@ -500,7 +610,24 @@ it('refuses on mismatch', () => {
 
 ---
 
-### Task 7 (optional, separable): standalone `.md` files
+### Task 7: Editing polish and accessibility
+
+**Files:**
+- Create: `src/lib/edit/Bubble.svelte` (the format bubble)
+- Modify: `src/lib/Lucide.svelte` (`bold`, `italic`, `strikethrough` paths), `src/lib/edit/BlockEditor.svelte`, `src/lib/edit/dom.ts`, `src/lib/MarkdownCell.svelte`, `src/lib/Cell.svelte`, `src/lib/Extras.svelte` (the `e` key), `src/lib/Menus.svelte`, `src/lib/edit/edit.css`, `docs/shortcuts.md`
+
+**Interfaces:**
+- Consumes: everything from Tasks 4–5 and the deltas listed at the end of the Edge cases section.
+- Produces: `dom.ts` → `caretAt(root: Node, offset: number): void`, `textOffset(root: Node): number`, `atEdge(root: HTMLElement, edge: 'top' | 'bottom'): boolean`.
+
+- [ ] **Step 1:** Implement rows E1, E2, E3, E9 (entry and discoverability).
+- [ ] **Step 2:** Implement E24 (the format bubble) and E25 (arrow navigation), using `atEdge`/`caretAt`.
+- [ ] **Step 3:** Implement E29 (the placeholder for an emptied cell), E30 (the unsaved-cell gutter bar), E32 (focus return).
+- [ ] **Step 4: Commit** `feat(edit): keyboard and touch entry, format bubble, block navigation`.
+
+---
+
+### Task 8 (optional, separable): standalone `.md` files
 
 **Files:**
 - Modify: `src/App.svelte` (`open`, picker `accept`), `src/lib/watch.ts` (`pick` types; `watch` re-read), `index.html:225` (`accept`) and whatever home-page script filters dropped files by extension (find with `grep -rn "ipynb" src/about index.html`), `src/lib/edit/save.ts`.
