@@ -10,6 +10,7 @@
   import { ui, type Pop } from './lib/ui.svelte';
   import { session, host, undo, reset, type Host } from './lib/edit/session.svelte';
   import type { Loaded } from './lib/edit/save';
+  import type { Watching } from './lib/watch';
 
   // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
   let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
@@ -30,6 +31,7 @@
   let Veil = $state<typeof import('./lib/Veil.svelte').default>();
   let changed = $state.raw<ReadonlySet<string>>(new Set());
   let stop: (() => void) | undefined;
+  let saved: Watching['saved'] | undefined;
   let tools: AbortController | undefined;
   // What the notebook on screen was read from, when it can be edited and saved back.
   let loaded: Loaded | null = null;
@@ -54,7 +56,7 @@
     const begin = () => {
       fresh = false;
       stop?.();
-      stop = undefined;
+      stop = saved = undefined;
       tools?.abort();
       tools = undefined;
       loaded = null;
@@ -123,18 +125,7 @@
         import('./lib/agent').then((m) => m.reader(mc, ctl.signal, () => ({ cells, meta, name, language })));
       }
       document.title = `${file.name} · ipynb viewer`;
-      if (handle && file instanceof File) {
-        const { watch } = await import('./lib/watch');
-        if (mine === run) {
-          stop = watch(handle, file, () => cells, (u) => {
-            cells = u.cells;
-            meta = u.notebook;
-            warnings = u.notebook.warnings;
-            changed = u.changed;
-            setTimeout(() => mine === run && (changed = new Set()), 2600);
-          });
-        }
-      }
+      if (handle && file instanceof File) await follow(mine, handle, file);
     } catch (e) {
       if (mine !== run) return;
       const why = e instanceof Error ? e.message : String(e);
@@ -148,6 +139,33 @@
       } else if (fresh && cells.length) import('./lib/notice').then((m) => m.say(`${file.name} would not open. ${why}`));
       else (status = 'error'), (detail = why);
     }
+  }
+
+  // Reads the file again whenever it changes on disk, unless edits here would be lost by it.
+  async function follow(mine: number, handle: FileSystemFileHandle, file: File) {
+    const { watch } = await import('./lib/watch');
+    if (mine !== run) return;
+    const w = watch(
+      handle,
+      file,
+      () => cells,
+      (u) => {
+        cells = u.cells;
+        meta = u.notebook;
+        warnings = u.notebook.warnings;
+        changed = u.changed;
+        // what the next save patches into is the file as it is now
+        if (loaded) Object.assign(loaded, { file: u.file, stamp: `${u.file.lastModified}:${u.file.size}`, text: null, original: u.cells.map((c) => c.source) });
+        setTimeout(() => mine === run && (changed = new Set()), 2600);
+      },
+      () => session.dirty || session.active !== null,
+      () => {
+        session.conflict = true;
+        import('./lib/notice').then((m) => m.say(`${name} changed on disk. Saving will keep both: your edits go to a new file.`));
+      },
+    );
+    stop = w.stop;
+    saved = w.saved;
   }
 
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
@@ -218,7 +236,42 @@
       if (!ok) import('./lib/notice').then((m) => m.say('This notebook changed on disk. Reopen it to edit.'));
       return ok;
     },
-    async save() {},
+    async save(asNew = false) {
+      if (!loaded || session.saving) return;
+      session.flush?.();
+      if (!session.dirty) return import('./lib/notice').then((m) => m.say('Nothing to save.'));
+      const say = (text: string) => import('./lib/notice').then((m) => m.say(text));
+      session.saving = true;
+      try {
+        const mod = await import('./lib/edit/save');
+        if (!(await mod.readBase(loaded))) return say('Not saved: this notebook changed on disk. Your edits are still here.');
+        const was = loaded.name;
+        const r = await mod.save({ name: was, handle: loaded.handle, stamp: loaded.stamp, text: loaded.text!, bom: loaded.bom, original: loaded.original, cells }, asNew);
+        if (r.how === 'none') return say('Nothing to save.');
+        if (r.how === 'cancelled') return;
+        if (r.how === 'failed') return say(`Not saved: ${r.why}.`);
+        // the text the next save patches into is the one just written (or offered), and the sources on screen are its baseline
+        loaded.text = r.text;
+        loaded.original = cells.map((c) => c.source);
+        if (r.how === 'in-place') {
+          Object.assign(loaded, { file: r.file, stamp: `${r.file.lastModified}:${r.file.size}` });
+          saved?.(r.file);
+        } else if (r.how === 'as-new') {
+          Object.assign(loaded, { file: r.file, handle: r.handle, name: r.name, stamp: `${r.file.lastModified}:${r.file.size}` });
+          name = r.name;
+          document.title = `${r.name} · ipynb viewer`;
+          stop?.();
+          await follow(run, r.handle, r.file);
+        }
+        reset();
+        const moved = r.how !== 'in-place' && r.why === 'changed' ? `${was} changed on disk, so your edits were saved as ` : '';
+        say(r.how === 'in-place' ? `Saved ${r.name}` : r.how === 'as-new' ? `${moved || 'Saved as '}${r.name}` : `${moved ? moved.replace('saved as', 'downloaded as') : 'Downloaded '}${r.name}`);
+      } catch (e) {
+        say(`Not saved: ${e instanceof Error ? e.message : String(e)}.`);
+      } finally {
+        session.saving = false;
+      }
+    },
   };
   host(editing);
 
