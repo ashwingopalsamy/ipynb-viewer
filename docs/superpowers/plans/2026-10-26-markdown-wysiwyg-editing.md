@@ -40,7 +40,7 @@
 
 Inline content the rich editor cannot represent (inline math, images, inline HTML) appears as an **atom**: a `contenteditable="false"` chip showing the sanitized rendering; it is preserved byte-for-byte. To change one, `Mod+/` into source.
 
-Out of scope for v1: arrow-key navigation across blocks, markdown input rules (typing `**x**` converts), drag-reordering blocks, creating new cells, editing code cells.
+Out of scope for v1: markdown input rules (typing `**x**` converts), drag-reordering blocks, creating new cells, editing code cells.
 
 ### Fidelity invariants
 1. A block that was opened and committed without any input event produces no source change.
@@ -304,7 +304,7 @@ describe('replaceBlock', () => {
     | { t: 'strong' | 'em' | 'del'; c: Inline[]; raw?: string; sig?: string }
     | { t: 'code'; v: string; raw?: string; sig?: string }
     | { t: 'link'; href: string; title: string | null; c: Inline[]; raw?: string; sig?: string }
-    | { t: 'br' }
+    | { t: 'br'; raw?: string }
     | { t: 'atom'; raw: string };
   export function fromTokens(tokens: Token[]): Inline[];   // sets raw and sig (= canonical(node)) on every mark node
   export function toMarkdown(nodes: Inline[], ctx?: 'paragraph' | 'heading'): string;
@@ -460,16 +460,16 @@ it('refuses on mismatch', () => {
 - Produces:
   ```ts
   // session.svelte.ts
-  export const session: { on: boolean; dirty: boolean; saving: boolean };
+  export const session: { on: boolean; dirty: boolean; saving: boolean; conflict: boolean; active: string | null; edited: ReadonlySet<string>; flush: (() => void) | null };
   export interface Host { apply(id: string, source: string): void; save(asNew?: boolean): Promise<void>; }
   export function host(h: Host | null): void;
-  export function commit(id: string, before: string, after: string): void; // no-op when before === after; pushes undo, calls apply, sets dirty
+  export function commit(id: string, before: string, after: string): boolean; // true on no-op too; compare-and-swap per E28; pushes undo, calls apply, sets dirty, adds id to edited
   export function undo(): boolean;                                         // false when the stack is empty
   export function reset(): void;                                           // clears stack and dirty (after open/save)
 
   // markdown.ts
   export function renderParts(source: string, attachments?: Record<string, MimeBundle>): { parts: string[]; blocks: Block[] | null };
-  export function renderInline(raw: string): string;
+  export function renderInline(raw: string, attachments?: Record<string, MimeBundle>): string;
   ```
   `renderParts`: when `blocksOf` is `null`, return `{ parts: [renderMarkdown(source, attachments)], blocks: null }`. Otherwise lex once, run the attachment rewrite with `marked.walkTokens(tokens, fn)` (same body as today's `walkTokens` option, extracted into a shared function), render each block's token with `marked.parser([token])` (give the array the lexed `links` property), sanitize each with the same DOMPurify config as `renderMarkdown` (extract the config object to a module const), then set `data-b="<index>"` on each top-level element via a `<template>` and take its `innerHTML`. Blocks with `kind` and no element (impossible after skipping space/def) need no handling. `renderInline(raw)`: `marked.parseInline(raw)` through the same sanitizer; used for atoms.
 
@@ -513,7 +513,7 @@ it('refuses on mismatch', () => {
   ```svelte
   <!-- BlockEditor.svelte props -->
   { block: Block | null; source: string; mode: 'rich' | 'source'; at: { x: number; y: number } | 'start' | null;
-    onDone: (next: string | null, follow?: 'next') => void }   // next = whole new cell source, null = unchanged
+    onDone: (next: string | null, follow?: { to: 'prev' | 'same' | 'next' | 'ghost'; at: Caret }) => void }   // final shape: see Interface deltas
   ```
   `block: null` means whole-cell source mode (`source` is the entire cell).
 
@@ -527,14 +527,14 @@ it('refuses on mismatch', () => {
   - Caret: on mount, if `at` is a point use `document.caretPositionFromPoint` ?? `caretRangeFromPoint` to place it; `'start'` → start; else end. Focus.
   - Keys (rich): `Mod+B/I/E/K`, `Mod+Shift+X` → `mark`; `Enter` in p/h (no Shift) → split: extract the range from caret to end of editor into a fragment, `fromDom` both halves, `next = replaceBlock(source, block, blockMarkdown(block, [left]) + '\n\n' + toMarkdown(right))`, `onDone(next, 'next')`; `Shift+Enter` → `execCommand('insertLineBreak')`; `Mod+/` → switch to source mode with the current serialized text; `Esc` / `Mod+Enter` → commit; all handled keys call `stopPropagation()` so the window shortcuts do not fire.
   - Commit: `!touched` → `onDone(null)`. Else, list: collect top-level `li` → items, any non-`li` element after them → `extra`. `onDone(replaceBlock(source, block, blockMarkdown(block, items, extra)))`.
-  - `focusout` whose `relatedTarget` is outside the editor → commit.
+  - Leaving: commit per E11 (never on window blur).
   - `paste` → `preventDefault`, `execCommand('insertText', false, clipboardData.getData('text/plain'))`. `drop`/`dragover` → `preventDefault` + `stopPropagation`.
   - Source mode: `textarea` with the block's raw (`source.slice(start, end)`) or whole cell; auto-height (`style.height = scrollHeight`); `Mod+Enter`/`Esc`/blur commit via `replaceBlock` (or whole-cell replacement); `Mod+/` back to rich only when `block.kind !== 'source'` and the text still lexes to one block of the same kind (else stay).
 
 - [ ] **Step 3: `MarkdownCell.svelte`.**
   - When `session.on`, render with `renderParts` instead of `renderMarkdown`; keep `parts`/`blocks` in state. Not editable → existing path untouched.
   - Template when editable: `{#each parts as p, i}{#if active && active.b === i}<Editor …/>{:else}{@html p}{/if}{/each}`; whole-cell mode (`blocks === null`) replaces all parts with the editor. `Editor` is the dynamically imported `BlockEditor` component (load `dom.ts`, `inline.ts`, `blocks.ts` through it).
-  - `ondblclick` on the root: `if (!session.on) return;` find `(e.target as Element).closest('[data-b]')` within root (whole-cell mode: any target); links still activate (a single click keeps navigating as today). Set `active = { b, mode: blocks[b].kind === 'source' ? 'source' : 'rich', at: { x: e.clientX, y: e.clientY } }` after the import resolves.
+  - `ondblclick` on the root: `if (!session.on) return;` find `(e.target as Element).closest('[data-b]')` within root (whole-cell mode: any target); targets inside `a` are ignored (E5). Set `active = { b, mode: blocks[b].kind === 'source' ? 'source' : 'rich', at: { x: e.clientX, y: e.clientY } }` after the import resolves.
   - `onDone(next, follow)`: `active = null`; if `next !== null` call `commit(cell.id, cell.source, next)`; if `follow === 'next'`, after the re-render (`await tick()`), set `active = { b: old + 1, mode: 'rich', at: 'start' }`.
   - Keep the `typeset(root)` effect; it must re-run after each parts change (depend on `parts`).
 
