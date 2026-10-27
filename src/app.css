@@ -255,9 +255,24 @@ main { flex: 1; }
   text-decoration: none;
   white-space: nowrap;
 }
-.made img { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--well); }
-.made b { font-weight: 600; color: var(--fg-2); }
-.made:hover b { color: var(--fg); }
+.made .line { display: inline-flex; align-items: center; gap: 6px; }
+.made b { font-weight: 650; letter-spacing: -0.005em; color: var(--fg-2); transition: color 150ms var(--out); }
+.made:hover b, .made:focus-visible b { color: var(--fg); }
+/* The picture steps out of the footer when it is pointed at: it grows upward from its base, tips a little, and takes a ring and a shadow. */
+.made img { position: relative; z-index: 1; display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--well); transform-origin: 50% 100%; transition: transform 320ms var(--pop), box-shadow 220ms var(--out); }
+@media (hover: hover) {
+  .made:hover img { transform: translate(-4px, -3px) scale(1.65) rotate(-6deg); box-shadow: 0 0 0 2px var(--paper), 0 8px 20px rgba(20, 24, 40, 0.28); }
+}
+.made:focus-visible img { transform: translate(-4px, -3px) scale(1.65) rotate(-6deg); box-shadow: 0 0 0 2px var(--paper), 0 8px 20px rgba(20, 24, 40, 0.28); }
+/* a heart that beats, lub-dub and a rest; faster while the footer is pointed at */
+.made .heart { flex: none; fill: #ee4b6a; transform-origin: 50% 55%; animation: beat 1.7s ease-in-out infinite; transition: filter 200ms var(--out); }
+.made:hover .heart, .made:focus-visible .heart { animation-duration: 0.85s; filter: drop-shadow(0 0 5px rgba(238, 75, 106, 0.55)); }
+@keyframes beat {
+  0%, 38%, 100% { transform: scale(1); }
+  8% { transform: scale(1.28); }
+  18% { transform: scale(1); }
+  26% { transform: scale(1.18); }
+}
 
 /* notebook */
 
