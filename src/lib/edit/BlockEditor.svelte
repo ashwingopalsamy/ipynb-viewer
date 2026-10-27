@@ -467,7 +467,7 @@
       if (ghost) (own(), blank ? finish(null) : finish(compute(), { to: 'ghost', at: 'start' }));
       else if (shape) (own(), split());
     } else if ((k === 'Backspace' || k === 'Delete') && join(k === 'Backspace')) own();
-    else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && block) {
+    else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && (block || blank)) {
       const up = k === 'ArrowUp';
       if (!atEdge(el, up ? 'top' : 'bottom')) return;
       const x = getSelection()?.getRangeAt(0).getClientRects()[0]?.left ?? el.getBoundingClientRect().left;
@@ -476,7 +476,8 @@
   }
 
   // On the first or last line, an arrow goes on into the block above or below, and from the first or last block into
-  // the text cell above or below, past any code between. False where there is nowhere to go, and the key does what it does.
+  // the text cell above or below, past any code between. A new paragraph with nothing in it (all an empty cell has) is
+  // passed over the same way. False where there is nowhere to go, and the key does what it does.
   function onward(up: boolean, x: number): boolean {
     const at = { edge: up ? 'bottom' : 'top', x } as const;
     if (block) {
@@ -484,6 +485,11 @@
       const i = all ? all.findIndex((b) => b.start === block.start) : -1;
       if (i < 0) return false;
       if (all![up ? i - 1 : i + 1]) return (finish(compute(), { to: up ? 'prev' : 'next', at }), true);
+    } else if (ghost) {
+      const step = (n: Element | null) => (up ? n?.previousElementSibling : n?.nextElementSibling) ?? null;
+      let near = step(el ?? null);
+      while (near && !near.matches('[data-b]')) near = step(near);
+      if (near) return (finish(compute(), { to: 'cell', cell: near.closest('[data-cell]')!, ask: { target: near, point: null, edge: at } }), true);
     }
     const cells = [...document.querySelectorAll('.notebook > .cell')];
     const i = cells.indexOf((el ?? ta)!.closest('.cell')!);
