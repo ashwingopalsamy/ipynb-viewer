@@ -137,9 +137,12 @@
       if (press?.id !== e.pointerId) return;
       const { x, y, to } = press;
       press = null;
-      // text selected by dragging, to copy, stays selected; a finger may wander a little more than a mouse in a tap
+      // Text selected by dragging, to copy, stays selected. A mouse tells a drag by how far it went: a press on text selects
+      // a character or two with the first pixels of any hand's drift, which is still a click. A long press on a finger
+      // selects a word on purpose, and a finger may wander a little more than a mouse in a tap.
+      const touch = e.pointerType === 'touch';
       const sel = getSelection();
-      const dragged = (sel && !sel.isCollapsed && !(el ?? ta)?.contains(sel.anchorNode)) || Math.hypot(e.clientX - x, e.clientY - y) >= (e.pointerType === 'touch' ? 16 : 5);
+      const dragged = (touch && sel && !sel.isCollapsed && !(el ?? ta)?.contains(sel.anchorNode)) || Math.hypot(e.clientX - x, e.clientY - y) >= (touch ? 16 : 8);
       if (!to || dragged) return finish(compute());
       hand(to, e.clientX, e.clientY);
     };

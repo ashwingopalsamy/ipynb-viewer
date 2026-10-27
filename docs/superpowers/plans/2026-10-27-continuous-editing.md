@@ -8,7 +8,7 @@ cell above/below, past any code. Esc, Done, and a click on anything that is not 
 ## Decisions
 
 1. **Every primary press is judged on release, not on press.** `BlockEditor` records the press on `pointerdown` and
-   decides on `pointerup`: a click (moved < 5px mouse/pen, < 16px touch, no selection made outside the editor) on text
+   decides on `pointerup`: a click (moved < 8px mouse/pen, < 16px touch, and for touch no word selected by a long press; a mouse's drift selects a character or two, which is still a click) on text
    hands off; anything else commits. Judging on press had a real bug, old and new: the closing editor changes the page's
    height, so a link or button below it moved before the release and the click was lost (seen live: a link under a task
    list opened as source). `pointercancel` commits for a mouse (a drag of text or a picture began) and leaves the editor
@@ -42,7 +42,7 @@ cell above/below, past any code. Esc, Done, and a click on anything that is not 
 
 | Case | Outcome |
 |---|---|
-| Drag-select in another block while editing | fix: commits on release, selection kept (verified) |
+| Drag-select in another block while editing | fix: commits on release, selection kept (verified); a click with 2-6px of drift hands off |
 | Link click while editing, editor above changes height | fix: navigates (verified with a hash link) |
 | Double-click out of habit while editing | first click hands off, second selects a word in the new editor (verified) |
 | Same-cell target after the edited block, block count changed (new paragraph committed, block removed) | fix: found by start offset (verified both) |
