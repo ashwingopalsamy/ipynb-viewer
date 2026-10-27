@@ -161,6 +161,19 @@ SVG(f'''<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox
 </svg>''')"""),
 ('code', """Markdown(f"**Drinkable after {drinkable:.1f} minutes.** A travel mug would take about {np.log((88 - room) / (60 - room)) / 0.012:.0f}.")"""),
 ('code', """readings["temp"]"""),
+('markdown', """## Edit it
+
+This notebook is editable, text and all. Double-click any paragraph, heading or list, press `e`, or use the pencil at the top right, and write. A bar opens with undo, bold, italic, code, link, headings and lists. Once one block is open, a click on any other text moves the editor there, and `↑` `↓` carry on into the next cell. `Esc` finishes.
+
+Code and outputs are never touched, and nothing runs. Saving changes only the text you edited, so every figure and table above stays as it is.
+
+| You opened it from | Save |
+|---|---|
+| A file, in Chromium | Writes into that file |
+| A link, like this demo | Saves a copy to your computer |
+| Safari or Firefox | Downloads the edited notebook |
+
+Try it: change this sentence, then press `⌘S`. This demo has no file to write to, so it saves a copy."""),
 ('markdown', """## Before you share this
 
 Press `i`. The sheet lists what a notebook gives away without its author noticing: a key pasted into a cell, a home folder in a traceback. It also lists what the notebook needs to run and what makes it heavy, and it can make a link with the notebook inside it.
