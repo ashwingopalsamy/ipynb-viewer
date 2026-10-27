@@ -282,6 +282,9 @@ main { flex: 1; }
   padding: 8px var(--bleed) 24px;
   margin: 0 calc(var(--bleed) * -1) -16px;
 }
+/* A text cell keeps 12px of room at each side, given back as negative margin, so what the editor draws around a block
+   (content-visibility clips paint at the cell's edge) is not cut off. The text stays where it was. */
+.cell.markdown { padding-inline: 12px; margin-inline: -12px; }
 
 .gutter {
   display: flex;

@@ -54,11 +54,13 @@
 /* a markdown or LaTeX output sits in its box like the other outputs, a little smaller than the prose around it */
 .out > .md.rendered { padding: 4px var(--pr, 20px) 4px 20px; font-size: 15px; line-height: 1.65; }
 
-/* Editing: the blocks of a notebook that can be edited say so under the pointer */
+/* Editing: the blocks of a notebook that can be edited say so under the pointer, with a slab a little wider than the
+   text (the live block's, fainter). Not while a block of the cell is open, so the only slab then is the live one. */
 .md [data-b] { cursor: text; }
 .md [data-b] a { cursor: pointer; }
 @media (hover: hover) {
-  .md [data-b]:hover { border-radius: 4px; background: color-mix(in srgb, var(--fg) 4%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--fg) 4%, transparent); }
+  .md:not(:has(.editing, .editing-src)) [data-b]:hover { box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--fg) 4%, transparent), 0 0 0 6px color-mix(in srgb, var(--fg) 4%, transparent); }
+  .md [data-b]:is(p, h1, h2, h3, h4, h5, h6, ul, ol, .math-block):hover { border-radius: var(--r-key); }
 }
 .md .placeholder { margin: 0; color: var(--fg-3); cursor: text; }
 .cell:focus { outline: none; }
