@@ -31,7 +31,8 @@
   border-radius: var(--r-key);
   box-shadow: inset 0 0 0 100vmax var(--fill), 0 0 0 6px var(--fill);
   caret-color: var(--fg);
-  min-height: 1.6em;
+  /* one line at its own size: an empty block keeps a line, and a heading does not grow as it opens */
+  min-height: 1lh;
 }
 /* At the top or the bottom of the cell the slab reaches 2px past the text there rather than 6px, so the card keeps the
    same 8px round it as at the sides. It is drawn in two overlapping halves, opaque so the overlap does not darken. */

@@ -33,23 +33,32 @@
 
 /* Every heading but the first opens with a hairline and room above it. The room says the step taken to reach it,
    most when a section starts or the outline climbs back out, least when it goes one level deeper; the length of the
-   line says the heading's rank, from the full width for the top level down to a short stroke. */
+   line says the heading's rank, from the full width for the top level down to a short stroke. Both sit outside the
+   heading's box, in its margin, so the slab drawn on a block being pointed at or edited holds the words alone. */
 .md > [data-h] {
   --gap: 28px;
   --pad: 16px;
   --len: 100%;
   --rule: var(--line);
-  margin-top: var(--gap);
-  padding-top: var(--pad);
-  background: linear-gradient(var(--rule), var(--rule)) 0 0 / var(--len) 1px no-repeat;
+  position: relative;
+  margin-top: calc(var(--gap) + var(--pad));
+  /* a jump from the contents still puts the hairline where it always did */
+  scroll-margin-top: calc(var(--jump) + var(--pad));
 }
+.md > [data-h]::after { content: ''; position: absolute; top: calc(var(--pad) * -1); left: 0; width: var(--len); height: 1px; background: var(--rule); pointer-events: none; }
 .md > [data-h='top'] { --gap: 64px; --pad: 32px; }
 .md > [data-h='out'] { --gap: 48px; --pad: 24px; }
 .md > [data-h='in'] { --gap: 20px; --pad: 14px; }
 .md > [data-d='0'] { --rule: var(--line-2); }
 .md > [data-d='2'] { --len: 240px; }
 .md > [data-d='3'] { --len: 96px; }
-.md > [data-h]:first-child { margin-top: max(10px, calc(var(--gap) - 16px)); }
+.md > [data-h]:first-child { margin-top: calc(max(10px, var(--gap) - 16px) + var(--pad)); }
+/* on paper the room is padding again, which a page break keeps, so a heading that starts a page keeps its hairline */
+@media print {
+  .md > [data-h] { margin-top: var(--gap); padding-top: var(--pad); }
+  .md > [data-h]:first-child { margin-top: max(10px, calc(var(--gap) - 16px)); }
+  .md > [data-h]::after { top: 0; }
+}
 
 /* a markdown or LaTeX output sits in its box like the other outputs, a little smaller than the prose around it */
 .out > .md.rendered { padding: 4px var(--pr, 20px) 4px 20px; font-size: 15px; line-height: 1.65; }
