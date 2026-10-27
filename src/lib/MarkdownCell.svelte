@@ -24,7 +24,7 @@
   import type { MarkdownCell } from './notebook';
   import { typeset } from './math';
   import { session, commit, current } from './edit/session.svelte';
-  import type { Caret, Follow } from './edit/types';
+  import type { Ask, Caret, Follow } from './edit/types';
 
   let { cell, seen }: { cell: MarkdownCell; seen: boolean } = $props();
 
@@ -73,8 +73,9 @@
   let starting = false;
 
   // Opens an editor: on the block under `target`, on the first block when there is no target (the `e` key), on a new
-  // paragraph in a cell with nothing in it, or on the whole cell when it could not be split into blocks.
-  async function begin(target: Element | null, point: { x: number; y: number } | null) {
+  // paragraph in a cell with nothing in it, or on the whole cell when it could not be split into blocks. After another
+  // editor commits (`after`), the block is found again by where it starts in the source, since the commit can draw it again.
+  async function begin(target: Element | null, point: { x: number; y: number } | null, after?: Ask) {
     if (!session.on) {
       if (session.why && !session.told) {
         session.told = true;
@@ -92,20 +93,27 @@
     const box = target ? (hit ?? root!).getBoundingClientRect() : null;
     const top = box?.top;
     const at: Caret | null = tex ? { find: tex } : point && box ? { x: point.x - box.left, y: point.y - box.top } : null;
+    const s = hit ? page.blocks?.[Number(hit.dataset.b)]?.start : undefined;
     starting = true;
     try {
-      if (!(await current()?.ensureBase())) return;
+      // the editor before has read the file already, and nothing reads it again while one is open: no wait (a frame
+      // drawn between the two would show the page without either)
+      if (!after && !(await current()?.ensureBase())) return;
       Editor ??= await load();
-      if (!page || (target && !root?.contains(target))) return;
+      // the commit of the editor before reaches the page here
+      await tick();
+      if (!page || (target && !after && !root?.contains(target))) return;
       const blocks = page.blocks;
       if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? at : null, top });
       if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start', top });
-      const b = hit ? Number(hit.dataset.b) : 0;
+      const b = s === undefined ? 0 : blocks.findIndex((x) => x.start === (after?.moved?.(s) ?? s));
       if (!blocks[b]) return;
       const text = blocks[b].kind === 'source' || tex !== null;
       activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: text && !tex ? null : (at ?? 'start'), top });
     } finally {
       starting = false;
+      // a block that is not found again leaves the focus on its cell, as closing an editor does
+      if (after && !open) root?.closest<HTMLElement>('[data-cell]')?.focus({ preventScroll: true });
     }
   }
 
@@ -118,11 +126,14 @@
     if (near) begin(e.target as Element, { x: e.clientX, y: e.clientY });
   }
 
-  // The `e` key reaches the cell as an event, since the keys are handled at the window.
+  // The `e` key reaches the cell as an event, since the keys are handled at the window; so does a block clicked while another is open.
   $effect(() => {
     const cellEl = root?.closest('[data-cell]');
     if (!cellEl) return;
-    const go = () => begin(null, null);
+    const go = (e: Event) => {
+      const ask = (e as CustomEvent<Ask | null>).detail;
+      begin(ask?.target ?? null, ask?.point ?? null, ask ?? undefined);
+    };
     cellEl.addEventListener('edit', go);
     return () => cellEl.removeEventListener('edit', go);
   });
@@ -143,6 +154,8 @@
       });
       return;
     }
+    // a block clicked while this one was open, here or in another cell, is opened by its cell, which then takes the focus
+    if (follow.to === 'cell') return void follow.cell.dispatchEvent(new CustomEvent('edit', { detail: follow.ask }));
     // the new source reaches this cell only when the parent flushes, so the blocks are read after that
     await tick();
     const blocks = page?.blocks ?? null;

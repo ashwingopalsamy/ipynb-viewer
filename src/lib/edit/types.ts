@@ -12,8 +12,20 @@ export type Caret =
   | { edge: 'top' | 'bottom'; x: number };
 
 /** What happens after an editor commits: which block opens next, and where its caret goes. */
-export interface Follow {
-  /** `near`: an edit in this cell is about to be taken back or put back, and the block where the text changes opens. */
-  to: 'prev' | 'same' | 'next' | 'ghost' | 'above' | 'near';
-  at: Caret;
+export type Follow =
+  | {
+      /** `near`: an edit in this cell is about to be taken back or put back, and the block where the text changes opens. */
+      to: 'prev' | 'same' | 'next' | 'ghost' | 'above' | 'near';
+      at: Caret;
+    }
+  /** A block that was clicked, in this cell or another: `cell` opens it once the commit is drawn. */
+  | { to: 'cell'; cell: Element; ask: Ask };
+
+/** What a text cell is asked to open after another editor commits. */
+export interface Ask {
+  /** What was clicked, and the point on the page, inside the block. */
+  target: Element | null;
+  point: { x: number; y: number } | null;
+  /** Where a block that starts at `s` in the cell's source starts once the commit is drawn: text after the edit moves. */
+  moved?: (s: number) => number;
 }

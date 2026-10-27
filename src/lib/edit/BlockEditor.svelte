@@ -115,22 +115,39 @@
     onDone(next, { to: 'same', at: where });
   }
 
+  // A press outside this editor, judged when it comes up. One that comes up as a click (not a drag, a selection or a scroll)
+  // on a text cell opens what it landed on, in this cell or another, so that once editing, one click goes anywhere; any
+  // other press commits. Not before: a finger may be about to scroll (the browser reports a cancel), and a click on a link
+  // or a button lands where it was pressed only if the page does not move under it between the press and the release.
+  let press: { id: number; x: number; y: number; to: Element | null } | null = null;
+
   onMount(() => {
-    // a finger that lands outside may be about to scroll, which the browser reports as a cancel, so a tap commits when it lifts
-    let lift: number | null = null;
     const down = (e: PointerEvent) => {
+      press = null;
       const t = e.target as Element;
       if ((el ?? ta)?.contains(t) || t.closest?.('.fmt')) return;
-      if (e.pointerType === 'touch') return void (lift = e.pointerId);
-      finish(compute());
+      // a right click (or the Mac's control click) opens a menu, which can keep the release from the page
+      if (e.button !== 0 || e.ctrlKey) return finish(compute());
+      const to = e.shiftKey || e.metaKey || e.altKey ? null : text(t, e.clientY);
+      press = { id: e.pointerId, x: e.clientX, y: e.clientY, to };
+      // the mouse press a browser sends after a tap would take the focus from the editor the tap opens
+      if (to && e.pointerType === 'touch') e.preventDefault();
     };
     const up = (e: PointerEvent) => {
-      if (lift !== e.pointerId) return;
-      lift = null;
-      finish(compute());
+      if (press?.id !== e.pointerId) return;
+      const { x, y, to } = press;
+      press = null;
+      // text selected by dragging, to copy, stays selected; a finger may wander a little more than a mouse in a tap
+      const sel = getSelection();
+      const dragged = (sel && !sel.isCollapsed && !(el ?? ta)?.contains(sel.anchorNode)) || Math.hypot(e.clientX - x, e.clientY - y) >= (e.pointerType === 'touch' ? 16 : 5);
+      if (!to || dragged) return finish(compute());
+      hand(to, e.clientX, e.clientY);
     };
     const cancel = (e: PointerEvent) => {
-      if (lift === e.pointerId) lift = null;
+      if (press?.id !== e.pointerId) return;
+      press = null;
+      // a finger that scrolls leaves the editor open; a mouse that began to drag text or a picture away has left it
+      if (e.pointerType !== 'touch') finish(compute());
     };
     // Safari does not blur a field when the click lands on plain text
     window.addEventListener('pointerdown', down, true);
@@ -152,11 +169,52 @@
     if (to?.closest?.('.fmt') && el?.contains(getSelection()?.anchorNode ?? null)) kept = getSelection()!.getRangeAt(0).cloneRange();
     if (to && ((el ?? ta)?.contains(to) || to.closest?.('.fmt'))) return;
     setTimeout(() => {
-      if (done || !document.hasFocus()) return;
+      // a press that took the focus is judged when it comes up
+      if (done || press || !document.hasFocus()) return;
       const now = document.activeElement;
       if (now && ((el ?? ta)?.contains(now) || now.closest('.fmt'))) return;
       finish(compute());
     }, 0);
+  }
+
+  /**
+   * What a click on `t` opens: the block of a text cell it is in, or the cell when it is drawn whole or is empty. On the
+   * cell around and between its blocks, the block nearest the pointer, or this editor. Null for a link, a table's sorting
+   * header, a cell not drawn yet, and anything outside a text cell.
+   */
+  function text(t: Element, y: number): Element | null {
+    const md = t.closest?.('.cell.markdown')?.querySelector(':scope > .md');
+    if (!md || md.querySelector(':scope > .pending') || t.closest('a, summary, thead th')) return null;
+    if (t.closest('[data-b], .placeholder')) return t;
+    let near: Element | null = null;
+    let far = Infinity;
+    for (const c of md.children) {
+      if (!c.matches('[data-b], .placeholder, .editing, .editing-src, .editing-preview')) continue;
+      const r = c.getBoundingClientRect();
+      const d = Math.max(r.top - y, y - r.bottom, 0);
+      if (d < far) (near = c), (far = d);
+    }
+    // a formula's drawing under its source is part of this editor
+    return near?.matches('.editing-preview') ? near.previousElementSibling : (near ?? md);
+  }
+
+  /** Commits this editor and opens what a click landed on (`to`, from `text`), with the caret on the point, kept inside the block. */
+  function hand(to: Element, x: number, y: number) {
+    const r = (to.closest('[data-b]') ?? to).getBoundingClientRect();
+    const point = { x: Math.min(Math.max(x, r.left), r.right - 1), y: Math.min(Math.max(y, r.top + 1), r.bottom - 1) };
+    const own = (el ?? ta)!;
+    if (to === own) {
+      // beside this block and nearer it than any other: the caret goes back into it
+      own.focus({ preventScroll: true });
+      if (el) place(el, { x: point.x - r.left, y: point.y - r.top });
+      return;
+    }
+    const cell = to.closest('[data-cell]')!;
+    const next = compute();
+    // in this cell, a block after this one moves by the length the edit adds (read now: the props change as it is drawn)
+    const end = cell.contains(own) ? (block?.end ?? insertAt ?? 0) : Infinity;
+    const by = next === null ? 0 : next.length - source.length;
+    finish(next, { to: 'cell', cell, ask: { target: to, point, moved: (s) => (s >= end ? s + by : s) } });
   }
 
   // ---- rich ----

@@ -15,8 +15,9 @@
   box-shadow: var(--lift), var(--edge);
   pointer-events: none;
 }
+/* it lifts as editing begins, with the toolbar's rise; opening another cell from this one moves it there without */
 @media (prefers-reduced-motion: no-preference) {
-  .md:has(> :is(.editing, .editing-src))::before { animation: lift 180ms var(--out) both; }
+  body:has(> .fmt.rise) .md:has(> :is(.editing, .editing-src))::before { animation: lift 180ms var(--out) both; }
 }
 @keyframes lift { from { opacity: 0; transform: scale(0.992); } }
 /* on a phone the text is 12px from the screen's edges, so the card runs edge to edge rather than past them */
