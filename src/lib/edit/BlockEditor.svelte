@@ -9,7 +9,7 @@
   import Bubble from './Bubble.svelte';
   import { typeset } from '../math';
   import { renderMarkdown } from '../markdown';
-  import { session } from './session.svelte';
+  import { rewind, session } from './session.svelte';
   import { say } from '../notice';
   import type { Caret, Follow } from './types';
 
@@ -107,16 +107,31 @@
   }
 
   onMount(() => {
+    // a finger that lands outside may be about to scroll, which the browser reports as a cancel, so a tap commits when it lifts
+    let lift: number | null = null;
     const down = (e: PointerEvent) => {
       const t = e.target as Element;
       if ((el ?? ta)?.contains(t) || t.closest?.('.fmt')) return;
+      if (e.pointerType === 'touch') return void (lift = e.pointerId);
       finish(compute());
+    };
+    const up = (e: PointerEvent) => {
+      if (lift !== e.pointerId) return;
+      lift = null;
+      finish(compute());
+    };
+    const cancel = (e: PointerEvent) => {
+      if (lift === e.pointerId) lift = null;
     };
     // Safari does not blur a field when the click lands on plain text
     window.addEventListener('pointerdown', down, true);
+    window.addEventListener('pointerup', up, true);
+    window.addEventListener('pointercancel', cancel, true);
     session.flush = flush;
     return () => {
       window.removeEventListener('pointerdown', down, true);
+      window.removeEventListener('pointerup', up, true);
+      window.removeEventListener('pointercancel', cancel, true);
       if (session.flush === flush) session.flush = null;
     };
   });
@@ -140,8 +155,7 @@
     if (c === 'start') return caretAt(node, 0);
     if ('offset' in c) return caretAt(node, c.offset);
     let p: { x: number; y: number };
-    if ('word' in c) p = c.word;
-    else if ('edge' in c) {
+    if ('edge' in c) {
       const box = node.getBoundingClientRect();
       p = { x: c.x, y: c.edge === 'bottom' ? box.bottom - 4 : box.top + 4 };
     } else p = c as { x: number; y: number };
@@ -149,12 +163,16 @@
     if (!pos || !node.contains(pos.node)) return caretAt(node, c && 'edge' in c && c.edge === 'top' ? 0 : Infinity);
     const sel = getSelection()!;
     sel.collapse(pos.node, pos.offset);
-    if ('word' in c) {
-      // a double-click selects a word, and the swap to the editor would otherwise lose it
-      const s = sel as Selection & { modify?: (a: string, d: string, g: string) => void };
-      s.modify?.('move', 'backward', 'word');
-      s.modify?.('extend', 'forward', 'word');
-    }
+  }
+
+  // An editor that opens (or a caret that arrives) near the edge of the window, under the header or the keyboard's side, is scrolled into view.
+  function reveal(node: HTMLElement) {
+    const sel = getSelection();
+    const box = (node === el && sel?.rangeCount ? sel.getRangeAt(0).getClientRects()[0] : undefined) ?? node.getBoundingClientRect();
+    const top = parseFloat(getComputedStyle(node).scrollMarginTop) || 0;
+    const bottom = innerHeight - 32;
+    if (box.top < top) scrollBy({ top: box.top - top });
+    else if (box.bottom > bottom) scrollBy({ top: box.bottom - bottom });
   }
 
   function build(node: Element) {
@@ -176,6 +194,7 @@
     typeset(root);
     root.focus({ preventScroll: true });
     place(root, caret);
+    reveal(root);
     return {
       destroy() {
         if (el === root) el = undefined;
@@ -196,7 +215,8 @@
     if (!sel?.rangeCount || !el.contains(sel.anchorNode)) return;
     const range = sel.getRangeAt(0);
     if (!range.collapsed) range.deleteContents();
-    if (textOffset(el) === 0) return;
+    // at the very start the block stays as it is and a new paragraph opens above it
+    if (textOffset(el) === 0) return finish(compute(), { to: 'above', at: 'start' });
     const tail = document.createRange();
     tail.setStart(range.endContainer, range.endOffset);
     tail.setEnd(el, el.childNodes.length);
@@ -290,6 +310,8 @@
       else if (k === 'e' && !e.shiftKey) (own(), fmt('code'));
       else if (k === 'k' && !e.shiftKey) (own(), fmt('link'));
       else if (k === 'x' && e.shiftKey) (own(), fmt('del'));
+      // nothing typed here yet, so the browser has nothing to take back: the edit before this one is what ⌘Z means
+      else if (k === 'z' && !touched) (own(), finish(null), rewind(e.shiftKey));
       else if (k === '/') (own(), toSource());
       else if (k === 'Enter') (own(), finish(compute()));
       return;
@@ -326,8 +348,29 @@
 
   function paste(e: ClipboardEvent) {
     e.preventDefault();
-    const text = e.clipboardData?.getData('text/plain') ?? '';
-    if (text && document.execCommand('insertText', false, text)) touched = true;
+    const text = (e.clipboardData?.getData('text/plain') ?? '').replace(/\r\n?/g, '\n').replace(/\n+$/, '');
+    const sel = getSelection();
+    if (!text || !el || !sel?.rangeCount || !el.contains(sel.anchorNode)) return;
+    // a web address pasted over some words makes them a link
+    if (!sel.isCollapsed && /^https?:\/\/\S+$/.test(text) && document.execCommand('createLink', false, text)) return void (touched = true);
+    // text with blank lines in it is several blocks: it goes in as markdown, between what comes before and after the caret
+    if (ghost && /\n[ \t]*\n/.test(text)) {
+      touched = true;
+      return finish(insert([toMarkdown(fromDom(el)).trim(), text].filter(Boolean).join('\n\n')));
+    }
+    if (block && shape && shape.kind !== 'list' && /\n[ \t]*\n/.test(text)) {
+      const range = sel.getRangeAt(0);
+      if (!range.collapsed) range.deleteContents();
+      const tail = document.createRange();
+      tail.setStart(range.endContainer, range.endOffset);
+      tail.setEnd(el, el.childNodes.length);
+      const right = fromDom(tail.extractContents());
+      const left = fromDom(el);
+      const rightMd = right.length ? (left.length ? toMarkdown(right).trim() : blockMarkdown(shape, [right])) : '';
+      touched = true;
+      return finish(replaceBlock(source, block, [left.length ? blockMarkdown(shape, [left]) : '', text, rightMd].filter(Boolean).join('\n\n')));
+    }
+    if (document.execCommand('insertText', false, text)) touched = true;
   }
 
   const over = (e: DragEvent) => {
@@ -363,6 +406,7 @@
     else if (caret && typeof caret === 'object' && 'find' in caret) i = Math.max(0, node.value.indexOf(caret.find));
     else if (caret && typeof caret === 'object' && 'edge' in caret) i = caret.edge === 'bottom' ? node.value.length : 0;
     node.setSelectionRange(i, i);
+    reveal(node);
     return {
       destroy() {
         if (ta === node) ta = undefined;
@@ -430,6 +474,7 @@
     };
     if (e.key === 'Escape' || (mod && e.key === 'Enter')) (own(), finish(compute()));
     else if (mod && e.key === '/') (own(), toRich());
+    else if (mod && !e.altKey && e.key.toLowerCase() === 'z' && compute() === null) (own(), finish(null), rewind(e.shiftKey));
     else if (e.key === 'Tab') (own(), indent(e.shiftKey));
     else if (mod && !e.altKey && !e.shiftKey && 'kbie'.includes(e.key.toLowerCase())) own();
     else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !mod && !e.shiftKey && !e.altKey && block && ta) {

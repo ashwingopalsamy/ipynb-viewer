@@ -37,6 +37,7 @@ interface Step {
 }
 
 let steps: Step[] = [];
+let undone: Step[] = [];
 let h: Host | null = null;
 
 export const host = (next: Host | null) => void (h = next);
@@ -54,24 +55,59 @@ export function commit(id: string, before: string, after: string): boolean {
   }
   steps.push({ id, before, after });
   if (steps.length > 100) steps.shift();
+  undone = [];
   h.apply(id, after);
-  session.dirty = true;
   if (!session.edited.has(id)) session.edited = new Map(session.edited).set(id, before);
+  settle(id, after);
   return true;
 }
 
-/** Takes back the last committed edit. False when there is nothing to take back. */
-export function undo(): boolean {
+/** A cell back at the source it began from has nothing to save, and the notebook has nothing once every cell is. */
+function settle(id: string, source: string) {
+  if (session.edited.get(id) === source) {
+    const next = new Map(session.edited);
+    next.delete(id);
+    session.edited = next;
+  }
+  session.dirty = session.edited.size > 0;
+}
+
+/** Takes back the last committed edit; the id of its cell, or null when there is nothing to take back. */
+function undo(): string | null {
   const s = steps.pop();
-  if (!s || !h) return false;
-  if (h.source(s.id) !== s.after) return false;
+  if (!s || !h) return null;
+  if (h.source(s.id) !== s.after) return null;
   h.apply(s.id, s.before);
+  settle(s.id, s.before);
+  undone.push(s);
+  return s.id;
+}
+
+/** Puts back the edit that was taken back last. */
+function redo(): string | null {
+  const s = undone.pop();
+  if (!s || !h) return null;
+  if (h.source(s.id) !== s.before) return null;
+  h.apply(s.id, s.after);
+  if (!session.edited.has(s.id)) session.edited = new Map(session.edited).set(s.id, s.before);
+  settle(s.id, s.after);
+  steps.push(s);
+  return s.id;
+}
+
+/** Takes back (or, going forward, puts back) an edit, and shows where it was. False when there was none. */
+export function rewind(forward = false): boolean {
+  const id = forward ? redo() : undo();
+  if (!id) return false;
+  document.querySelector(`[data-cell="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' });
+  say(forward ? 'Put the edit back.' : 'Took back the last edit. ⇧⌘Z puts it back.');
   return true;
 }
 
 /** A new file, or a save: nothing is unsaved and nothing can be taken back. */
 export function reset() {
   steps = [];
+  undone = [];
   session.dirty = false;
   session.conflict = false;
   session.edited = new Map();

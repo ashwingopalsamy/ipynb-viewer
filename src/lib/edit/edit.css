@@ -29,6 +29,7 @@
   min-height: 1.6em;
 }
 .md .editing a { cursor: text; }
+.md :is(.editing, .editing-src) { scroll-margin-top: var(--jump); }
 /* a new paragraph says what it is for until something is typed */
 .md .editing[data-placeholder]::before { content: attr(data-placeholder); position: absolute; inset: 0 auto auto 0; color: var(--fg-3); white-space: nowrap; pointer-events: none; }
 

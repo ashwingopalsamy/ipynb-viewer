@@ -73,7 +73,7 @@
       const b = hit ? Number(hit.dataset.b) : 0;
       if (!blocks[b]) return;
       const text = blocks[b].kind === 'source' || tex !== null;
-      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: tex ? { find: tex } : text ? null : point ? { word: point } : 'start' });
+      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: tex ? { find: tex } : text ? null : (point ?? 'start') });
     } finally {
       starting = false;
     }
@@ -116,13 +116,14 @@
     await tick();
     const blocks = page?.blocks ?? null;
     const kindAt = (i: number): 'rich' | 'source' => (blocks![i].kind === 'source' ? 'source' : 'rich');
-    if (follow.to === 'ghost') {
-      // a new paragraph that was just committed is the block after `was.b`, so the next one goes after it
-      const after = Math.min(was.kind === 'ghost' ? was.b + 1 : was.b, (blocks?.length ?? 0) - 1);
+    if (follow.to === 'ghost' || follow.to === 'above') {
+      // a new paragraph that was just committed is the block after `was.b`, so the next one goes after it; above goes after the block before
+      const after = follow.to === 'above' ? was.b - 1 : Math.min(was.kind === 'ghost' ? was.b + 1 : was.b, (blocks?.length ?? 0) - 1);
       activate({ kind: 'ghost', b: after, mode: 'rich', at: follow.at });
     } else if (was.kind === 'ghost') {
-      // a new paragraph that was committed is done; one that was empty opens again
+      // a new paragraph that was committed is done, unless saving committed it mid-sentence, and then it opens again as the block it became
       if (next === null) activate({ kind: 'ghost', b: was.b, mode: 'rich', at: follow.at });
+      else if (follow.to === 'same' && blocks?.[was.b + 1]) activate({ kind: 'block', b: was.b + 1, mode: kindAt(was.b + 1), at: follow.at });
     } else if (was.kind === 'whole' || !blocks) {
       if (was.kind === 'whole' && follow.to === 'same') activate({ kind: 'whole', b: -1, mode: 'source', at: follow.at });
     } else {

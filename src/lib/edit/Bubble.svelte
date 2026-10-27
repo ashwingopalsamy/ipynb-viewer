@@ -16,7 +16,7 @@
 
   let at = $state<{ x: number; y: number; below: boolean } | null>(null);
   let on = $state<Record<Kind, boolean>>({ strong: false, em: false, del: false, code: false, link: false });
-  // the word a double-click selects as the editor opens is not a selection the reader made, so the bar waits for them to act
+  // a selection left over from the double-click that opened the editor is not one the reader made, so the bar waits for them to act
   let armed = false;
 
   function sync() {

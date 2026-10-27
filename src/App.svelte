@@ -8,7 +8,7 @@
   import Lucide from './lib/Lucide.svelte';
   import { blank } from './lib/blank';
   import { ui, type Pop } from './lib/ui.svelte';
-  import { session, host, undo, reset, type Host } from './lib/edit/session.svelte';
+  import { session, host, rewind, reset, type Host } from './lib/edit/session.svelte';
   import type { Loaded } from './lib/edit/save';
   import type { Watching } from './lib/watch';
 
@@ -189,6 +189,7 @@
         changed = u.changed;
         // what the next save patches into is the file as it is now
         if (loaded) Object.assign(loaded, { file: u.file, stamp: `${u.file.lastModified}:${u.file.size}`, text: null, original: u.cells.map((c) => c.source) });
+        reset();
         setTimeout(() => mine === run && (changed = new Set()), 2600);
       },
       () => session.dirty || session.active !== null,
@@ -216,7 +217,7 @@
   };
 
   // Leaving a notebook with unsaved edits asks first.
-  const keep = () => session.dirty && !confirm(`Discard unsaved edits to ${name}?`);
+  const keep = () => (session.flush?.(), session.dirty && !confirm(`Discard unsaved edits to ${name}?`));
 
   function pick() {
     const file = picker.files?.[0];
@@ -273,19 +274,21 @@
       if (!loaded || session.saving) return;
       session.flush?.();
       if (!session.dirty) return import('./lib/notice').then((m) => m.say('Nothing to save.'));
+      // what is saved is the notebook as it is now; an edit made while the write is under way is not in it
+      const snap = cells;
       const say = (text: string) => import('./lib/notice').then((m) => m.say(text));
       session.saving = true;
       try {
         const mod = await import('./lib/edit/save');
         if (!(await mod.readBase(loaded))) return say('Not saved: this notebook changed on disk. Your edits are still here.');
         const was = loaded.name;
-        const r = await mod.save({ name: was, handle: loaded.handle, stamp: loaded.stamp, text: loaded.text!, bom: loaded.bom, kind: loaded.kind, crlf: loaded.crlf, original: loaded.original, cells }, asNew);
+        const r = await mod.save({ name: was, handle: loaded.handle, stamp: loaded.stamp, text: loaded.text!, bom: loaded.bom, kind: loaded.kind, crlf: loaded.crlf, original: loaded.original, cells: snap }, asNew);
         if (r.how === 'none') return say('Nothing to save.');
         if (r.how === 'cancelled') return;
         if (r.how === 'failed') return say(`Not saved: ${r.why}.`);
         // the text the next save patches into is the one just written (or offered), and the sources on screen are its baseline
         loaded.text = r.text;
-        loaded.original = cells.map((c) => c.source);
+        loaded.original = snap.map((c) => c.source);
         if (r.how === 'in-place') {
           Object.assign(loaded, { file: r.file, stamp: `${r.file.lastModified}:${r.file.size}` });
           saved?.(r.file);
@@ -298,6 +301,13 @@
           await follow(run, r.handle, r.file);
         }
         reset();
+        // an edit that came in while the write was under way stays unsaved, measured from what was written
+        const late = new Map<string, string>();
+        for (const c of cells) {
+          const written = snap.find((s) => s.id === c.id)?.source;
+          if (written !== undefined && written !== c.source) late.set(c.id, written);
+        }
+        if (late.size) (session.edited = late), (session.dirty = true);
         const moved = r.how !== 'in-place' && r.why === 'changed' ? `${was} changed on disk, so your edits were saved as ` : '';
         say(r.how === 'in-place' ? `Saved ${r.name}` : r.how === 'as-new' ? `${moved || 'Saved as '}${r.name}` : `${moved ? moved.replace('saved as', 'downloaded as') : 'Downloaded '}${r.name}`);
       } catch (e) {
@@ -309,6 +319,14 @@
   };
   host(editing);
 
+  // The tab says there are unsaved edits, whichever way the title was last set.
+  $effect(() => {
+    name;
+    const dirty = session.dirty;
+    const t = document.title;
+    if (dirty !== t.startsWith('• ')) document.title = dirty ? `• ${t}` : t.slice(2);
+  });
+
   function keys(e: KeyboardEvent) {
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key === 'o') return e.preventDefault(), choose();
@@ -316,13 +334,13 @@
     if (e.key.toLowerCase() === 's') {
       e.preventDefault();
       editing.save(e.shiftKey);
-    } else if (e.key === 'z' && !e.shiftKey && !(e.target as Element | null)?.closest?.('input, textarea, [contenteditable]')) {
-      if (undo()) e.preventDefault();
+    } else if (e.key.toLowerCase() === 'z' && !(e.target as Element | null)?.closest?.('input, textarea, [contenteditable]')) {
+      if (rewind(e.shiftKey)) e.preventDefault();
     }
   }
 </script>
 
-<svelte:window onkeydown={keys} onbeforeunload={(e) => (session.dirty || session.saving) && e.preventDefault()} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
+<svelte:window onkeydown={keys} onbeforeunload={(e) => (session.flush?.(), (session.dirty || session.saving) && e.preventDefault())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
 <input bind:this={picker} type="file" accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
 

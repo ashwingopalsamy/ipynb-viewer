@@ -151,6 +151,8 @@ export function mark(root: HTMLElement, kind: 'strong' | 'em' | 'del' | 'code' |
   const at = (sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode!.parentElement)?.closest('a');
   if (range.collapsed && !at) return false;
   const saved = range.cloneRange();
+  // with the caret inside a link the commands act on the whole link, which is what is being edited
+  if (at && range.collapsed) saved.selectNodeContents(at);
   const url = prompt('Link', at?.getAttribute('href') ?? '');
   if (url === null) return false;
   sel.removeAllRanges();
