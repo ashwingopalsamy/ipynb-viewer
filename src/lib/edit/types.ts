@@ -18,14 +18,16 @@ export type Follow =
       to: 'prev' | 'same' | 'next' | 'ghost' | 'above' | 'near';
       at: Caret;
     }
-  /** A block that was clicked, in this cell or another: `cell` opens it once the commit is drawn. */
+  /** A block that was clicked, in this cell or another, or the text cell an arrow key went on into: `cell` opens it once the commit is drawn. */
   | { to: 'cell'; cell: Element; ask: Ask };
 
 /** What a text cell is asked to open after another editor commits. */
 export interface Ask {
-  /** What was clicked, and the point on the page, inside the block. */
+  /** What was clicked, and the point on the page, inside the block; null for an arrow key. */
   target: Element | null;
   point: { x: number; y: number } | null;
+  /** An arrow key's: the cell's first block (`top`) or last, with the caret at this horizontal position. */
+  edge?: { edge: 'top' | 'bottom'; x: number };
   /** Where a block that starts at `s` in the cell's source starts once the commit is drawn: text after the edit moves. */
   moved?: (s: number) => number;
 }

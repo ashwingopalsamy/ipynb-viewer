@@ -225,6 +225,10 @@
     if ('offset' in c) return caretAt(node, c.offset);
     const box = node.getBoundingClientRect();
     const p = 'edge' in c ? { x: c.x, y: c.edge === 'bottom' ? box.bottom - 4 : box.top + 4 } : { x: box.left + c.x, y: box.top + c.y };
+    // a point out of the window finds no text: an arrow into a block or a cell out of sight scrolls just far enough to show its line
+    const top = parseFloat(getComputedStyle(node).scrollMarginTop) || 0;
+    const by = p.y < top ? p.y - top - 8 : p.y > innerHeight - 32 ? p.y - innerHeight + 40 : 0;
+    if (by) (scrollBy({ top: by }), (p.y -= by));
     const pos = pointAt(p.x, p.y);
     if (!pos || !node.contains(pos.node)) return caretAt(node, c && 'edge' in c && c.edge === 'top' ? 0 : Infinity);
     const sel = getSelection()!;
@@ -464,16 +468,29 @@
       else if (shape) (own(), split());
     } else if ((k === 'Backspace' || k === 'Delete') && join(k === 'Backspace')) own();
     else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && block) {
-      // on the first or last line, the arrow goes on into the neighbouring block
       const up = k === 'ArrowUp';
       if (!atEdge(el, up ? 'top' : 'bottom')) return;
+      const x = getSelection()?.getRangeAt(0).getClientRects()[0]?.left ?? el.getBoundingClientRect().left;
+      if (onward(up, x)) own();
+    }
+  }
+
+  // On the first or last line, an arrow goes on into the block above or below, and from the first or last block into
+  // the text cell above or below, past any code between. False where there is nowhere to go, and the key does what it does.
+  function onward(up: boolean, x: number): boolean {
+    const at = { edge: up ? 'bottom' : 'top', x } as const;
+    if (block) {
       const all = blocksOf(source);
       const i = all ? all.findIndex((b) => b.start === block.start) : -1;
-      if (!all?.[up ? i - 1 : i + 1] || i < 0) return;
-      own();
-      const x = getSelection()?.getRangeAt(0).getClientRects()[0]?.left ?? el.getBoundingClientRect().left;
-      finish(compute(), { to: up ? 'prev' : 'next', at: { edge: up ? 'bottom' : 'top', x } });
+      if (i < 0) return false;
+      if (all![up ? i - 1 : i + 1]) return (finish(compute(), { to: up ? 'prev' : 'next', at }), true);
     }
+    const cells = [...document.querySelectorAll('.notebook > .cell')];
+    const i = cells.indexOf((el ?? ta)!.closest('.cell')!);
+    const cell = i < 0 ? undefined : up ? cells.slice(0, i).findLast((c) => c.matches('.markdown')) : cells.slice(i + 1).find((c) => c.matches('.markdown'));
+    if (!cell) return false;
+    finish(compute(), { to: 'cell', cell, ask: { target: null, point: null, edge: at } });
+    return true;
   }
 
   function paste(e: ClipboardEvent) {
@@ -608,16 +625,12 @@
     else if (mod && !e.altKey && e.key.toLowerCase() === 'z' && !browser(e.shiftKey)) (own(), back(e.shiftKey));
     else if (e.key === 'Tab') (own(), indent(e.shiftKey));
     else if (mod && !e.altKey && !e.shiftKey && 'kbie'.includes(e.key.toLowerCase())) own();
-    else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !mod && !e.shiftKey && !e.altKey && block && ta) {
-      // at the very start or end of the text the arrow goes on into the neighbouring block, as in the rich editor
+    else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !mod && !e.shiftKey && !e.altKey && ta) {
+      // at the very start or end of the text the arrow goes on into the block or text cell above or below, as in the rich editor
       const up = e.key === 'ArrowUp';
       const end = up ? 0 : ta.value.length;
       if (ta.selectionStart !== end || ta.selectionEnd !== end) return;
-      const all = blocksOf(source);
-      const i = all ? all.findIndex((b) => b.start === block.start) : -1;
-      if (i < 0 || !all?.[up ? i - 1 : i + 1]) return;
-      own();
-      finish(compute(), { to: up ? 'prev' : 'next', at: { edge: up ? 'bottom' : 'top', x: ta.getBoundingClientRect().left } });
+      if (onward(up, ta.getBoundingClientRect().left)) own();
     }
   }
 

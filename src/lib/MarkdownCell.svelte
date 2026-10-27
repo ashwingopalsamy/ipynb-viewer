@@ -17,6 +17,8 @@
     if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 4000 });
     else setTimeout(go, 1500);
   }
+  // the renderer, once any cell has it: an arrow key into a cell not drawn yet draws it without waiting
+  let lib: typeof import('./markdown') | undefined;
 </script>
 
 <script lang="ts">
@@ -42,6 +44,7 @@
     if (!seen || md) return;
     let live = true;
     import('./markdown').then((m) => {
+      lib = m;
       if (live) md = m;
     });
     return () => {
@@ -72,9 +75,10 @@
 
   let starting = false;
 
-  // Opens an editor: on the block under `target`, on the first block when there is no target (the `e` key), on a new
-  // paragraph in a cell with nothing in it, or on the whole cell when it could not be split into blocks. After another
-  // editor commits (`after`), the block is found again by where it starts in the source, since the commit can draw it again.
+  // Opens an editor: on the block under `target`, on the first block when there is no target (the `e` key) or the first or
+  // last when an arrow key goes on into this cell (`after.edge`), on a new paragraph in a cell with nothing in it, or on the
+  // whole cell when it could not be split into blocks. After another editor commits (`after`), the block is found again by
+  // where it starts in the source, since the commit can draw it again.
   async function begin(target: Element | null, point: { x: number; y: number } | null, after?: Ask) {
     if (!session.on) {
       if (session.why && !session.told) {
@@ -83,33 +87,35 @@
       }
       return;
     }
+    const edge = after?.edge;
     // a block drawn again since the click is no longer in the page
-    if (starting || open || !page || (target && (!root?.contains(target) || target.closest('a')))) return;
+    if (starting || open || (!page && !edge) || (target && (!root?.contains(target) || target.closest('a')))) return;
     const hit = target?.closest<HTMLElement>('[data-b]') ?? null;
-    if (target && page.blocks?.length && !hit) return;
+    if (target && page?.blocks?.length && !hit) return;
     // the TeX of the formula under the pointer, which opens the block as text with the caret on it
     const tex = target?.closest('.math')?.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? null;
     // the block's box (the cell's, when it is not drawn in blocks), which the click is measured from and which the editor opens over
     const box = target ? (hit ?? root!).getBoundingClientRect() : null;
     const top = box?.top;
     const at: Caret | null = tex ? { find: tex } : point && box ? { x: point.x - box.left, y: point.y - box.top } : null;
-    const s = hit ? page.blocks?.[Number(hit.dataset.b)]?.start : undefined;
+    const s = hit ? page?.blocks?.[Number(hit.dataset.b)]?.start : undefined;
     starting = true;
     try {
       // the editor before has read the file already, and nothing reads it again while one is open: no wait (a frame
       // drawn between the two would show the page without either)
       if (!after && !(await current()?.ensureBase())) return;
       Editor ??= await load();
+      md ??= lib ?? (await import('./markdown'));
       // the commit of the editor before reaches the page here
       await tick();
       if (!page || (target && !after && !root?.contains(target))) return;
       const blocks = page.blocks;
-      if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? at : null, top });
+      if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? at : (edge ?? null), top });
       if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start', top });
-      const b = s === undefined ? 0 : blocks.findIndex((x) => x.start === (after?.moved?.(s) ?? s));
+      const b = s === undefined ? (edge?.edge === 'bottom' ? blocks.length - 1 : 0) : blocks.findIndex((x) => x.start === (after?.moved?.(s) ?? s));
       if (!blocks[b]) return;
       const text = blocks[b].kind === 'source' || tex !== null;
-      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: text && !tex ? null : (at ?? 'start'), top });
+      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: text && !tex ? (edge ?? null) : (at ?? edge ?? 'start'), top });
     } finally {
       starting = false;
       // a block that is not found again leaves the focus on its cell, as closing an editor does
