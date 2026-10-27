@@ -1,4 +1,6 @@
 /* The block being edited keeps the look of the page; only a hairline says it is live. */
+/* The hairline sits outside the text on every side; a cell that skips painting what is off screen would cut it off at the right edge. */
+.cell:has(> .md > :is(.editing, .editing-src)) { content-visibility: visible; }
 .md .editing {
   outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 4px;
