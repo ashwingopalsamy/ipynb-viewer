@@ -44,8 +44,8 @@
 .md > :is(.editing, .editing-src):last-child { border-radius: 6px; box-shadow: inset 0 0 0 100vmax var(--fill), -2px -2px 0 4px var(--slab), 2px -2px 0 4px var(--slab); }
 .md > :is(.editing, .editing-src):first-child:last-child:not([data-h]) { border-radius: 8px; box-shadow: inset 0 0 0 100vmax var(--fill), -4px 0 0 2px var(--slab), 4px 0 0 2px var(--slab); }
 .md .editing a { cursor: text; }
-/* an editor that opens near the top is scrolled clear of the toolbar under the header */
-.md :is(.editing, .editing-src) { scroll-margin-top: calc(var(--jump) + 16px); }
+/* an editor that opens near the top is scrolled as clear of the header row as a jump from the contents */
+.md :is(.editing, .editing-src) { scroll-margin-top: var(--jump); }
 /* a new paragraph says what it is for until something is typed */
 .md .editing[data-placeholder]::before { content: attr(data-placeholder); position: absolute; inset: 0 auto auto 0; color: var(--fg-3); white-space: nowrap; pointer-events: none; }
 
@@ -84,25 +84,28 @@
 /* code and tables keep their lines and scroll sideways */
 .md textarea.editing-src.code { white-space: pre; overflow-x: auto; }
 
-/* The editing toolbar: a glass pill like the header's, docked under it for as long as a text cell is open. Up there it
-   never sits on the text being written, and it stays put however far a long cell scrolls. */
+/* The editing toolbar: a glass pill like the header's, in the header's own row for as long as a text cell is open; the
+   header's pills step aside until Done. A row of its own under the header would sit on the first lines of a notebook
+   at the top of the page, where nothing can scroll clear of it. It stays put however far a long cell scrolls, and is
+   centred on the open cell, which sits right of the window's centre (Toolbar.svelte sets --x). */
 .fmt {
   position: fixed;
   z-index: 17;
-  top: 60px;
-  inset-inline: 0;
+  top: 8px;
+  left: var(--x, 50%);
+  translate: -50% 0;
   display: flex;
   align-items: center;
   gap: 2px;
   width: max-content;
-  max-width: calc(100vw - 24px);
-  margin-inline: auto;
+  max-width: calc(100vw - 40px);
   padding: 4px;
   background: var(--glass);
   backdrop-filter: blur(22px) saturate(1.7);
   border-radius: 999px;
   box-shadow: var(--float);
 }
+body:has(> .fmt) .bar .inner > *, body:has(> .fmt) .mid { visibility: hidden; }
 .fmt .icon { width: var(--btn); height: var(--btn); }
 .fmt .icon[aria-pressed='true'] { color: var(--fg); }
 .fmt .icon[aria-pressed='true']::before { opacity: 0.12; }
@@ -114,8 +117,7 @@
 @media (max-width: 720px), (pointer: coarse) {
   .fmt { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 }
-/* on a phone it takes the header's place, the file's name and the dock, while the text is open; Done brings them back */
+/* on a phone it runs the width of the screen */
 @media (max-width: 720px) {
-  .fmt { top: 8px; inset-inline: 12px; width: auto; max-width: none; margin: 0; }
-  body:has(> .fmt) .bar .inner > * { visibility: hidden; }
+  .fmt { inset-inline: 12px; translate: none; width: auto; max-width: none; }
 }

@@ -100,10 +100,25 @@
   onMount(() => {
     document.addEventListener('selectionchange', sync);
     document.addEventListener('input', sync, true);
+    // Centred on the open cell, not the window: the text column sits right of centre, past the gutter. Held 20px
+    // inside the window's edges, the header's margin. Ignored on a phone, where the bar spans the screen.
+    const cell = document.querySelector('.md:has(> :is(.editing, .editing-src))');
+    const centre = () => {
+      if (!cell) return;
+      const box = cell.getBoundingClientRect();
+      const half = bar.offsetWidth / 2;
+      bar.style.setProperty('--x', `${Math.min(Math.max(box.left + box.width / 2, 20 + half), document.documentElement.clientWidth - 20 - half)}px`);
+    };
+    // the column moves with the window, the contents rail and the width setting
+    const look = new ResizeObserver(centre);
+    if (cell) look.observe(cell);
+    addEventListener('resize', centre);
     return () => {
       gone = performance.now();
       document.removeEventListener('selectionchange', sync);
       document.removeEventListener('input', sync, true);
+      look.disconnect();
+      removeEventListener('resize', centre);
     };
   });
 
