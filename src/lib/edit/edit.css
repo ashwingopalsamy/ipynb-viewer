@@ -24,11 +24,14 @@
   .md:has(> :is(.editing, .editing-src))::before { inset-inline: -12px; border-radius: 0; }
 }
 /* The block being edited keeps the look of the page. A soft slab a little wider than the text, a step stronger than
-   the hover, says it is live. A shadow and not a background, so a heading keeps its hairline and a quote its surface. */
+   the hover, says it is live. A shadow and not a background, so it reaches past the text without moving it. Its
+   corners are the 10px squircle of a code box, the card's 18px less the 8px between them; a shadow's corner grows
+   by its spread, so each slab's radius here is 10px less its reach. */
 .md .editing {
   position: relative;
   outline: none;
-  border-radius: var(--r-key);
+  border-radius: 4px;
+  corner-shape: squircle;
   box-shadow: inset 0 0 0 100vmax var(--fill), 0 0 0 6px var(--fill);
   caret-color: var(--fg);
   /* one line at its own size: an empty block keeps a line, and a heading does not grow as it opens */
@@ -37,9 +40,9 @@
 /* At the top or the bottom of the cell the slab reaches 2px past the text there rather than 6px, so the card keeps the
    same 8px round it as at the sides. It is drawn in two overlapping halves, opaque so the overlap does not darken. */
 .md > :is(.editing, .editing-src) { --slab: color-mix(in srgb, var(--fg) 6%, var(--paper)); }
-.md > :is(.editing, .editing-src):first-child:not([data-h]) { box-shadow: inset 0 0 0 100vmax var(--fill), -2px 2px 0 4px var(--slab), 2px 2px 0 4px var(--slab); }
-.md > :is(.editing, .editing-src):last-child { box-shadow: inset 0 0 0 100vmax var(--fill), -2px -2px 0 4px var(--slab), 2px -2px 0 4px var(--slab); }
-.md > :is(.editing, .editing-src):first-child:last-child:not([data-h]) { box-shadow: inset 0 0 0 100vmax var(--fill), -4px 0 0 2px var(--slab), 4px 0 0 2px var(--slab); }
+.md > :is(.editing, .editing-src):first-child:not([data-h]) { border-radius: 6px; box-shadow: inset 0 0 0 100vmax var(--fill), -2px 2px 0 4px var(--slab), 2px 2px 0 4px var(--slab); }
+.md > :is(.editing, .editing-src):last-child { border-radius: 6px; box-shadow: inset 0 0 0 100vmax var(--fill), -2px -2px 0 4px var(--slab), 2px -2px 0 4px var(--slab); }
+.md > :is(.editing, .editing-src):first-child:last-child:not([data-h]) { border-radius: 8px; box-shadow: inset 0 0 0 100vmax var(--fill), -4px 0 0 2px var(--slab), 4px 0 0 2px var(--slab); }
 .md .editing a { cursor: text; }
 /* an editor that opens near the top is scrolled clear of the toolbar under the header */
 .md :is(.editing, .editing-src) { scroll-margin-top: calc(var(--jump) + 16px); }
@@ -51,7 +54,7 @@
   user-select: all;
   cursor: default;
   background: var(--fill);
-  border-radius: 4px;
+  border-radius: var(--r-key);
   padding: 0 2px;
 }
 .md .editing .atom.raw { font-family: var(--mono); font-size: 0.9em; color: var(--fg-3); }
@@ -64,7 +67,8 @@
   color: var(--fg);
   background: none;
   border: 0;
-  border-radius: var(--r-key);
+  border-radius: 4px;
+  corner-shape: squircle;
   box-shadow: inset 0 0 0 100vmax var(--fill), 0 0 0 6px var(--fill);
   outline: none;
   resize: none;
