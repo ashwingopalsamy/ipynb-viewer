@@ -74,6 +74,7 @@
   const NONE: Record<Mark, boolean> = { strong: false, em: false, del: false, code: false, link: false };
   let on = $state.raw<Record<Mark, boolean>>(NONE);
   let span = $state(false);
+  let tight = $state(false);
   let can = $state({ undo: false, redo: false });
   let bar: HTMLElement;
   const fresh = performance.now() - gone > 250;
@@ -100,18 +101,29 @@
   onMount(() => {
     document.addEventListener('selectionchange', sync);
     document.addEventListener('input', sync, true);
-    // Centred on the open cell, not the window: the text column sits right of centre, past the gutter. Held 20px
-    // inside the window's edges, the header's margin. Ignored on a phone, where the bar spans the screen.
+    // In the header's own row, between its pills (the file and Open on the left, the tools on the right), centred on the open
+    // cell, not the window: the text column sits right of centre, past the gutter. Where the pills leave it less room than it
+    // needs it takes what there is and scrolls. Ignored on a phone, where the bar spans the screen above the dock.
     const cell = document.querySelector('.md:has(> :is(.editing, .editing-src))');
+    const side = (sel: string, edge: 'left' | 'right') => document.querySelector(`.bar ${sel}`)?.getBoundingClientRect()[edge];
     const centre = () => {
-      if (!cell) return;
+      if (!cell || innerWidth <= 720) return;
       const box = cell.getBoundingClientRect();
-      const half = bar.offsetWidth / 2;
-      bar.style.setProperty('--x', `${Math.min(Math.max(box.left + box.width / 2, 20 + half), document.documentElement.clientWidth - 20 - half)}px`);
+      const lo = Math.max(20, (side('.name', 'right') ?? 0) + 8, (side('.opener', 'right') ?? 0) + 8);
+      const hi = (side('.tools', 'left') ?? innerWidth - 20) - 8;
+      const room = Math.max(0, hi - lo);
+      bar.style.setProperty('--room', `${room}px`);
+      tight = bar.scrollWidth > room;
+      const half = Math.min(bar.scrollWidth, room) / 2;
+      bar.style.setProperty('--x', `${Math.min(Math.max(box.left + box.width / 2, lo + half), hi - half)}px`);
     };
-    // the column moves with the window, the contents rail and the width setting
+    // the column moves with the window, the contents rail and the width setting; the pills with Save and the file's name
     const look = new ResizeObserver(centre);
     if (cell) look.observe(cell);
+    for (const sel of ['.name', '.opener', '.tools']) {
+      const pill = document.querySelector(`.bar ${sel}`);
+      if (pill) look.observe(pill);
+    }
     addEventListener('resize', centre);
     return () => {
       gone = performance.now();
@@ -174,6 +186,7 @@
   bind:this={bar}
   class="fmt"
   class:rise={fresh}
+  class:tight
   role="toolbar"
   aria-label="Editing"
   tabindex="-1"

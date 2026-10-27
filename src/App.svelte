@@ -319,6 +319,19 @@
   };
   host(editing);
 
+  // The Edit button: ends the editor that is open, else opens the text cell holding the focus, else the first one on screen.
+  function toggleEdit() {
+    if (session.active !== null) return session.close?.();
+    const texts = [...document.querySelectorAll<HTMLElement>('.notebook > .cell.markdown')];
+    const focus = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('.notebook > .cell.markdown');
+    const on = focus ?? texts.find((c) => c.getBoundingClientRect().bottom > 56) ?? texts[0];
+    if (!on) return void import('./lib/notice').then((m) => m.say('No text cell to edit.'));
+    on.dispatchEvent(new CustomEvent('edit'));
+  }
+
+  // While a cell is open, the header's Edit, Save and theme buttons act without taking the focus from its text.
+  const hold = (e: Event) => session.active !== null && (e.target as Element).closest('[data-keep]') && e.preventDefault();
+
   // The tab says there are unsaved edits, whichever way the title was last set.
   $effect(() => {
     name;
@@ -345,7 +358,7 @@
 <input bind:this={picker} type="file" accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
 
 <header class="bar">
-  <div class="inner">
+  <div class="inner" role="presentation" onpointerdown={hold} onmousedown={hold}>
     <span class="name pill" class:idle={!name} class:two={sections > 1}>
       <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span>{#if session.dirty}<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>{/if}</span>
       {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
@@ -353,9 +366,13 @@
     <Opener />
     <div class="tools pill">
       <span class="tool-name">{tool}</span>
-      {#if session.dirty}<button class="icon" aria-label="Save edits" data-tip={session.conflict || session.detached ? 'Save a copy · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>{/if}
+      {#if session.on}<button class="icon" data-keep aria-pressed={session.active !== null} aria-label="Edit mode" data-tip={session.active !== null ? 'Done editing · Esc' : 'Edit mode · e'} onclick={toggleEdit}><Lucide name="pencil" /></button>{/if}
+      {#if session.on && (session.active !== null || session.dirty)}
+        <button class="icon" data-keep aria-label="Save edits" data-tip={session.conflict || session.detached ? 'Save a copy · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>
+        {#if !(session.conflict || session.detached)}<button class="icon copy" data-keep aria-label="Save a copy" data-tip="Save a copy · ⇧⌘S" disabled={session.saving} onclick={() => editing.save(true)}><Lucide name="download" /></button>{/if}
+      {/if}
       {#if Actions}<Actions />{/if}
-      <button class="icon swap" onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+      <button class="icon swap" data-keep onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
         <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>
         <span class="glyph" class:on={theme.value === 'dark'}><Lucide name="sun" /></span>
       </button>

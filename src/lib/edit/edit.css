@@ -99,20 +99,23 @@
   align-items: center;
   gap: 2px;
   width: max-content;
-  max-width: calc(100vw - 40px);
+  max-width: var(--room, calc(100vw - 40px));
   padding: 4px;
   background: var(--glass);
   backdrop-filter: blur(22px) saturate(1.7);
   border-radius: 999px;
   box-shadow: var(--float);
 }
-body:has(> .fmt) .bar .inner > *, body:has(> .fmt) .mid { visibility: hidden; }
+/* The header stays: the file, Open, Edit, Save and the tools. Only its centre pill, the section heading, gives way to this bar,
+   and the file's name, which could run long, gives up its width to the bar (the unsaved dot does not). */
+body:has(> .fmt) .mid { visibility: hidden; }
+body:has(> .fmt) .bar .name { max-width: 220px; }
 .fmt .icon { width: var(--btn); height: var(--btn); }
-.fmt .icon[aria-pressed='true'] { color: var(--fg); }
-.fmt .icon[aria-pressed='true']::before { opacity: 0.12; }
-.fmt .icon[aria-pressed='true']:hover::before { opacity: 0.16; }
-.fmt .icon:disabled { opacity: 0.3; cursor: default; color: var(--fg-2); }
-.fmt .icon:disabled::before { opacity: 0; }
+:is(.fmt, .bar) .icon[aria-pressed='true'] { color: var(--fg); }
+:is(.fmt, .bar) .icon[aria-pressed='true']::before { opacity: 0.12; }
+:is(.fmt, .bar) .icon[aria-pressed='true']:hover::before { opacity: 0.16; }
+:is(.fmt, .bar) .icon:disabled { opacity: 0.3; cursor: default; color: var(--fg-2); }
+:is(.fmt, .bar) .icon:disabled::before { opacity: 0; }
 .fmt .icon:focus-visible { outline-offset: -2px; }
 .fmt .sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: var(--line-2); }
 /* Done, the way out, says so in words; it never gives up its width to the tools */
@@ -124,9 +127,16 @@ body:has(> .fmt) .bar .inner > *, body:has(> .fmt) .mid { visibility: hidden; }
   .fmt .btn { position: sticky; right: 0; box-shadow: 0 0 0 4px var(--paper); }
   .fmt [data-tip]::after { display: none; }
 }
+/* the same where the header's pills leave it less room than it needs (Toolbar.svelte measures the gap, as --room) */
+.fmt.tight { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.fmt.tight .btn { position: sticky; right: 0; box-shadow: 0 0 0 4px var(--paper); }
+.fmt.tight [data-tip]::after { display: none; }
 /* on a phone it runs the width of the screen */
 @media (max-width: 720px) {
   .fmt { inset-inline: 12px; translate: none; width: auto; max-width: none; }
+  /* the file and Open sit where the bar does; the dock keeps what works on the open cell and gives the rest back after Done */
+  body:has(> .fmt) .bar :is(.name, .opener) { visibility: hidden; }
+  body:has(> .fmt) .bar .tools > :not([data-keep]) { display: none; }
 }
 /* Windows high contrast drops shadows and fills, which is all the slab and a pressed button are made of */
 @media (forced-colors: active) {

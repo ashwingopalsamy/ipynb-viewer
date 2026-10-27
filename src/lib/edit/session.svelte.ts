@@ -28,6 +28,8 @@ export const session = $state({
   edited: new Map<string, string>() as ReadonlyMap<string, string>,
   /** Set by the open editor: commits what is typed without closing it. */
   flush: null as (() => void) | null,
+  /** Set by the open editor: commits what is typed and closes it, as Done does. */
+  close: null as (() => void) | null,
 });
 
 interface Step {

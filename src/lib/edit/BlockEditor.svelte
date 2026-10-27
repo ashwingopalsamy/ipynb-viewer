@@ -125,7 +125,8 @@
     const down = (e: PointerEvent) => {
       press = null;
       const t = e.target as Element;
-      if ((el ?? ta)?.contains(t) || t.closest?.('.fmt')) return;
+      // the toolbar, and the header's Save, Edit and theme buttons, work on the open editor without closing it
+      if ((el ?? ta)?.contains(t) || t.closest?.('.fmt, .bar [data-keep]')) return;
       // a right click (or the Mac's control click) opens a menu, which can keep the release from the page
       if (e.button !== 0 || e.ctrlKey) return finish(compute());
       const to = e.shiftKey || e.metaKey || e.altKey ? null : text(t, e.clientY);
@@ -157,7 +158,10 @@
     window.addEventListener('pointerup', up, true);
     window.addEventListener('pointercancel', cancel, true);
     session.flush = flush;
+    const close = () => finish(compute());
+    session.close = close;
     return () => {
+      if (session.close === close) session.close = null;
       window.removeEventListener('pointerdown', down, true);
       window.removeEventListener('pointerup', up, true);
       window.removeEventListener('pointercancel', cancel, true);
