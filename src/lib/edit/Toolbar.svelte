@@ -189,7 +189,7 @@
     {#each group as t}
       <button
         type="button"
-        class="icon"
+        class={t.cmd === 'done' ? 'btn solid' : 'icon'}
         data-cmd={t.cmd}
         aria-label={t.name}
         data-tip={t.key ? `${t.name} · ${t.key}` : t.name}
@@ -201,7 +201,7 @@
           queueMicrotask(sync);
         }}
       >
-        <Lucide name={t.icon} />
+        {#if t.cmd === 'done'}Done{:else}<Lucide name={t.icon} />{/if}
       </button>
     {/each}
   {/each}

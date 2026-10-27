@@ -109,15 +109,26 @@ body:has(> .fmt) .bar .inner > *, body:has(> .fmt) .mid { visibility: hidden; }
 .fmt .icon { width: var(--btn); height: var(--btn); }
 .fmt .icon[aria-pressed='true'] { color: var(--fg); }
 .fmt .icon[aria-pressed='true']::before { opacity: 0.12; }
-.fmt .icon:disabled { opacity: 0.3; cursor: default; }
+.fmt .icon[aria-pressed='true']:hover::before { opacity: 0.16; }
+.fmt .icon:disabled { opacity: 0.3; cursor: default; color: var(--fg-2); }
 .fmt .icon:disabled::before { opacity: 0; }
 .fmt .icon:focus-visible { outline-offset: -2px; }
 .fmt .sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: var(--line-2); }
-/* where it is wider than the window (a phone, a finger's larger buttons) it scrolls sideways */
+/* Done, the way out, says so in words; it never gives up its width to the tools */
+.fmt .btn { flex: none; }
+/* where it is wider than the window (a phone, a finger's larger buttons) it scrolls sideways, with Done pinned at its
+   end over the tools passing under it; names on hover would make it scroll up and down too */
 @media (max-width: 720px), (pointer: coarse) {
   .fmt { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .fmt .btn { position: sticky; right: 0; box-shadow: 0 0 0 4px var(--paper); }
+  .fmt [data-tip]::after { display: none; }
 }
 /* on a phone it runs the width of the screen */
 @media (max-width: 720px) {
   .fmt { inset-inline: 12px; translate: none; width: auto; max-width: none; }
+}
+/* Windows high contrast drops shadows and fills, which is all the slab and a pressed button are made of */
+@media (forced-colors: active) {
+  .md :is(.editing, textarea.editing-src) { outline: 2px solid Highlight; outline-offset: 4px; }
+  .fmt .icon[aria-pressed='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
 }

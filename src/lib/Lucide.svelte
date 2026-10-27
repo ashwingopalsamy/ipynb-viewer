@@ -48,9 +48,10 @@
     undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/>',
     redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/>',
     pilcrow: '<path d="M13 4v16M17 4v16M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/>',
-    'heading-1': '<path d="M4 12h8M4 18V6M12 18V6m5 6 3-2v8"/>',
-    'heading-2': '<path d="M4 12h8M4 18V6M12 18V6M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>',
-    'heading-3': '<path d="M4 12h8M4 18V6M12 18V6M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2"/>',
+    // not Lucide's: the figure as tall as the H, so it reads at 18px beside the other tools
+    'heading-1': '<path d="M4 6v12M12 6v12M4 12h8M16.5 8.5 19.5 6v12"/>',
+    'heading-2': '<path d="M4 6v12M12 6v12M4 12h8M15.5 9a3 3 0 0 1 6 0c0 3.5-6 5-6 9h6"/>',
+    'heading-3': '<path d="M4 6v12M12 6v12M4 12h8M15.5 6h6l-3.5 4.5a3.75 3.75 0 1 1-2.9 6.4"/>',
     save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
     'arrow-up-right': '<path d="M7 7h10v10M7 17 17 7"/>',
   };
