@@ -1,3 +1,24 @@
+<script lang="ts" module>
+  // The editor loads while the page is idle, once a notebook that can be edited has drawn some text, so the first
+  // double-click opens it at once and the first paint never waits for it. Not on a connection that asks to save data.
+  let engine: Promise<typeof import('./edit/BlockEditor.svelte').default> | undefined;
+  const load = () =>
+    (engine ??= import('./edit/BlockEditor.svelte').then(
+      (m) => m.default,
+      // a load that failed (offline) is tried again on the next edit
+      (e) => ((engine = undefined), Promise.reject(e)),
+    ));
+  let asked = false;
+  function prefetch() {
+    if (asked || (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
+    asked = true;
+    // what opening an editor also reads: the file the edits are patched into
+    const go = () => void Promise.all([load(), import('./edit/save')]).catch(() => {});
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 4000 });
+    else setTimeout(go, 1500);
+  }
+</script>
+
 <script lang="ts">
   import { tick } from 'svelte';
   import type { MarkdownCell } from './notebook';
@@ -25,6 +46,10 @@
     return () => {
       live = false;
     };
+  });
+
+  $effect(() => {
+    if (session.on && md) prefetch();
   });
 
   // Drawn in pieces, one per block, while the notebook can be edited; the rest of the time as one.
@@ -65,7 +90,7 @@
     starting = true;
     try {
       if (!(await current()?.ensureBase())) return;
-      Editor ??= (await import('./edit/BlockEditor.svelte')).default;
+      Editor ??= await load();
       if (!page || (target && !root?.contains(target))) return;
       const blocks = page.blocks;
       if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? { find: tex } : null });
@@ -99,6 +124,7 @@
 
   async function done(next: string | null, follow?: Follow) {
     const was = open;
+    const from = cell.source;
     const before = page?.blocks?.length ?? 0;
     open = null;
     session.active = null;
@@ -116,7 +142,17 @@
     await tick();
     const blocks = page?.blocks ?? null;
     const kindAt = (i: number): 'rich' | 'source' => (blocks![i].kind === 'source' ? 'source' : 'rich');
-    if (follow.to === 'ghost' || follow.to === 'above') {
+    if (follow.to === 'near') {
+      // an edit here was taken back or put back: the block where the text changed opens, or the one that was open when nothing did
+      if (!blocks) return void (was.kind === 'whole' && activate({ kind: 'whole', b: -1, mode: 'source', at: follow.at }));
+      if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start' });
+      const now = cell.source;
+      let p = 0;
+      while (p < from.length && from[p] === now[p]) p++;
+      const hit = from === now ? Math.max(0, was.b) : blocks.findIndex((b) => p <= b.end);
+      const i = hit < 0 || hit >= blocks.length ? blocks.length - 1 : hit;
+      activate({ kind: 'block', b: i, mode: kindAt(i), at: follow.at });
+    } else if (follow.to === 'ghost' || follow.to === 'above') {
       // a new paragraph that was just committed is the block after `was.b`, so the next one goes after it; above goes after the block before
       const after = follow.to === 'above' ? was.b - 1 : Math.min(was.kind === 'ghost' ? was.b + 1 : was.b, (blocks?.length ?? 0) - 1);
       activate({ kind: 'ghost', b: after, mode: 'rich', at: follow.at });

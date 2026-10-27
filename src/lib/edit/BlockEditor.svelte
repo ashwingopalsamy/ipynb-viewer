@@ -6,10 +6,10 @@
   import { blockFrom, blocksOf, replaceBlock, type Block } from './blocks';
   import { blockMarkdown, blockText, plainLength, toMarkdown, type Inline } from './inline';
   import { atEdge, caretAt, fromDom, inputRule, mark, pointAt, textOffset, toDom } from './dom';
-  import Bubble from './Bubble.svelte';
+  import Toolbar, { type Cmd, type Mark, type Type } from './Toolbar.svelte';
   import { typeset } from '../math';
   import { renderMarkdown } from '../markdown';
-  import { rewind, session } from './session.svelte';
+  import { pending, rewind, session } from './session.svelte';
   import { say } from '../notice';
   import type { Caret, Follow } from './types';
 
@@ -45,7 +45,10 @@
   let el: HTMLElement | undefined;
   let ta: HTMLTextAreaElement | undefined;
   let touched = false;
+  // something was typed here, so the browser's own undo has steps of this editor's
+  let input = false;
   let done = false;
+  let bar: Toolbar | undefined;
   // nothing typed yet, so a new paragraph shows what it is for
   let blank = $state(ghost);
 
@@ -55,6 +58,8 @@
 
   const tag = $derived(shape?.kind === 'heading' ? `h${(shape.token as Tokens.Heading).depth}` : shape?.kind === 'list' ? ((shape.token as Tokens.List).ordered ? 'ol' : 'ul') : 'p');
   const label = $derived(shape?.kind === 'heading' ? 'heading' : shape?.kind === 'list' ? 'list' : 'paragraph');
+  // the block's kind as the toolbar names it; it has no button for the smaller headings
+  const type = $derived(/^h[4-6]$/.test(tag) ? null : (tag as Type));
 
   function finish(next: string | null, follow?: Follow) {
     if (done) return;
@@ -91,7 +96,8 @@
       if (text === original()) return null;
       return whole ? text : replaceBlock(source, block!, text.replace(/\n+$/, ''));
     }
-    if (!touched) return null;
+    // an editor taken off the page without closing (a hot reload) has nothing to read, which is not an empty block
+    if (!touched || !el) return null;
     const md = richMarkdown();
     if (ghost) return md ? insert(md) : null;
     return replaceBlock(source, block!, md);
@@ -139,6 +145,8 @@
   // Leaving the editor commits it, but switching to another window does not.
   function leave(e: FocusEvent) {
     const to = e.relatedTarget as Element | null;
+    // the keys took the focus to the toolbar: the selection it will act on is kept
+    if (to?.closest?.('.fmt') && el?.contains(getSelection()?.anchorNode ?? null)) kept = getSelection()!.getRangeAt(0).cloneRange();
     if (to && ((el ?? ta)?.contains(to) || to.closest?.('.fmt'))) return;
     setTimeout(() => {
       if (done || !document.hasFocus()) return;
@@ -202,7 +210,7 @@
     };
   }
 
-  const fmt = (kind: 'strong' | 'em' | 'del' | 'code' | 'link') => {
+  const fmt = (kind: Mark) => {
     // a heading is bold already: the browser's bold would take it off on screen while the markdown kept it
     if (kind === 'strong' && shape?.kind === 'heading') return;
     if (el && mark(el, kind, say)) touched = true;
@@ -259,6 +267,7 @@
   let ruling = false;
   function typed(e: Event) {
     touched = true;
+    input = true;
     blank = !el?.textContent;
     const ev = e as InputEvent;
     // the rule's own edits fire input too
@@ -280,12 +289,58 @@
     const head = first?.t === 'text' ? first.v : '';
     const pre = /^(#{1,3}|[-*+]|1[.)])[  ]/.exec(head);
     if (!pre || textOffset(el) !== pre[0].length) return;
-    const rest = toMarkdown([{ t: 'text', v: head.slice(pre[0].length) }, ...m.slice(1)]).trim();
-    const found = blockFrom(`${pre[1]} ${rest}`);
-    if (!found || (found.kind !== 'heading' && found.kind !== 'list')) return;
-    caret = { offset: 0 };
-    blank = !rest;
+    become(pre[1], [[{ t: 'text', v: head.slice(pre[0].length) }, ...m.slice(1)]], 0);
+  }
+
+  /**
+   * The open block drawn again as a paragraph (marker ''), a heading (`#` to `###`) or a list (`-`, `*`, `+`, `1.`, `1)`) of
+   * `lines`: written as that markdown and read back, so what is drawn is the one block that will be saved. A heading
+   * takes the lines as one, a paragraph keeps them apart with line breaks, and a list makes each an item.
+   */
+  function become(marker: string, lines: Inline[][], at: number) {
+    const like = blockFrom(marker ? `${marker} x` : 'x');
+    if (!like) return;
+    const md = blockMarkdown(like, like.kind === 'list' ? lines : [lines.flatMap((l, i) => (i ? [BR, ...l] : l))]);
+    // nothing left: an empty heading or list item still holds the caret, and a paragraph is the plain one a new paragraph is
+    const found = md ? blockFrom(md) : marker ? blockFrom(`${marker} `) : null;
+    if ((md || marker) && found?.kind !== like.kind) return;
+    caret = { offset: at };
+    blank = !md;
+    touched = true;
     shape = found;
+  }
+
+  const BR: Inline = { t: 'br' };
+  const MARKER: Record<Type, string> = { p: '', h1: '#', h2: '##', h3: '###', ul: '-', ol: '1.' };
+
+  // The toolbar's paragraph, heading and list buttons. A list button pressed again takes the list away. A list's items
+  // and a paragraph's lines (the runs between its line breaks) become each other.
+  function retype(to: Type) {
+    if (!el || view !== 'rich' || whole) return;
+    if (to === type) {
+      if (to !== 'ul' && to !== 'ol') return;
+      to = 'p';
+    }
+    const { items, extra } = read();
+    const list = to === 'ul' || to === 'ol';
+    let lines: Inline[][] = [...items, ...extra];
+    // the caret stays on its character: an item boundary is no position, a line break (or a heading's space) is one
+    const from = textOffset(el);
+    let at = from;
+    if (shape?.kind === 'list') {
+      const node = getSelection()?.anchorNode;
+      const li = (node instanceof Element ? node : node?.parentElement)?.closest('li');
+      if (!list && li) at += Math.max(0, [...el.children].indexOf(li));
+    } else {
+      lines = [[]];
+      let pos = 0;
+      for (const n of items[0] ?? []) {
+        if (list && n.t === 'br' && pos < from) at--;
+        pos += plainLength([n]);
+        n.t === 'br' ? lines.push([]) : lines[lines.length - 1].push(n);
+      }
+    }
+    become(MARKER[to], lines, at);
   }
 
   // the empty last item of a list, where Enter ends the list
@@ -303,6 +358,7 @@
       e.preventDefault();
       e.stopPropagation();
     };
+    if (k === 'F10' && e.altKey) return void (own(), bar?.focus());
     if (mod && !e.altKey) {
       // these also mean something to the page or the browser (search, bookmarks), so the editor keeps them
       if (k === 'b' && !e.shiftKey) (own(), fmt('strong'));
@@ -310,8 +366,8 @@
       else if (k === 'e' && !e.shiftKey) (own(), fmt('code'));
       else if (k === 'k' && !e.shiftKey) (own(), fmt('link'));
       else if (k === 'x' && e.shiftKey) (own(), fmt('del'));
-      // nothing typed here yet, so the browser has nothing to take back: the edit before this one is what ⌘Z means
-      else if (k === 'z' && !touched) (own(), finish(null), rewind(e.shiftKey));
+      // the browser has nothing of this editor's to take back: the edit before this one is what ⌘Z means
+      else if (k === 'z' && !browser(e.shiftKey)) (own(), back(e.shiftKey));
       else if (k === '/') (own(), toSource());
       else if (k === 'Enter') (own(), finish(compute()));
       return;
@@ -458,7 +514,7 @@
   function toRich() {
     if (!ta || !block || block.kind === 'source') return;
     const found = blocksOf(ta.value);
-    if (found?.length !== 1 || found[0].kind === 'source') return;
+    if (found?.length !== 1 || found[0].kind === 'source') return say('This markdown is more than one paragraph, heading or list now, so it stays as text.');
     touched = ta.value !== original();
     shape = found[0];
     caret = 'end';
@@ -472,9 +528,10 @@
       e.preventDefault();
       e.stopPropagation();
     };
-    if (e.key === 'Escape' || (mod && e.key === 'Enter')) (own(), finish(compute()));
+    if (e.key === 'F10' && e.altKey) (own(), bar?.focus());
+    else if (e.key === 'Escape' || (mod && e.key === 'Enter')) (own(), finish(compute()));
     else if (mod && e.key === '/') (own(), toRich());
-    else if (mod && !e.altKey && e.key.toLowerCase() === 'z' && compute() === null) (own(), finish(null), rewind(e.shiftKey));
+    else if (mod && !e.altKey && e.key.toLowerCase() === 'z' && !browser(e.shiftKey)) (own(), back(e.shiftKey));
     else if (e.key === 'Tab') (own(), indent(e.shiftKey));
     else if (mod && !e.altKey && !e.shiftKey && 'kbie'.includes(e.key.toLowerCase())) own();
     else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !mod && !e.shiftKey && !e.altKey && block && ta) {
@@ -493,10 +550,67 @@
   const files = (e: DragEvent) => {
     if (e.dataTransfer?.types.includes('Files')) over(e);
   };
+
+  // ---- history and the toolbar ----
+
+  /** The browser's own undo (or redo) has a step of what was typed here. */
+  const browser = (forward: boolean) => input && document.queryCommandEnabled(forward ? 'redo' : 'undo');
+
+  // Undo past what the browser holds: the edit before this one in the notebook (going forward, the one taken back last).
+  // What is typed here and not yet committed is committed first, so it is what goes, and a new edit leaves nothing to put
+  // back. When the edit is in this cell the editor opens again where the text changes; elsewhere it closes, and the page shows the edit.
+  function back(forward: boolean) {
+    const next = compute();
+    const typed = next !== null && next !== source;
+    const id = typed ? (forward ? null : session.active) : pending(forward);
+    if (!id) return;
+    const at: Caret = ghost ? 'end' : view === 'source' ? { offset: ta?.selectionStart ?? 0 } : { offset: el ? textOffset(el) : 0 };
+    finish(next, id === session.active ? { to: 'near', at } : undefined);
+    rewind(forward);
+  }
+
+  /** Whether undo (or redo) has anything to do here: in the browser's history of this editor, or in the notebook's. */
+  function history(forward: boolean): boolean {
+    if (browser(forward)) return true;
+    // read only when the rest does not decide it, since it writes out the block
+    const changed = () => {
+      const next = compute();
+      return next !== null && next !== source;
+    };
+    return forward ? pending(true) !== null && !changed() : pending(false) !== null || changed();
+  }
+
+  // the selection in the text when the keys took the focus to the toolbar
+  let kept: Range | null = null;
+
+  /** The focus back in the text, with the selection it had. */
+  function resume() {
+    const node = el ?? ta;
+    if (!node || document.activeElement === node) return;
+    node.focus({ preventScroll: true });
+    if (el && kept && el.contains(kept.startContainer)) {
+      const sel = getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(kept);
+    }
+    kept = null;
+  }
+
+  function run(cmd: Cmd) {
+    if (done) return;
+    resume();
+    if (cmd === 'undo' || cmd === 'redo') {
+      if (browser(cmd === 'redo')) document.execCommand(cmd);
+      else back(cmd === 'redo');
+    } else if (cmd === 'done') finish(compute());
+    else if (cmd === 'source') view === 'source' ? toRich() : toSource();
+    else if (cmd in MARKER) retype(cmd as Type);
+    else fmt(cmd as Mark);
+  }
 </script>
 
 {#if view === 'source'}
-  <textarea use:src class="editing-src" class:code={block?.token.type === 'code' || block?.token.type === 'table'} rows="1" spellcheck="false" data-gramm="false" aria-label="Edit markdown source" onkeydown={srcKey} oninput={() => ta && size(ta)} onfocusout={leave} ondragover={files} ondrop={files}></textarea>
+  <textarea use:src class="editing-src" class:code={block?.token.type === 'code' || block?.token.type === 'table'} rows="1" spellcheck="false" data-gramm="false" aria-label="Edit markdown source" onkeydown={srcKey} oninput={() => ((input = true), ta && size(ta))} onfocusout={leave} ondragover={files} ondrop={files}></textarea>
   {#if block?.token.type === 'blockMath'}<div class="editing-preview" aria-hidden="true" use:preview></div>{/if}
 {:else}
   {#key shape}
@@ -520,5 +634,17 @@
       onclick={(e: MouseEvent) => (e.target as Element).closest('a') && e.preventDefault()}
     ></svelte:element>
   {/key}
-  <Bubble root={() => el} onmark={fmt} heading={shape?.kind === 'heading'} />
 {/if}
+<Toolbar
+  bind:this={bar}
+  root={() => el}
+  source={view === 'source'}
+  {type}
+  shapes={view === 'rich' && !whole}
+  flip={!ghost && !!block && block.kind !== 'source'}
+  heading={shape?.kind === 'heading'}
+  {history}
+  {run}
+  {resume}
+  onleave={leave}
+/>

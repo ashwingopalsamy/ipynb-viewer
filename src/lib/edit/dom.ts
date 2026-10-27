@@ -279,6 +279,10 @@ export function atEdge(root: HTMLElement, edge: 'top' | 'bottom'): boolean {
   if (!sel?.rangeCount || !sel.isCollapsed) return false;
   const range = sel.getRangeAt(0).cloneRange();
   let box = range.getClientRects()[0];
+  // a caret on an empty line, between two breaks, has no box of its own: the break after it stands for its line
+  const { startContainer: at, startOffset: i } = range;
+  const brk = at.nodeType === 1 ? at.childNodes[i] : null;
+  if (!box && brk?.nodeName === 'BR') box = (brk as Element).getBoundingClientRect();
   if (!box) {
     const near = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
     box = (near ?? root).getBoundingClientRect();

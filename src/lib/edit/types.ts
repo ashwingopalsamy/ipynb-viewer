@@ -13,6 +13,7 @@ export type Caret =
 
 /** What happens after an editor commits: which block opens next, and where its caret goes. */
 export interface Follow {
-  to: 'prev' | 'same' | 'next' | 'ghost' | 'above';
+  /** `near`: an edit in this cell is about to be taken back or put back, and the block where the text changes opens. */
+  to: 'prev' | 'same' | 'next' | 'ghost' | 'above' | 'near';
   at: Caret;
 }

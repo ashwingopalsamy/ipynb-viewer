@@ -95,6 +95,12 @@ function redo(): string | null {
   return s.id;
 }
 
+/** The cell of the edit that would be taken back (or put back) next, or null when there is none. */
+export function pending(forward = false): string | null {
+  const list = forward ? undone : steps;
+  return list[list.length - 1]?.id ?? null;
+}
+
 /** Takes back (or, going forward, puts back) an edit, and shows where it was. False when there was none. */
 export function rewind(forward = false): boolean {
   const id = forward ? redo() : undo();
