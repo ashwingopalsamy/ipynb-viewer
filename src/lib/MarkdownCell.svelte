@@ -32,8 +32,9 @@
   let Editor = $state.raw<typeof import('./edit/BlockEditor.svelte').default>();
   let root = $state<HTMLElement>();
 
-  // the block that is open: `b` indexes the drawn blocks, a ghost is a new paragraph after block `after` (-1 for the start)
-  type Open = { id: number; kind: 'block' | 'whole' | 'ghost'; b: number; mode: 'rich' | 'source'; at: Caret | null };
+  // the block that is open: `b` indexes the drawn blocks, a ghost is a new paragraph after block `after` (-1 for the start);
+  // `top` is where on the screen it was when it was clicked open
+  type Open = { id: number; kind: 'block' | 'whole' | 'ghost'; b: number; mode: 'rich' | 'source'; at: Caret | null; top?: number };
   let open = $state.raw<Open | null>(null);
   let seq = 0;
 
@@ -87,18 +88,22 @@
     if (target && page.blocks?.length && !hit) return;
     // the TeX of the formula under the pointer, which opens the block as text with the caret on it
     const tex = target?.closest('.math')?.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? null;
+    // the block's box (the cell's, when it is not drawn in blocks), which the click is measured from and which the editor opens over
+    const box = target ? (hit ?? root!).getBoundingClientRect() : null;
+    const top = box?.top;
+    const at: Caret | null = tex ? { find: tex } : point && box ? { x: point.x - box.left, y: point.y - box.top } : null;
     starting = true;
     try {
       if (!(await current()?.ensureBase())) return;
       Editor ??= await load();
       if (!page || (target && !root?.contains(target))) return;
       const blocks = page.blocks;
-      if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? { find: tex } : null });
-      if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start' });
+      if (!blocks) return activate({ kind: 'whole', b: -1, mode: 'source', at: tex ? at : null, top });
+      if (!blocks.length) return activate({ kind: 'ghost', b: -1, mode: 'rich', at: 'start', top });
       const b = hit ? Number(hit.dataset.b) : 0;
       if (!blocks[b]) return;
       const text = blocks[b].kind === 'source' || tex !== null;
-      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: tex ? { find: tex } : text ? null : (point ?? 'start') });
+      activate({ kind: 'block', b, mode: text ? 'source' : 'rich', at: text && !tex ? null : (at ?? 'start'), top });
     } finally {
       starting = false;
     }
@@ -173,7 +178,7 @@
 {#snippet ghost()}
   {#if open && Editor && page}
     {#key open.id}
-      <Editor block={null} insertAt={open.b >= 0 ? page.blocks![open.b].end : 0} source={cell.source} attachments={cell.attachments} mode="rich" at={open.at} onDone={done} />
+      <Editor block={null} insertAt={open.b >= 0 ? page.blocks![open.b].end : 0} source={cell.source} attachments={cell.attachments} mode="rich" at={open.at} top={open.top} onDone={done} />
     {/key}
   {/if}
 {/snippet}
@@ -182,7 +187,7 @@
   {#if page}
     {#if open?.kind === 'whole' && Editor}
       {#key open.id}
-        <Editor block={null} source={cell.source} attachments={cell.attachments} mode="source" at={open.at} onDone={done} />
+        <Editor block={null} source={cell.source} attachments={cell.attachments} mode="source" at={open.at} top={open.top} onDone={done} />
       {/key}
     {:else}
       {#if open?.kind === 'ghost' && open.b === -1}{@render ghost()}{/if}
@@ -192,7 +197,7 @@
       {#each page.parts as part, i}
         {#if open?.kind === 'block' && open.b === i && Editor}
           {#key open.id}
-            <Editor block={page.blocks![i]} source={cell.source} attachments={cell.attachments} mode={open.mode} at={open.at} onDone={done} />
+            <Editor block={page.blocks![i]} source={cell.source} attachments={cell.attachments} mode={open.mode} at={open.at} top={open.top} onDone={done} />
           {/key}
         {:else}
           <!-- sanitized by DOMPurify in renderMarkdown and renderParts -->

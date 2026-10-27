@@ -4,7 +4,7 @@ export type Caret =
   | 'end'
   /** A character position inside the block, as `textOffset` counts. */
   | { offset: number }
-  /** The point that was clicked. */
+  /** The point that was clicked, from the top left of the block's box: an open block can be drawn a little higher or lower. */
   | { x: number; y: number }
   /** The first place this text occurs in a source editor. */
   | { find: string }

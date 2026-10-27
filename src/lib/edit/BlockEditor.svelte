@@ -22,6 +22,7 @@
     attachments,
     mode,
     at,
+    top,
     onDone,
   }: {
     block: Block | null;
@@ -30,10 +31,12 @@
     attachments: Record<string, MimeBundle>;
     mode: 'rich' | 'source';
     at: Caret | null;
+    /** Where on the screen the block was when it was clicked open: it opens there. */
+    top?: number;
     onDone: (next: string | null, follow?: Follow) => void;
   } = $props();
 
-  const first = (() => ({ mode, shape: block, ghost: insertAt !== undefined, whole: block === null && insertAt === undefined, at }))();
+  const first = (() => ({ mode, shape: block, ghost: insertAt !== undefined, whole: block === null && insertAt === undefined, at, top }))();
   const ghost = first.ghost;
   const whole = first.whole;
 
@@ -162,11 +165,8 @@
     if (!c || c === 'end' || (typeof c === 'object' && 'find' in c)) return caretAt(node, Infinity);
     if (c === 'start') return caretAt(node, 0);
     if ('offset' in c) return caretAt(node, c.offset);
-    let p: { x: number; y: number };
-    if ('edge' in c) {
-      const box = node.getBoundingClientRect();
-      p = { x: c.x, y: c.edge === 'bottom' ? box.bottom - 4 : box.top + 4 };
-    } else p = c as { x: number; y: number };
+    const box = node.getBoundingClientRect();
+    const p = 'edge' in c ? { x: c.x, y: c.edge === 'bottom' ? box.bottom - 4 : box.top + 4 } : { x: box.left + c.x, y: box.top + c.y };
     const pos = pointAt(p.x, p.y);
     if (!pos || !node.contains(pos.node)) return caretAt(node, c && 'edge' in c && c.edge === 'top' ? 0 : Infinity);
     const sel = getSelection()!;
@@ -181,6 +181,22 @@
     const bottom = innerHeight - 32;
     if (box.top < top) scrollBy({ top: box.top - top });
     else if (box.bottom > bottom) scrollBy({ top: box.bottom - bottom });
+  }
+
+  // Both wait for the page to be drawn for this frame: the contents list marks the headings then (in a frame it asks for
+  // when the page changes, so before this one), and the room it gives a heading moves it. A block that was clicked open
+  // first goes back to where it was clicked, though an editor that closed above it changed the height of the page.
+  let held = first.top;
+  function settle(node: HTMLElement) {
+    queueMicrotask(() =>
+      requestAnimationFrame(() => {
+        if (!node.isConnected) return;
+        const off = held === undefined ? 0 : node.getBoundingClientRect().top - held;
+        held = undefined;
+        if (Math.abs(off) >= 1) scrollBy({ top: off });
+        reveal(node);
+      }),
+    );
   }
 
   function build(node: Element) {
@@ -202,7 +218,7 @@
     typeset(root);
     root.focus({ preventScroll: true });
     place(root, caret);
-    reveal(root);
+    settle(root);
     return {
       destroy() {
         if (el === root) el = undefined;
@@ -462,7 +478,7 @@
     else if (caret && typeof caret === 'object' && 'find' in caret) i = Math.max(0, node.value.indexOf(caret.find));
     else if (caret && typeof caret === 'object' && 'edge' in caret) i = caret.edge === 'bottom' ? node.value.length : 0;
     node.setSelectionRange(i, i);
-    reveal(node);
+    settle(node);
     return {
       destroy() {
         if (ta === node) ta = undefined;
