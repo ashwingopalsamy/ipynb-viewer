@@ -2,9 +2,28 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
-## Unreleased
+## 1.1.0 (2026-10-27)
 
-First public version, in progress.
+Edit a notebook in the page, and save it back.
+
+- Double-click a paragraph, heading or list to edit it where it stands, or press `e`, or use the pencil in the header. Code and outputs are never touched, and nothing runs.
+- A bar for the open cell: undo and redo, bold, italic, strikethrough, code, link, paragraph, three heading sizes, lists, the markdown source of the block, and Done. It sits in the header's row, in place of the section name.
+- Once a cell is open, one click on any other text opens it there, in this cell or another, with the caret where you clicked. A click that drifts a few pixels still counts as a click; a drag still selects. `↑` and `↓` at the first or last line carry on into the cell above or below, past code.
+- Writes as you would expect: `Enter` splits a paragraph or starts a new one, `⌫` joins, `⇧Enter` breaks the line, `-`, `1.` and `#` start a list or a heading, pasted markdown becomes real blocks, a link pasted over a selection becomes a link.
+- `⌘Z` and `⇧⌘Z` take back and put back an edit, from anywhere on the page, and the unsaved mark follows them.
+- Save and Save a copy sit in the header beside an Edit mode button. Save writes into the file you opened and changes only the text of the cells you edited, so outputs, pictures and the file's own formatting stay as they were. Save a copy asks where to put `name (edited).ipynb`.
+- Open a notebook from a link, edit it, and save it to your computer: it has no file to write to, so saving makes a copy. Browsers that cannot write files download it instead.
+- Markdown files open and edit the same way.
+- If the file changed on disk while you edited, saving goes to a new file and leaves the original alone. A reload, a new file or closing the tab warns while edits are unsaved, and the tab title shows a dot.
+- Edits show everywhere on the page before they are saved: Contents, Search, Copy as Markdown and share links.
+- The editor loads after the first paint, so the page opens as fast as before.
+- On a phone the dock sits at the bottom of the screen instead of over the file name, and while editing it keeps Edit, Save and the theme.
+- The footer credit has a beating heart and a face that appears on hover.
+- The Notebook sheet now finds a key or token assigned to a name that ends in the word, such as `OPENAI_API_KEY = "..."`. It had passed over those, and the demo notebook's own made-up token with them.
+
+## 1.0.0 (2026-10-21)
+
+First public version.
 
 - Link downloads are rate limited per IP, time out, and are capped by size as they stream; aggregate server-side counts of outcomes, with no addresses or identifiers.
 - Extra response headers and a `security.txt`.
