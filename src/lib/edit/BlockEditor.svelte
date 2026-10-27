@@ -3,9 +3,9 @@
   import { onMount } from 'svelte';
   import type { Tokens } from 'marked';
   import type { MimeBundle } from '../notebook';
-  import { blocksOf, replaceBlock, type Block } from './blocks';
+  import { blockFrom, blocksOf, replaceBlock, type Block } from './blocks';
   import { blockMarkdown, blockText, plainLength, toMarkdown, type Inline } from './inline';
-  import { atEdge, caretAt, fromDom, mark, pointAt, textOffset, toDom } from './dom';
+  import { atEdge, caretAt, fromDom, inputRule, mark, pointAt, textOffset, toDom } from './dom';
   import Bubble from './Bubble.svelte';
   import { typeset } from '../math';
   import { renderMarkdown } from '../markdown';
@@ -166,6 +166,8 @@
       for (const item of blockText(shape)) {
         const li = document.createElement('li');
         li.append(toDom(item, document, attachments));
+        // an empty item needs a break to hold the caret
+        if (!item.length) li.append(document.createElement('br'));
         root.append(li);
       }
       const list = shape.token as Tokens.List;
@@ -233,6 +235,46 @@
     view = 'source';
   }
 
+  // Markdown typed as text: a closing `*`, `~` or backtick turns what it closes into a mark.
+  let ruling = false;
+  function typed(e: Event) {
+    touched = true;
+    blank = !el?.textContent;
+    const ev = e as InputEvent;
+    // the rule's own edits fire input too
+    if (ruling || !el || ev.isComposing || ev.inputType !== 'insertText' || !ev.data) return;
+    ruling = true;
+    try {
+      if ('*~`'.includes(ev.data)) inputRule(el, shape?.kind === 'heading');
+      else if (ev.data === ' ') blockRule();
+    } finally {
+      ruling = false;
+    }
+  }
+
+  // `# ` to `### `, `- `, `* `, `+ `, `1. ` or `1) ` typed at the very start of a paragraph turns it into a heading or a list
+  function blockRule() {
+    if (!el || (shape && shape.kind !== 'paragraph')) return;
+    const m = fromDom(el);
+    const first = m[0];
+    const head = first?.t === 'text' ? first.v : '';
+    const pre = /^(#{1,3}|[-*+]|1[.)])[  ]/.exec(head);
+    if (!pre || textOffset(el) !== pre[0].length) return;
+    const rest = toMarkdown([{ t: 'text', v: head.slice(pre[0].length) }, ...m.slice(1)]).trim();
+    const found = blockFrom(`${pre[1]} ${rest}`);
+    if (!found || (found.kind !== 'heading' && found.kind !== 'list')) return;
+    caret = { offset: 0 };
+    blank = !rest;
+    shape = found;
+  }
+
+  // the empty last item of a list, where Enter ends the list
+  function endItem(): HTMLElement | null {
+    const at = getSelection()?.anchorNode;
+    const li = (at instanceof Element ? at : at?.parentElement)?.closest('li');
+    return el && li && li === el.lastElementChild && el.children.length > 1 && !li.textContent ? li : null;
+  }
+
   function richKey(e: KeyboardEvent) {
     if (e.isComposing || e.keyCode === 229 || !el) return;
     const mod = e.metaKey || e.ctrlKey;
@@ -259,9 +301,15 @@
       document.execCommand('insertLineBreak');
       touched = true;
     } else if (k === 'Enter' && !e.altKey) {
+      if (shape?.kind === 'list') {
+        // in a list the browser adds the item; an empty last item ends the list, and a new paragraph opens under it
+        const item = endItem();
+        if (item) (own(), item.remove(), (touched = true), finish(compute(), { to: 'ghost', at: 'start' }));
+        return;
+      }
       // a new paragraph with text is kept and another opens under it; Enter on an empty one closes it
       if (ghost) (own(), blank ? finish(null) : finish(compute(), { to: 'ghost', at: 'start' }));
-      else if (shape && shape.kind !== 'list') (own(), split());
+      else if (shape) (own(), split());
     } else if ((k === 'Backspace' || k === 'Delete') && join(k === 'Backspace')) own();
     else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && block) {
       // on the first or last line, the arrow goes on into the neighbouring block
@@ -418,8 +466,8 @@
       aria-label="Edit {label}"
       spellcheck="true"
       onkeydown={richKey}
-      data-placeholder={ghost && blank ? 'Type a paragraph · Esc to cancel' : undefined}
-      oninput={() => ((touched = true), (blank = !el?.textContent))}
+      data-placeholder={ghost && blank ? 'Type, or # for a heading, - for a list' : undefined}
+      oninput={typed}
       onpaste={paste}
       ondrop={drop}
       ondragover={over}

@@ -22,9 +22,16 @@ function kindOf(t: Token): Kind {
   for (const item of list.items) {
     if (item.task) return 'source';
     const body = item.tokens.filter((x) => x.type !== 'space');
-    if (body.length !== 1 || (body[0].type !== 'text' && body[0].type !== 'paragraph')) return 'source';
+    // an empty item, as `- ` alone, still makes a simple list
+    if (body.length > 1 || (body.length === 1 && body[0].type !== 'text' && body[0].type !== 'paragraph')) return 'source';
   }
   return 'list';
+}
+
+/** The one block that `src` lexes to, spanning all of it. Unlike `blocksOf` it accepts what the lexer normalises (`- ` alone), for text typed into the editor. */
+export function blockFrom(src: string): Block | null {
+  const tokens = lexOf(src).filter((t) => t.type !== 'space');
+  return tokens.length === 1 ? { start: 0, end: src.length, kind: kindOf(tokens[0]), token: tokens[0] } : null;
 }
 
 /**

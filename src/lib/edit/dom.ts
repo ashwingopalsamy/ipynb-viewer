@@ -163,6 +163,54 @@ export function mark(root: HTMLElement, kind: 'strong' | 'em' | 'del' | 'code' |
   return document.execCommand('createLink', false, url.trim());
 }
 
+// Markdown typed as text: the closing character of `**x**`, `*x*`, `~~x~~` or `` `x` `` turns the run into its mark.
+// No rule for `_x_`, which would fire inside snake_case.
+const RULES: [RegExp, 'strong' | 'em' | 'del' | 'code'][] = [
+  [/(?:^|[^*\\])(\*\*([^*\s](?:[^*]*[^*\s])?)\*\*)$/, 'strong'],
+  [/(?:^|[^*\\])(\*([^*\s](?:[^*]*[^*\s])?)\*)$/, 'em'],
+  [/(?:^|[^~\\])(~~([^~\s](?:[^~]*[^~\s])?)~~)$/, 'del'],
+  [/(?:^|[^`\\])(`([^`]+)`)$/, 'code'],
+];
+
+/** Turns the markdown typed just before the caret into its mark. True when it did. */
+export function inputRule(root: HTMLElement, heading: boolean): boolean {
+  const sel = getSelection();
+  const node = sel?.anchorNode;
+  if (!sel?.isCollapsed || !node || node.nodeType !== 3 || !root.contains(node) || node.parentElement?.closest('code, .atom')) return false;
+  const end = sel.anchorOffset;
+  const typed = (node as Text).data.slice(0, end);
+  for (const [re, kind] of RULES) {
+    const m = re.exec(typed);
+    // a heading is bold already
+    if (!m || (kind === 'strong' && heading)) continue;
+    const r = document.createRange();
+    r.setStart(node, end - m[1].length);
+    r.setEnd(node, end);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    // the browser's own insert, so undo brings the typed markdown back
+    if (!document.execCommand('insertText', false, m[2])) return false;
+    const at = sel.getRangeAt(0);
+    if (at.endContainer.nodeType !== 3 || at.endOffset < m[2].length) return true;
+    const inner = document.createRange();
+    inner.setStart(at.endContainer, at.endOffset - m[2].length);
+    inner.setEnd(at.endContainer, at.endOffset);
+    sel.removeAllRanges();
+    sel.addRange(inner);
+    mark(root, kind);
+    // typing goes on after the mark, not inside it; the zero-width space is dropped when the block is read back
+    const near = sel.focusNode instanceof Element ? sel.focusNode : sel.focusNode?.parentElement;
+    const made = near?.closest('b, strong, i, em, s, strike, del, code');
+    if (made && root.contains(made)) {
+      const gap = document.createTextNode('\u200b');
+      made.after(gap);
+      sel.collapse(gap, 1);
+    } else sel.collapseToEnd();
+    return true;
+  }
+  return false;
+}
+
 const sized = (n: Node): n is HTMLElement => n instanceof HTMLElement && (n.classList.contains('atom') || n.tagName === 'BR');
 
 /** How many caret positions `n` spans: a character each, and an atom or a break as one. */
