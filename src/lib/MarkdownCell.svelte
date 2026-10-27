@@ -32,8 +32,10 @@
     md ? (session.on ? md.renderParts(cell.source, cell.attachments) : { parts: [md.renderMarkdown(cell.source, cell.attachments)], blocks: null }) : null,
   );
 
+  // a block drawn again after its editor closes holds TeX placeholders too, so closing typesets as a new page does
   $effect(() => {
     page;
+    open;
     if (root && page) typeset(root);
   });
 
@@ -100,9 +102,9 @@
     const before = page?.blocks?.length ?? 0;
     open = null;
     session.active = null;
-    if (next !== null) commit(cell.id, cell.source, next);
-    const blocks = page?.blocks ?? null;
-    if (!follow || !was) {
+    // a commit that was refused (the cell changed underneath) leaves everything closed
+    const ok = next === null || commit(cell.id, cell.source, next);
+    if (!follow || !was || !ok) {
       // the reader stays where they were rather than falling to the top of the page, unless they clicked on something else
       tick().then(() => {
         const now = document.activeElement;
@@ -110,10 +112,13 @@
       });
       return;
     }
+    // the new source reaches this cell only when the parent flushes, so the blocks are read after that
     await tick();
+    const blocks = page?.blocks ?? null;
     const kindAt = (i: number): 'rich' | 'source' => (blocks![i].kind === 'source' ? 'source' : 'rich');
     if (follow.to === 'ghost') {
-      const after = Math.min(was.b, (blocks?.length ?? 0) - 1);
+      // a new paragraph that was just committed is the block after `was.b`, so the next one goes after it
+      const after = Math.min(was.kind === 'ghost' ? was.b + 1 : was.b, (blocks?.length ?? 0) - 1);
       activate({ kind: 'ghost', b: after, mode: 'rich', at: follow.at });
     } else if (was.kind === 'ghost') {
       // a new paragraph that was committed is done; one that was empty opens again
