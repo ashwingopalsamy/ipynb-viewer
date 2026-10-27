@@ -9,7 +9,7 @@ const origin = new WeakMap<Node, Inline>();
 
 const MARKS = { strong: 'strong', em: 'em', del: 'del' } as const;
 
-/** The model as DOM. Text keeps its line breaks, so the editor must set `white-space: pre-wrap`. */
+/** The model as DOM. Text keeps its soft line breaks as \n, which the editor shows as spaces, as the page does. */
 export function toDom(nodes: Inline[], doc: Document, attachments: Record<string, MimeBundle> = {}): DocumentFragment {
   const out = doc.createDocumentFragment();
   for (const n of nodes) {

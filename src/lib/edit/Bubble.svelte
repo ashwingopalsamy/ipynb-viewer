@@ -4,7 +4,7 @@
 
   // The formatting toolbar over selected text, for touch and for anyone who does not know the keys.
   type Kind = 'strong' | 'em' | 'del' | 'code' | 'link';
-  let { root, onmark }: { root: () => HTMLElement | undefined; onmark: (kind: Kind) => void } = $props();
+  let { root, onmark, heading = false }: { root: () => HTMLElement | undefined; onmark: (kind: Kind) => void; heading?: boolean } = $props();
 
   const TOOLS: { kind: Kind; icon: Icon; label: string }[] = [
     { kind: 'strong', icon: 'bold', label: 'Bold · ⌘B' },
@@ -54,7 +54,7 @@
 
 {#if at}
   <div class="fmt" class:below={at.below} role="toolbar" aria-label="Format" use:portal style:left="{at.x}px" style:top="{at.y}px">
-    {#each TOOLS as t}
+    {#each TOOLS.filter((t) => !(heading && t.kind === 'strong')) as t}
       <button
         type="button"
         title={t.label}

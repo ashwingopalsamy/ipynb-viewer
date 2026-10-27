@@ -179,6 +179,8 @@
   }
 
   const fmt = (kind: 'strong' | 'em' | 'del' | 'code' | 'link') => {
+    // a heading is bold already: the browser's bold would take it off on screen while the markdown kept it
+    if (kind === 'strong' && shape?.kind === 'heading') return;
     if (el && mark(el, kind, say)) touched = true;
   };
 
@@ -294,7 +296,7 @@
 
   const size = (node: HTMLTextAreaElement) => {
     node.style.height = 'auto';
-    node.style.height = node.scrollHeight + 2 + 'px';
+    node.style.height = node.scrollHeight + 'px';
   };
 
   function src(node: HTMLTextAreaElement) {
@@ -357,6 +359,17 @@
     else if (mod && e.key === '/') (own(), toRich());
     else if (e.key === 'Tab') (own(), indent(e.shiftKey));
     else if (mod && !e.altKey && !e.shiftKey && 'kbie'.includes(e.key.toLowerCase())) own();
+    else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !mod && !e.shiftKey && !e.altKey && block && ta) {
+      // at the very start or end of the text the arrow goes on into the neighbouring block, as in the rich editor
+      const up = e.key === 'ArrowUp';
+      const end = up ? 0 : ta.value.length;
+      if (ta.selectionStart !== end || ta.selectionEnd !== end) return;
+      const all = blocksOf(source);
+      const i = all ? all.findIndex((b) => b.start === block.start) : -1;
+      if (i < 0 || !all?.[up ? i - 1 : i + 1]) return;
+      own();
+      finish(compute(), { to: up ? 'prev' : 'next', at: { edge: up ? 'bottom' : 'top', x: ta.getBoundingClientRect().left } });
+    }
   }
 
   const files = (e: DragEvent) => {
@@ -365,7 +378,7 @@
 </script>
 
 {#if view === 'source'}
-  <textarea use:src class="editing-src" spellcheck="false" data-gramm="false" aria-label="Edit markdown source" onkeydown={srcKey} oninput={() => ta && size(ta)} onfocusout={leave} ondragover={files} ondrop={files}></textarea>
+  <textarea use:src class="editing-src" class:code={block?.token.type === 'code' || block?.token.type === 'table'} rows="1" spellcheck="false" data-gramm="false" aria-label="Edit markdown source" onkeydown={srcKey} oninput={() => ta && size(ta)} onfocusout={leave} ondragover={files} ondrop={files}></textarea>
 {:else}
   {#key shape}
     <svelte:element
@@ -387,5 +400,5 @@
       onclick={(e: MouseEvent) => (e.target as Element).closest('a') && e.preventDefault()}
     ></svelte:element>
   {/key}
-  <Bubble root={() => el} onmark={fmt} />
+  <Bubble root={() => el} onmark={fmt} heading={shape?.kind === 'heading'} />
 {/if}

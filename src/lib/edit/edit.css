@@ -6,7 +6,6 @@
   outline-offset: 4px;
   border-radius: 4px;
   caret-color: var(--fg);
-  white-space: pre-wrap;
   min-height: 1.6em;
 }
 .md .editing:focus-visible { outline-color: var(--accent); }
@@ -36,10 +35,12 @@
   outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 1px;
   resize: none;
-  overflow-x: auto;
-  white-space: pre;
+  overflow: hidden;
+  white-space: pre-wrap;
   tab-size: 4;
 }
+/* code and tables keep their lines and scroll sideways */
+.md textarea.editing-src.code { white-space: pre; overflow-x: auto; }
 
 /* the toolbar floats over a selection */
 .fmt {
