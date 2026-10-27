@@ -45,6 +45,8 @@
   let ta: HTMLTextAreaElement | undefined;
   let touched = false;
   let done = false;
+  // nothing typed yet, so a new paragraph shows what it is for
+  let blank = $state(ghost);
 
   // the text the block had when it opened, to tell an untouched source editor from a changed one
   const original = () => (whole ? source : block ? source.slice(block.start, block.end) : '');
@@ -256,7 +258,8 @@
       document.execCommand('insertLineBreak');
       touched = true;
     } else if (k === 'Enter' && !e.altKey) {
-      if (ghost) (own(), finish(compute()));
+      // a new paragraph with text is kept and another opens under it; Enter on an empty one closes it
+      if (ghost) (own(), blank ? finish(null) : finish(compute(), { to: 'ghost', at: 'start' }));
       else if (shape && shape.kind !== 'list') (own(), split());
     } else if ((k === 'Backspace' || k === 'Delete') && join(k === 'Backspace')) own();
     else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.shiftKey && !e.altKey && block) {
@@ -392,7 +395,8 @@
       aria-label="Edit {label}"
       spellcheck="true"
       onkeydown={richKey}
-      oninput={() => (touched = true)}
+      data-placeholder={ghost && blank ? 'Type a paragraph · Esc to cancel' : undefined}
+      oninput={() => ((touched = true), (blank = !el?.textContent))}
       onpaste={paste}
       ondrop={drop}
       ondragover={over}

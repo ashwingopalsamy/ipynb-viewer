@@ -16,11 +16,13 @@
 
   let at = $state<{ x: number; y: number; below: boolean } | null>(null);
   let on = $state<Record<Kind, boolean>>({ strong: false, em: false, del: false, code: false, link: false });
+  // the word a double-click selects as the editor opens is not a selection the reader made, so the bar waits for them to act
+  let armed = false;
 
   function sync() {
     const el = root();
     const sel = getSelection();
-    if (!el || !sel?.rangeCount || sel.isCollapsed || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) {
+    if (!armed || !el || !sel?.rangeCount || sel.isCollapsed || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) {
       at = null;
       return;
     }
@@ -31,15 +33,23 @@
     }
     // under the selection when the header would cover it
     const below = box.top < 96;
-    at = { x: box.left + box.width / 2, y: below ? box.bottom : box.top, below };
+    // kept clear of the window's edges
+    at = { x: Math.min(Math.max(box.left + box.width / 2, 128), innerWidth - 128), y: below ? box.bottom : box.top, below };
     const near = sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
     on = { strong: document.queryCommandState('bold'), em: document.queryCommandState('italic'), del: document.queryCommandState('strikeThrough'), code: !!near?.closest('code'), link: !!near?.closest('a') };
   }
 
   onMount(() => {
+    const arm = (e: Event) => {
+      if (root()?.contains(e.target as Node)) armed = true;
+    };
+    document.addEventListener('pointerdown', arm, true);
+    document.addEventListener('keydown', arm, true);
     document.addEventListener('selectionchange', sync);
     addEventListener('scroll', sync, true);
     return () => {
+      document.removeEventListener('pointerdown', arm, true);
+      document.removeEventListener('keydown', arm, true);
       document.removeEventListener('selectionchange', sync);
       removeEventListener('scroll', sync, true);
     };
@@ -66,7 +76,7 @@
           queueMicrotask(sync);
         }}
       >
-        <Lucide name={t.icon} size={16} />
+        <Lucide name={t.icon} />
       </button>
     {/each}
   </div>

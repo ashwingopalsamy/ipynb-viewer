@@ -11,6 +11,8 @@
   min-height: 1.6em;
 }
 .md .editing a { cursor: text; }
+/* a new paragraph says what it is for until something is typed */
+.md .editing[data-placeholder]::before { content: attr(data-placeholder); position: absolute; inset: 0 auto auto 0; color: var(--fg-3); white-space: nowrap; pointer-events: none; }
 
 /* math, pictures and markup the editor cannot change sit in the line as one piece */
 .md .editing .atom {
@@ -43,7 +45,7 @@
 /* code and tables keep their lines and scroll sideways */
 .md textarea.editing-src.code { white-space: pre; overflow-x: auto; }
 
-/* the toolbar floats over a selection */
+/* the toolbar floats over a selection: a glass pill, like the header */
 .fmt {
   position: fixed;
   z-index: 70;
@@ -51,23 +53,25 @@
   gap: 2px;
   padding: 4px;
   background: var(--glass);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border-radius: var(--r-group);
+  backdrop-filter: blur(22px) saturate(1.7);
+  border-radius: 999px;
   box-shadow: var(--float);
-  transform: translate(-50%, calc(-100% - 8px));
+  transform: translate(-50%, calc(-100% - 10px));
 }
-.fmt.below { transform: translate(-50%, 8px); }
+.fmt.below { transform: translate(-50%, 10px); }
 .fmt button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: var(--ctl);
+  height: var(--ctl);
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
   color: var(--fg-2);
   cursor: pointer;
 }
-.fmt button:hover { background: var(--fill); color: var(--fg); }
-.fmt button[aria-pressed='true'] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.fmt button:hover { background: var(--btn-2); color: var(--fg); }
+.fmt button:active { transform: scale(0.97); }
+.fmt button[aria-pressed='true'] { background: color-mix(in srgb, var(--fg) 14%, transparent); color: var(--fg); }
+.fmt button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
