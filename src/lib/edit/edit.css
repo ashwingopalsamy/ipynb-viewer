@@ -42,6 +42,9 @@
 }
 /* the rhythm of a paragraph, except as the cell's first block */
 .md :where(textarea.editing-src) { margin: 0.8em 0; }
+/* a formula being edited is drawn under its source */
+.md .editing-preview { pointer-events: none; }
+.md .editing-preview > .math-block { margin: 8px 0 0; }
 /* code and tables keep their lines and scroll sideways */
 .md textarea.editing-src.code { white-space: pre; overflow-x: auto; }
 

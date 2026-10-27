@@ -62,7 +62,7 @@ export function renderMarkdown(source: string, attachments: Record<string, MimeB
  * The same page as renderMarkdown, one piece per top-level block and each piece's elements numbered (`data-b`) so a
  * double-click can tell which block it landed in. Null blocks mean the source could not be mapped; the page is then one piece.
  */
-export function renderParts(source: string, attachments: Record<string, MimeBundle> = {}): { parts: string[]; blocks: Block[] | null } {
+export function renderParts(source: string, attachments: Record<string, MimeBundle> = {}, base?: string): { parts: string[]; blocks: Block[] | null } {
   guard();
   const whole = () => ({ parts: [renderMarkdown(source, attachments)], blocks: null });
   if (source.includes('\r')) return whole();
@@ -70,14 +70,21 @@ export function renderParts(source: string, attachments: Record<string, MimeBund
   const blocks = blocksOf(source, tokens);
   if (!blocks) return whole();
   marked.walkTokens(tokens, attached(attachments));
+  // blocks whose text is not in the cell as it was last saved carry a mark (md.css draws a dot beside them)
+  const was = new Map<string, number>();
+  if (base !== undefined) for (const b of blocksOf(base) ?? []) was.set(base.slice(b.start, b.end), (was.get(base.slice(b.start, b.end)) ?? 0) + 1);
   const parts = blocks.map((b, i) => {
     const box = document.createElement('template');
     box.innerHTML = clean(marked.parser([b.token]));
     for (const el of box.content.children) el.setAttribute('data-b', String(i));
+    const text = source.slice(b.start, b.end);
+    const left = was.get(text) ?? 0;
+    if (left) was.set(text, left - 1);
+    else if (base !== undefined) box.content.firstElementChild?.setAttribute('data-changed', '');
     return box.innerHTML;
   });
   if (import.meta.env.DEV) {
-    const same = parts.join('').replace(/ data-b="\d+"/g, '') === renderMarkdown(source, attachments);
+    const same = parts.join('').replace(/ data-b="\d+"| data-changed=""/g, '') === renderMarkdown(source, attachments);
     if (!same) console.warn('renderParts differs from renderMarkdown for this cell');
   }
   return { parts, blocks };

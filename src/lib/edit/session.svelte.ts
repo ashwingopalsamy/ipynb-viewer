@@ -24,8 +24,8 @@ export const session = $state({
   conflict: false,
   /** The cell that has an open editor. */
   active: null as string | null,
-  /** Cells with unsaved edits; replaced on every commit. */
-  edited: new Set<string>() as ReadonlySet<string>,
+  /** Cells with unsaved edits, each with its source as it was before the first of them; replaced when a cell is added. */
+  edited: new Map<string, string>() as ReadonlyMap<string, string>,
   /** Set by the open editor: commits what is typed without closing it. */
   flush: null as (() => void) | null,
 });
@@ -56,7 +56,7 @@ export function commit(id: string, before: string, after: string): boolean {
   if (steps.length > 100) steps.shift();
   h.apply(id, after);
   session.dirty = true;
-  session.edited = new Set(session.edited).add(id);
+  if (!session.edited.has(id)) session.edited = new Map(session.edited).set(id, before);
   return true;
 }
 
@@ -74,5 +74,5 @@ export function reset() {
   steps = [];
   session.dirty = false;
   session.conflict = false;
-  session.edited = new Set();
+  session.edited = new Map();
 }

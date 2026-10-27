@@ -64,3 +64,8 @@
 }
 .md .placeholder { margin: 0; color: var(--fg-3); cursor: text; }
 .cell:focus { outline: none; }
+
+/* a block with unsaved edits has a dot in the gutter beside its first line */
+.cell.markdown > .md { position: relative; }
+.md > [data-changed]::before { content: ''; position: absolute; left: -20px; width: 6px; height: 6px; margin-top: calc(0.5lh - 3px); border-radius: 999px; background: var(--accent); }
+@media (max-width: 720px) { .md > [data-changed]::before { left: -11px; } }

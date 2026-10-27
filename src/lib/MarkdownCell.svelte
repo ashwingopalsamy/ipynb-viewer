@@ -29,7 +29,7 @@
 
   // Drawn in pieces, one per block, while the notebook can be edited; the rest of the time as one.
   const page = $derived(
-    md ? (session.on ? md.renderParts(cell.source, cell.attachments) : { parts: [md.renderMarkdown(cell.source, cell.attachments)], blocks: null }) : null,
+    md ? (session.on ? md.renderParts(cell.source, cell.attachments, session.edited.get(cell.id)) : { parts: [md.renderMarkdown(cell.source, cell.attachments)], blocks: null }) : null,
   );
 
   // a block drawn again after its editor closes holds TeX placeholders too, so closing typesets as a new page does

@@ -8,6 +8,7 @@
   import { atEdge, caretAt, fromDom, mark, pointAt, textOffset, toDom } from './dom';
   import Bubble from './Bubble.svelte';
   import { typeset } from '../math';
+  import { renderMarkdown } from '../markdown';
   import { session } from './session.svelte';
   import { say } from '../notice';
   import type { Caret, Follow } from './types';
@@ -321,6 +322,27 @@
     };
   }
 
+  // TeX is hard to read as text, so a formula being edited is drawn under its source as it is typed
+  function preview(node: HTMLElement) {
+    const box = node.previousElementSibling as HTMLTextAreaElement | null;
+    let frame = 0;
+    const draw = () => {
+      frame = 0;
+      // sanitized by DOMPurify in renderMarkdown
+      node.innerHTML = renderMarkdown(box?.value ?? srcText, attachments);
+      typeset(node);
+    };
+    const queue = () => (frame ||= requestAnimationFrame(draw));
+    draw();
+    box?.addEventListener('input', queue);
+    return {
+      destroy() {
+        cancelAnimationFrame(frame);
+        box?.removeEventListener('input', queue);
+      },
+    };
+  }
+
   // Tab indents the selected lines, one step for prose and four for code, through the browser's insert so undo still works.
   function indent(out: boolean) {
     if (!ta) return;
@@ -382,6 +404,7 @@
 
 {#if view === 'source'}
   <textarea use:src class="editing-src" class:code={block?.token.type === 'code' || block?.token.type === 'table'} rows="1" spellcheck="false" data-gramm="false" aria-label="Edit markdown source" onkeydown={srcKey} oninput={() => ta && size(ta)} onfocusout={leave} ondragover={files} ondrop={files}></textarea>
+  {#if block?.token.type === 'blockMath'}<div class="editing-preview" aria-hidden="true" use:preview></div>{/if}
 {:else}
   {#key shape}
     <svelte:element
