@@ -29,8 +29,8 @@ const KEYS: [string, RegExp][] = [
 ];
 /** A password inside an address: the part after the colon. */
 const URL_PASSWORD = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:([^\s@/]{3,})@[^\s/]+/gi;
-/** `api_key = "..."`: the quoted value. */
-const ASSIGNED = /\b(?:api[_-]?key|secret|token|passw(?:or)?d|pwd|auth)\b["']?\s*[:=]\s*["']([^"'\s]{12,})["']/gi;
+/** `api_key = "..."`, or `OPENAI_API_KEY = "..."`: the quoted value. An underscore before the name is part of a longer name, not a word edge. */
+const ASSIGNED = /(?<![A-Za-z0-9])(?:api[_-]?key|secret|token|passw(?:or)?d|pwd|auth)\b["']?\s*[:=]\s*["']([^"'\s]{12,})["']/gi;
 const PLACEHOLDER = /^(?:your|my|xxx|\*+|<|\$\{|\{\{|os\.|getenv|example|changeme|placeholder|dummy|test)/i;
 const EMAIL = /(?<![A-Za-z0-9._%+:-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/g;
 const BORING_MAIL = /(?:@example\.|@users\.noreply\.github\.com|^noreply@|^no-reply@)/i;
