@@ -1,63 +1,12 @@
 import './md.css';
 import './tbl.css';
-import { Marked, type Token, type Tokens } from 'marked';
+import type { Token } from 'marked';
 import DOMPurify from 'dompurify';
 import type { MimeBundle } from './notebook';
 import { isNum } from './tabular';
 import { guard, settle, LINKS } from './guard';
-
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-// KaTeX renders these placeholders on demand; until then the source stays readable.
-const math = (tex: string, display: boolean) =>
-  `<span class="math${display ? ' display' : ''}" data-tex="${escapeHtml(tex)}">${escapeHtml(tex)}</span>`;
-
-interface MathToken extends Tokens.Generic {
-  type: 'inlineMath' | 'blockMath';
-  text: string;
-  display: boolean;
-}
-
-const INLINE_MATH = [
-  /^\$\$([\s\S]+?)\$\$/,
-  /^\\\(([\s\S]+?)\\\)/,
-  /^\\\[([\s\S]+?)\\\]/,
-];
-// $x$ but not a price: no space inside the delimiters, no digit right after the closing one.
-const DOLLAR = /^\$(?!\s)((?:\\.|[^\\$\n]|\n(?!\n))+?)(?<!\s)\$(?!\d)/;
-
-const marked = new Marked({
-  gfm: true,
-  extensions: [
-    {
-      name: 'inlineMath',
-      level: 'inline',
-      start: (src: string) => src.search(/\$|\\[([]/),
-      tokenizer(src: string): MathToken | undefined {
-        for (const re of INLINE_MATH) {
-          const m = re.exec(src);
-          if (m) return { type: 'inlineMath', raw: m[0], text: m[1].trim(), display: re !== INLINE_MATH[1] };
-        }
-        const m = DOLLAR.exec(src);
-        if (m) return { type: 'inlineMath', raw: m[0], text: m[1], display: false };
-      },
-      renderer: (t) => math((t as MathToken).text, (t as MathToken).display),
-    },
-    {
-      name: 'blockMath',
-      level: 'block',
-      start: (src: string) => src.search(/^(?:\$\$|\\begin\{)/m),
-      tokenizer(src: string): MathToken | undefined {
-        const dollars = /^\$\$[ \t]*\n?([\s\S]+?)\n?\$\$[ \t]*(?:\n|$)/.exec(src);
-        if (dollars) return { type: 'blockMath', raw: dollars[0], text: dollars[1].trim(), display: true };
-        const env = /^\\begin\{([a-zA-Z*]+)\}[\s\S]+?\\end\{\1\}[ \t]*(?:\n|$)/.exec(src);
-        if (env) return { type: 'blockMath', raw: env[0], text: env[0].trim(), display: true };
-      },
-      renderer: (t) => `<div class="math-block">${math((t as MathToken).text, true)}</div>\n`,
-    },
-  ],
-});
+import { marked } from './mdlex';
+import { blocksOf, lexOf, type Block } from './edit/blocks';
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
@@ -84,19 +33,8 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   } else if (node.tagName === 'IMG') settle(node, remote);
 });
 
-/** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
-export function renderMarkdown(source: string, attachments: Record<string, MimeBundle> = {}): string {
-  guard();
-  const html = marked.parse(source, {
-    async: false,
-    walkTokens(token: Token) {
-      if (token.type === 'image' && token.href.startsWith('attachment:')) {
-        const url = attachmentUrl(token.href.slice('attachment:'.length), attachments);
-        if (url) token.href = url;
-      }
-    },
-  });
-  return DOMPurify.sanitize(html, {
+const clean = (html: string): string =>
+  DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'label', 'audio', 'video', 'source', 'track', 'picture', 'iframe', 'frame', 'object', 'embed', 'meta', 'link', 'base'],
     FORBID_ATTR: ['style', 'srcset', 'sizes', 'ping', 'poster', 'background', 'formaction', 'action'],
@@ -105,6 +43,57 @@ export function renderMarkdown(source: string, attachments: Record<string, MimeB
     SANITIZE_NAMED_PROPS: true,
     ALLOWED_URI_REGEXP: LINKS,
   });
+
+// Pictures a cell carries itself are shown from the data it holds.
+const attached = (attachments: Record<string, MimeBundle>) => (token: Token) => {
+  if (token.type === 'image' && token.href.startsWith('attachment:')) {
+    const url = attachmentUrl(token.href.slice('attachment:'.length), attachments);
+    if (url) token.href = url;
+  }
+};
+
+/** Markdown to sanitized HTML. Raw HTML in the source is kept only as far as DOMPurify allows. */
+export function renderMarkdown(source: string, attachments: Record<string, MimeBundle> = {}): string {
+  guard();
+  return clean(marked.parse(source, { async: false, walkTokens: attached(attachments) }));
+}
+
+/**
+ * The same page as renderMarkdown, one piece per top-level block and each piece's elements numbered (`data-b`) so a
+ * double-click can tell which block it landed in. Null blocks mean the source could not be mapped; the page is then one piece.
+ */
+export function renderParts(source: string, attachments: Record<string, MimeBundle> = {}, base?: string): { parts: string[]; blocks: Block[] | null } {
+  guard();
+  const whole = () => ({ parts: [renderMarkdown(source, attachments)], blocks: null });
+  if (source.includes('\r')) return whole();
+  const tokens = lexOf(source);
+  const blocks = blocksOf(source, tokens);
+  if (!blocks) return whole();
+  marked.walkTokens(tokens, attached(attachments));
+  // blocks whose text is not in the cell as it was last saved carry a mark (md.css draws a dot beside them)
+  const was = new Map<string, number>();
+  if (base !== undefined) for (const b of blocksOf(base) ?? []) was.set(base.slice(b.start, b.end), (was.get(base.slice(b.start, b.end)) ?? 0) + 1);
+  const parts = blocks.map((b, i) => {
+    const box = document.createElement('template');
+    box.innerHTML = clean(marked.parser([b.token]));
+    for (const el of box.content.children) el.setAttribute('data-b', String(i));
+    const text = source.slice(b.start, b.end);
+    const left = was.get(text) ?? 0;
+    if (left) was.set(text, left - 1);
+    else if (base !== undefined) box.content.firstElementChild?.setAttribute('data-changed', '');
+    return box.innerHTML;
+  });
+  if (import.meta.env.DEV) {
+    const same = parts.join('').replace(/ data-b="\d+"| data-changed=""/g, '') === renderMarkdown(source, attachments);
+    if (!same) console.warn('renderParts differs from renderMarkdown for this cell');
+  }
+  return { parts, blocks };
+}
+
+/** One line of markdown as sanitized inline HTML, for the parts of a block the editor leaves alone. */
+export function renderInline(raw: string, attachments: Record<string, MimeBundle> = {}): string {
+  guard();
+  return clean(marked.parseInline(raw, { async: false, walkTokens: attached(attachments) }));
 }
 
 const TABLE = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'b', 'strong', 'i', 'em', 'code', 'br', 'p'];

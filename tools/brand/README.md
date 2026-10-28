@@ -10,6 +10,7 @@ The scripts that draw the images in `.github/assets/` and the example notebook. 
 | `tag-*.svg` | `tags.py` |
 | `hero-light.png`, `hero-dark.png` | `hero.py`, then `draw.mjs` |
 | `social-preview.png` | `social.py`, then `draw.mjs` |
+| `edit-light.png`, `edit-dark.png` | `edit.mjs` (a screenshot of a paragraph open for editing, in a rounded card; `BASE=http://localhost:5173` uses a running dev server instead of `dist/`) |
 | `examples/cooling-coffee.ipynb`, `public/cooling-coffee.ipynb` | `notebook.py` |
 
 Text in the SVGs is set as outlines with HarfBuzz, so it looks the same wherever GitHub shows it. The green dot over the i is the reader's own status dot, the one beside every cell that ran.
@@ -57,6 +58,7 @@ tools/brand/build.sh
 | Markdown output | The "Drinkable after" line |
 | Fold handles | The figure cells, the frame, the long listing |
 | Insights: secrets, needs, weight | The made-up `SCALE_API_TOKEN`, the home folder in the traceback, `%pip install tqdm`, the pictures |
+| Editing in place, save back | "Edit it": the section before "Before you share this". It is a text cell, so it can be edited on the spot |
 | Run order switch | Not shown: the cells ran in order |
 
 Redraw it with `python3 notebook.py ../../examples/cooling-coffee.ipynb ../../public/cooling-coffee.ipynb`. The hero images and the file-size chip in `scenes.py` come from this notebook, so run `build.sh` after changing it.

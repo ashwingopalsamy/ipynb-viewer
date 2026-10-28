@@ -18,6 +18,10 @@ Outputs are matched by MIME type. Images show as they are, with a light plate be
 
 The core of the reader, script and styles, is held under 30 KB gzipped. Highlighting, math, the chapter rail, screenshots and live refresh are separate chunks that load the first time they are needed. Fonts are self-hosted Latin subsets, with italics loaded on demand.
 
+## Editing
+
+The editor is not part of the first load. After the first paint the page fetches it when idle (not on a connection that asks to save data), and a double-click waits for it if it has not arrived. A cell is drawn in blocks while editing is possible, so a block that is open is the only part that is live. Closing it commits the block's new markdown into the cell's source if the cell still holds what the edit began from, and a cell that changed underneath is left alone. Saving does not rebuild the notebook: it patches the edited cells' source into the original file text (`src/lib/edit/nbsplice.ts`), so outputs, ids, metadata and the file's own formatting are kept byte for byte. Undo is a stack of those commits.
+
 ## Keeping state
 
 Settings and the theme live in `localStorage` and are applied before the first paint, so the page never flashes the wrong theme. Nothing about the notebook itself is stored, apart from where you stopped reading.

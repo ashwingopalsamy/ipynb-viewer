@@ -4,12 +4,14 @@
   import MarkdownCell from './MarkdownCell.svelte';
   import CodeCell from './CodeCell.svelte';
   import { blank } from './blank';
+  import { session } from './edit/session.svelte';
 
   let { cell, index, language, fresh = false }: { cell: Cell; index: number; language: string | null; fresh?: boolean } = $props();
 
   let seen = $state(false);
 
-  const empty = $derived(blank(cell));
+  // a text cell that was emptied by editing stays, so there is somewhere to write again
+  const empty = $derived(blank(cell) && !(cell.type === 'markdown' && session.edited.has(cell.id)));
 
   // A rough content height (the cell's own padding comes on top) so the scrollbar holds still until the real layout is known.
   const height = $derived.by(() => {
@@ -34,7 +36,7 @@
 </script>
 
 {#if !empty}
-  <article class="cell {cell.type}" class:fresh data-cell={cell.id} style:--h="{height}px" style:--i={Math.min(index, 10)} use:inview={() => (seen = true)}>
+  <article class="cell {cell.type}" class:fresh class:edited={session.edited.has(cell.id)} tabindex="-1" data-cell={cell.id} style:--h="{height}px" style:--i={Math.min(index, 10)} use:inview={() => (seen = true)}>
     {#if cell.type === 'markdown'}
       <div class="gutter"></div>
       <MarkdownCell {cell} {seen} />

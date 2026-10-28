@@ -26,6 +26,7 @@
     ['f', 'Trace the selected name'],
     ['n p', 'Next, previous cell with it'],
     ['t', 'Contents'],
+    ['e', 'Edit this cell'],
     ['m', 'Copy as Markdown'],
     ['i', 'Notebook sheet'],
     ['/', 'Search'],

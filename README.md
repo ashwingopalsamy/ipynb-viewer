@@ -31,6 +31,25 @@ Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.
 
 The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
+## Edit a notebook
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/edit-dark.png">
+    <img src=".github/assets/edit-light.png" width="920" alt="A paragraph of the Cooling coffee notebook open for editing: a card around the text, a bar above it with undo, bold, italic, code, link, headings and lists, and Edit mode, Save and the other tools in the header">
+  </picture>
+</p>
+
+Double-click any paragraph, heading or list and write. A bar opens at the top with undo and redo, bold, italic, code, links, headings and lists, and `Esc` or **Done** finishes. Once you are editing, one click on any other text moves the editor there, in this cell or the next, and `↑` `↓` carry on across cells, so there is no double-clicking again. The pencil in the header and the `e` key start it too.
+
+Code and outputs are never touched, and nothing runs. Saving changes only the text of the cells you edited, so figures, tables and outputs stay exactly as they were.
+
+- **Save it into the file.** Open a notebook from your disk in a Chromium browser, and **Save** (`⌘S`) writes into that file. **Save a copy** (`⇧⌘S`) asks where to put `name (edited).ipynb`.
+- **Open from a link, edit, save it locally.** Open a notebook from a GitHub link, change what you like, and save it to your computer. A notebook from a link has no file to write to, so saving makes a copy. To try it, [open the example from a link](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb), edit a sentence and press `⌘S`. Browsers that cannot write files download the copy instead.
+- **Markdown too.** A `.md` file opens and edits the same way.
+
+Nothing is uploaded: edits stay in the page until you save, and saving writes to your own disk. If the file changed on disk while you were editing, your edits go to a new file and the original is left alone.
+
 ## What it does
 
 ### Reading
@@ -58,6 +77,12 @@ The file never leaves your browser. There is no server to send it to, and no cod
 - **Checks before you share.** One sheet finds keys and tokens in a notebook, lists what it needs to run, shows what makes it heavy and makes a link with the notebook inside it.
 
 <!-- visual 3: a cell in the viewer, beside the image it exports -->
+
+### Editing
+
+- **Edits where you read.** The page does not change into an editor: the text stays set as it was, with a card behind it and a bar above.
+- **Takes anything back.** `⌘Z` and `⇧⌘Z` undo and redo edits, and the unsaved dot in the header and the tab title follow them.
+- **Checks before it writes.** A cell that changed underneath you is not overwritten, and a closed tab, a reload or a new file warns while edits are unsaved.
 
 ### Staying current
 

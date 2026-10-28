@@ -1,0 +1,145 @@
+/* What is drawn around the live block sits outside the text, where a cell that skips painting off-screen content could cut it off. */
+.cell:has(> .md > :is(.editing, .editing-src)) { content-visibility: visible; }
+/* The cell with an open editor lifts off the page as a card, like a code cell does: the same paper, edge and soft
+   shadow, drawn behind the text (it takes no room, so nothing moves when the editor opens). The live block's slab sits on it,
+   8px inside the card's edge all round. Above and below, the card reaches 2px into the next cell's padding. */
+.md:has(> :is(.editing, .editing-src)) { isolation: isolate; }
+.md:has(> :is(.editing, .editing-src))::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -10px -14px;
+  border-radius: 18px;
+  corner-shape: squircle;
+  background: var(--paper);
+  box-shadow: var(--lift), var(--edge);
+  pointer-events: none;
+}
+/* it lifts as editing begins, with the toolbar's rise; opening another cell from this one moves it there without */
+@media (prefers-reduced-motion: no-preference) {
+  body:has(> .fmt.rise) .md:has(> :is(.editing, .editing-src))::before { animation: lift 180ms var(--out) both; }
+}
+@keyframes lift { from { opacity: 0; transform: scale(0.992); } }
+/* on a phone the text is 12px from the screen's edges, so the card runs edge to edge rather than past them */
+@media (max-width: 720px) {
+  .md:has(> :is(.editing, .editing-src))::before { inset-inline: -12px; border-radius: 0; }
+}
+/* The block being edited keeps the look of the page. A soft slab a little wider than the text, a step stronger than
+   the hover, says it is live. A shadow and not a background, so it reaches past the text without moving it. Its
+   corners are the 10px squircle of a code box, the card's 18px less the 8px between them; a shadow's corner grows
+   by its spread, so each slab's radius here is 10px less its reach. */
+.md .editing {
+  position: relative;
+  outline: none;
+  border-radius: 4px;
+  corner-shape: squircle;
+  box-shadow: inset 0 0 0 100vmax var(--fill), 0 0 0 6px var(--fill);
+  caret-color: var(--fg);
+  /* one line at its own size: an empty block keeps a line, and a heading does not grow as it opens */
+  min-height: 1lh;
+}
+/* At the top or the bottom of the cell the slab reaches 2px past the text there rather than 6px, so the card keeps the
+   same 8px round it as at the sides. It is drawn in two overlapping halves, opaque so the overlap does not darken. */
+.md > :is(.editing, .editing-src) { --slab: color-mix(in srgb, var(--fg) 6%, var(--paper)); }
+.md > :is(.editing, .editing-src):first-child:not([data-h]) { border-radius: 6px; box-shadow: inset 0 0 0 100vmax var(--fill), -2px 2px 0 4px var(--slab), 2px 2px 0 4px var(--slab); }
+.md > :is(.editing, .editing-src):last-child { border-radius: 6px; box-shadow: inset 0 0 0 100vmax var(--fill), -2px -2px 0 4px var(--slab), 2px -2px 0 4px var(--slab); }
+.md > :is(.editing, .editing-src):first-child:last-child:not([data-h]) { border-radius: 8px; box-shadow: inset 0 0 0 100vmax var(--fill), -4px 0 0 2px var(--slab), 4px 0 0 2px var(--slab); }
+.md .editing a { cursor: text; }
+/* an editor that opens near the top is scrolled as clear of the header row as a jump from the contents */
+.md :is(.editing, .editing-src) { scroll-margin-top: var(--jump); }
+/* a new paragraph says what it is for until something is typed */
+.md .editing[data-placeholder]::before { content: attr(data-placeholder); position: absolute; inset: 0 auto auto 0; color: var(--fg-3); white-space: nowrap; pointer-events: none; }
+
+/* math, pictures and markup the editor cannot change sit in the line as one piece */
+.md .editing .atom {
+  user-select: all;
+  cursor: default;
+  background: var(--fill);
+  border-radius: var(--r-key);
+  padding: 0 2px;
+}
+.md .editing .atom.raw { font-family: var(--mono); font-size: 0.9em; color: var(--fg-3); }
+
+.md textarea.editing-src {
+  display: block;
+  width: 100%;
+  padding: 0;
+  font: 13.5px/1.6 var(--mono);
+  color: var(--fg);
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  corner-shape: squircle;
+  box-shadow: inset 0 0 0 100vmax var(--fill), 0 0 0 6px var(--fill);
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  tab-size: 4;
+}
+/* the rhythm of a paragraph, except as the cell's first block */
+.md :where(textarea.editing-src) { margin: 0.8em 0; }
+/* a formula being edited is drawn under its source */
+.md .editing-preview { pointer-events: none; }
+.md .editing-preview > .math-block { margin: 8px 0 0; }
+/* code and tables keep their lines and scroll sideways */
+.md textarea.editing-src.code { white-space: pre; overflow-x: auto; }
+
+/* The editing toolbar: a glass pill like the header's, in the header's own row for as long as a text cell is open; the
+   header's pills step aside until Done. A row of its own under the header would sit on the first lines of a notebook
+   at the top of the page, where nothing can scroll clear of it. It stays put however far a long cell scrolls, and is
+   centred on the open cell, which sits right of the window's centre (Toolbar.svelte sets --x). */
+.fmt {
+  position: fixed;
+  z-index: 17;
+  top: 8px;
+  left: var(--x, 50%);
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  max-width: var(--room, calc(100vw - 40px));
+  padding: 4px;
+  background: var(--glass);
+  backdrop-filter: blur(22px) saturate(1.7);
+  border-radius: 999px;
+  box-shadow: var(--float);
+}
+/* The header stays: the file, Open, Edit, Save and the tools. Only its centre pill, the section heading, gives way to this bar,
+   and the file's name, which could run long, gives up its width to the bar (the unsaved dot does not). */
+body:has(> .fmt) .mid { visibility: hidden; }
+body:has(> .fmt) .bar .name { max-width: 220px; }
+.fmt .icon { width: var(--btn); height: var(--btn); }
+:is(.fmt, .bar) .icon[aria-pressed='true'] { color: var(--fg); }
+:is(.fmt, .bar) .icon[aria-pressed='true']::before { opacity: 0.12; }
+:is(.fmt, .bar) .icon[aria-pressed='true']:hover::before { opacity: 0.16; }
+:is(.fmt, .bar) .icon:disabled { opacity: 0.3; cursor: default; color: var(--fg-2); }
+:is(.fmt, .bar) .icon:disabled::before { opacity: 0; }
+.fmt .icon:focus-visible { outline-offset: -2px; }
+.fmt .sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: var(--line-2); }
+/* Done, the way out, says so in words; it never gives up its width to the tools */
+.fmt .btn { flex: none; }
+/* where it is wider than the window (a phone, a finger's larger buttons) it scrolls sideways, with Done pinned at its
+   end over the tools passing under it; names on hover would make it scroll up and down too */
+@media (max-width: 720px), (pointer: coarse) {
+  .fmt { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .fmt .btn { position: sticky; right: 0; box-shadow: 0 0 0 4px var(--paper); }
+  .fmt [data-tip]::after { display: none; }
+}
+/* the same where the header's pills leave it less room than it needs (Toolbar.svelte measures the gap, as --room) */
+.fmt.tight { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.fmt.tight .btn { position: sticky; right: 0; box-shadow: 0 0 0 4px var(--paper); }
+.fmt.tight [data-tip]::after { display: none; }
+/* on a phone it runs the width of the screen */
+@media (max-width: 720px) {
+  .fmt { inset-inline: 12px; translate: none; width: auto; max-width: none; }
+  /* the file and Open sit where the bar does; the dock keeps what works on the open cell and gives the rest back after Done */
+  body:has(> .fmt) .bar :is(.name, .opener) { visibility: hidden; }
+  body:has(> .fmt) .bar .tools > :not([data-keep]) { display: none; }
+}
+/* Windows high contrast drops shadows and fills, which is all the slab and a pressed button are made of */
+@media (forced-colors: active) {
+  .md :is(.editing, textarea.editing-src) { outline: 2px solid Highlight; outline-offset: 4px; }
+  .fmt .icon[aria-pressed='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+}
