@@ -2,7 +2,7 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
-## 1.1.0 (2026-10-27)
+## 1.1.0 (2026-10-28)
 
 Edit a notebook in the page, and save it back.
 
