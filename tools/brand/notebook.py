@@ -14,7 +14,7 @@ cells = [
 
 A cup of filter coffee, a kitchen at 22 °C, and a thermometer read every two minutes. How long until it is pleasant to drink?
 
-> **Try it.** Press `t` for the contents, `s` on any cell to save it as an image, `i` for what this notebook gives away, `/` to search, `?` for every key.
+> **This notebook is also a tour.** Each **Try it** note names one thing to press or click, next to what it works on. Nothing here runs: the figures and tables were saved by Jupyter, and the viewer only reads them. To begin, press `t` for the contents, `/` to search, `?` for every key. The buttons are at the top, and along the bottom on a phone.
 
 Newton's law of cooling says a cup loses heat in proportion to how much warmer it is than the room:
 
@@ -62,10 +62,14 @@ t_{1/2} &= \\frac{\\ln 2}{k}
 
 - [x] The room stays at 22 °C
 - [x] The coffee is stirred, so it has one temperature
-- [ ] Evaporation matters (it does, a little; we ignore it)"""),
+- [ ] Evaporation matters (it does, a little; we ignore it)
+
+> **Try it.** Click the chevron beside a code cell, or press `x` while you read it, to fold it to one line. `c` hides the code in every cell and `o` every output, so the page reads like an article; press them again to bring them back. The camera in a cell's corner, or `s`, saves the cell as an image, and a click on a plot opens it full size."""),
 ('markdown', """## The data
 
-Sixteen readings per cup, one every two minutes."""),
+Sixteen readings per cup, one every two minutes.
+
+> **Try it.** Click a column heading in the table below to sort by it; again to reverse, once more for the original order. Hover over the table for a button that copies it as CSV."""),
 ('code', """readings = pd.DataFrame({"minute": minutes, **{name: s.round(1) for name, s in temp.items()}})
 readings"""),
 ('markdown', """### The same frame, as plain text
@@ -74,7 +78,9 @@ A `print` of a frame is not an HTML table, but the viewer reads the columns back
 ('code', """print(readings.head(10))"""),
 ('markdown', """## Fitting k
 
-Taking the log of the excess temperature turns the curve into a straight line, so a plain least squares fit is enough."""),
+Taking the log of the excess temperature turns the curve into a straight line, so a plain least squares fit is enough.
+
+> **Try it.** Click the name `readings` in the code below. Every cell that defines or uses it gets a ring, a pill counts them, `n` and `p` step between them, and `esc` lets go. You can also select a name and press `f`."""),
 ('code', """excess = np.log(readings["ceramic"] - room)
 slope, intercept = np.polyfit(readings.minute, excess, 1)
 k = -slope
@@ -112,6 +118,11 @@ for _ in tqdm(range(200)):
 
 lo, hi = np.percentile(ks, [2.5, 97.5])
 print(f"k is between {lo:.4f} and {hi:.4f} (95%)")""", {'tqdm': 200}),
+('markdown', """### Colour, and long output
+
+The next cell prints a report in colour; the viewer keeps terminal colours, so PASS is green and WARN amber. The cell after it prints 31 lines. Past 24, the first 12 and the last 8 show and the rest sits behind a "lines hidden" row.
+
+> **Try it.** Click that row to open the rest. Turn Trim off in Settings, the sliders icon, to see long outputs in full."""),
 ('code', """GREEN, AMBER, RESET = "\\033[32m", "\\033[33m", "\\033[0m"
 
 print(f"{GREEN}PASS{RESET}  residuals centred on zero (mean {residual.mean():+.2f} °C)")
@@ -121,7 +132,9 @@ print(f"{AMBER}WARN{RESET}  thermometer resolution is 0.1 °C; the last readings
     print(f"t = {m:2d} min   {room + np.exp(intercept) * np.exp(-k * m):5.1f} °C")"""),
 ('markdown', """## What the fit says
 
-The cup cools fastest while it is hottest. The gap to the room shrinks by the same fraction every minute, so the first ten minutes decide most of the story."""),
+The cup cools fastest while it is hottest. The gap to the room shrinks by the same fraction every minute, so the first ten minutes decide most of the story.
+
+> **Try it.** Open Figures, the picture icon: every plot in the notebook on one page. Click one to see it full size and move with `←` `→`, or choose Go to cell. To keep one, use Save figure on the picture in its cell: PNG, JPEG or WebP, at 1×, 2× or 3×."""),
 ('code', """ks_grid = np.linspace(0.03, 0.07, 9)
 rooms = np.linspace(16, 28, 7)
 wait = np.array([[np.log((88 - r) / (60 - r)) / kk for kk in ks_grid] for r in rooms])
@@ -147,7 +160,7 @@ axes[0].set_ylabel("°C lost per minute")
 fig.tight_layout()""", {'alt': 'Three small charts, one per cup, showing how many degrees per minute each loses: steep at first and flattening, much flatter for the travel mug.'}),
 ('markdown', """## When to drink
 
-Most people stop flinching at 60 °C."""),
+Most people stop flinching at 60 °C. Not every output is a picture or a table: the next cell draws a thermometer as a vector (SVG) image, and the one after it writes a line of Markdown."""),
 ('code', """from IPython.display import SVG, Markdown
 
 drinkable = np.log((88 - room) / (60 - room)) / k
@@ -160,12 +173,17 @@ SVG(f'''<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox
   <text x="340" y="104" text-anchor="end" font-family="system-ui, sans-serif" font-size="12" fill="#6e6e73">88 °C</text>
 </svg>''')"""),
 ('code', """Markdown(f"**Drinkable after {drinkable:.1f} minutes.** A travel mug would take about {np.log((88 - room) / (60 - room)) / 0.012:.0f}.")"""),
+('markdown', """### An error, on purpose
+
+The next cell fails: the frame has no column called `temp`. Jupyter saved a long traceback with it. The viewer shows the line in your own code and the exception, and keeps the rest one click away.
+
+> **Try it.** Click Show full traceback. Then press `i`: the traceback gave away a home folder, and the sheet says so."""),
 ('code', """readings["temp"]"""),
 ('markdown', """## Edit it
 
-This notebook is editable, text and all. Double-click any paragraph, heading or list, press `e`, or use the pencil at the top right, and write. A bar opens with undo, bold, italic, code, link, headings and lists. Once one block is open, a click on any other text moves the editor there, and `↑` `↓` carry on into the next cell. `Esc` finishes.
+This notebook is editable, text and all. Double-click any paragraph, heading or list, press `e`, or use the pencil, and write. A bar opens with undo, bold, italic, code, link, headings and lists. Once one block is open, a click on any other text moves the editor there, and `↑` `↓` carry on into the next cell. `Esc` finishes.
 
-Code and outputs are never touched, and nothing runs. Saving changes only the text you edited, so every figure and table above stays as it is.
+Code and outputs are never touched, and nothing runs. Saving changes only the text you edited, so every figure and table above stays as it is. Your edits already show in the contents, in search and in Copy as Markdown, and a dot in the header marks what is not saved.
 
 | You opened it from | Save |
 |---|---|
@@ -173,10 +191,12 @@ Code and outputs are never touched, and nothing runs. Saving changes only the te
 | A link, like this demo | Saves a copy to your computer |
 | Safari or Firefox | Downloads the edited notebook |
 
-Try it: change this sentence, then press `⌘S`. This demo has no file to write to, so it saves a copy."""),
+> **Try it.** Change this sentence, then press `⌘S` (`Ctrl S` elsewhere). This demo has no file to write to, so it saves a copy."""),
 ('markdown', """## Before you share this
 
-Press `i`. The sheet lists what a notebook gives away without its author noticing: a key pasted into a cell, a home folder in a traceback. It also lists what the notebook needs to run and what makes it heavy, and it can make a link with the notebook inside it.
+Press `i` for the notebook sheet, which has three tabs. **Share** lists what a notebook gives away without its author noticing, such as a key pasted into a cell or a home folder in a traceback, makes a link that carries the notebook inside it, and compares it with an earlier file. **Run** lists what the notebook needs, with the install command ready to copy. **Weight** shows what makes the file heavy and can save a copy without pictures or without outputs.
+
+Press `m` to copy the notebook as Markdown for a note or a prompt: choose how much output to keep, fit it to 8k, 32k or 128k tokens, and anything that looks like a secret is hidden.
 
 Everything here is made up, including the token below.
 
@@ -195,6 +215,52 @@ GROUP BY cup;
 ```"""),
 ('code', """SCALE_API_TOKEN = "demo-9f3a71c2e8d4b605"  # not a real key; the sheet flags it anyway
 print("Scale token set:", SCALE_API_TOKEN[:5] + "…")"""),
+('markdown', """## What else it does
+
+**Open anything.**
+
+| You have | Do this |
+|---|---|
+| A notebook file | Drop it anywhere on the page, press `⌘O` (`Ctrl O` elsewhere), or use Open at the top left |
+| A notebook on GitHub, or a gist | Open, then paste the link. Colab and nbviewer addresses for GitHub files work too |
+| A link someone made with the notebook sheet | Open it. The notebook is in the address after the `#` |
+| A Markdown file | Drop it. It reads, and edits, like a one-cell notebook |
+
+To open a GitHub notebook straight from an address, put `?url=` and the link after this site's address. A Markdown file opens from your disk, not from a link.
+
+**Make it comfortable.** Settings, the sliders icon, holds:
+
+- **Text size** and **page width**: narrow, centred or wide.
+- **Serif** for text cells, and **Wrap** and **Line numbers** for code.
+- **Run info** for the counts beside each cell, and **Trim** for long outputs.
+- **Spotlight**, which dims all but the cell you read.
+- **Run order**, which appears when a notebook's cells ran out of order and lays them out as they ran.
+- **Shortcuts**, with the full key list and a switch that turns the single keys off.
+
+The sun and moon beside Settings switch between light and dark.
+
+**Keep up, and take it with you.**
+
+- **Live refresh.** In Chromium browsers, a notebook opened from your disk refreshes by itself when the file changes, so one saved in Jupyter or written by a script shows up as it lands, and the changed cells glow.
+- **Offline.** After your first visit the app works with the network off. A notebook from a link needs a network, because the file has to come from somewhere.
+- **Install.** Chromium browsers can install it as an app from their menu, and `.ipynb` files then open in it.
+- **PDF.** Use the browser's print dialog; the page prints without its buttons.
+
+**Check the page itself.** Privacy, in Settings, counts the requests the page has made to other sites since your notebook opened."""),
+('markdown', """## Small things worth trying
+
+1. **Read it like an article.** Press `c` and `o` to hide the code and the outputs, turn on Serif and Spotlight in Settings, and switch to the dark theme.
+2. **Post a plot.** Press `s` on a figure cell, pick a backdrop and a shape, and copy the picture or save it. It is drawn in your browser.
+3. **Follow one variable.** Click `room` in any code cell and step through everywhere it is defined or used with `n` and `p`; the contents rail marks the chapters it appears in.
+4. **Brief a model.** Press `m`, pick a token budget and Copy. Long outputs are trimmed, pictures are named rather than pasted, and anything that looks like a secret is hidden.
+5. **Send a notebook without uploading it.** In the notebook sheet, Copy link. The notebook rides in the address after the `#`, which no server ever sees. If it is too large, pictures are left out first, then outputs.
+6. **Slim a heavy notebook.** The sheet's Weight tab shows what takes the room and saves a copy without pictures, or without outputs, as a lighter file to send.
+7. **Look inside a stranger's notebook.** Paste its GitHub link into Open. It is fetched, never run, and the sheet tells you what it contains, what it needs and what it weighs.
+8. **Fix a typo in someone else's notebook.** Open it from a link, double-click the sentence, and press `⌘S`. You get `name (edited).ipynb`, with the outputs as they were.
+9. **See what an edit changed.** Save a copy, open it, and in the sheet's Share tab choose Compare and pick the original. Every added, removed and edited cell is listed.
+10. **Watch a notebook being written.** In Chrome or Edge, open a notebook from your disk, then let a script or an agent save to it. The changed cells glow as they arrive.
+
+That is the tour. To read your own notebook, drop it anywhere on this page, or press `⌘O`."""),
 ]
 
 plt.rcParams.update({

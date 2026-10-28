@@ -27,7 +27,7 @@
 
 ## Read a notebook
 
-Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` anywhere on the page. No notebook to hand? **Open Demo**, at the top right, loads one that shows everything below. It explains what it does and shows the numbers behind it. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
+Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` anywhere on the page. No notebook to hand? **Demo**, at the top right of the home page, loads one that is also a tour of the app: a note beside each feature says what to press, and the last sections list everything else. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
 
 The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
@@ -56,7 +56,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 
 - **Reads like a document.** Prose is set in Inter and code in JetBrains Mono, with math typeset and every code cell highlighted, in light or dark.
 - **Knows where you are.** A slim rail on the right tracks the chapter you are in and opens into the full outline. When you come back to a notebook, it offers to pick up where you stopped.
-- **Fits the page to you.** Text size and page width are yours to set, and so is whether code and outputs show by default.
+- **Fits the page to you.** Text size, page width, a book face for text, line numbers and wrapping are in Settings, and `c` and `o` hide the code or the outputs of the whole page.
 - **Opens what other tools break.** Notebooks with `NaN` or trailing commas still load, and a file cut off halfway shows every complete cell with a note about the rest. nbformat 3 and 4 both work.
 
 ### Outputs
@@ -87,7 +87,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 ### Staying current
 
 - **Keeps up with your work.** In Chromium browsers, a notebook you dropped refreshes when it changes on disk, so a notebook saved in Jupyter or written by an agent updates in place.
-- **Compares versions.** Put two notebooks side by side, cell by cell, outputs included.
+- **Compares versions.** The notebook sheet lists every cell added, removed or edited since an earlier file, and every output that changed.
 
 Every shortcut is in [docs/shortcuts.md](docs/shortcuts.md), or press `?` in the app. To try it on something real, drop [examples/cooling-coffee.ipynb](examples/cooling-coffee.ipynb).
 
