@@ -31,12 +31,20 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       node.setAttribute('href', '#user-content-' + href.slice(1));
     }
   } else if (node.tagName === 'IMG') settle(node, remote);
+  else if (node.tagName === 'INPUT') {
+    // the checkbox of a task list is the one control that stays, and it stays unclickable
+    if (node.getAttribute('type') !== 'checkbox') node.remove();
+    else {
+      for (const { name } of [...node.attributes]) if (name !== 'type' && name !== 'checked') node.removeAttribute(name);
+      node.setAttribute('disabled', '');
+    }
+  }
 });
 
 const clean = (html: string): string =>
   DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
-    FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'label', 'audio', 'video', 'source', 'track', 'picture', 'iframe', 'frame', 'object', 'embed', 'meta', 'link', 'base'],
+    FORBID_TAGS: ['style', 'form', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'label', 'audio', 'video', 'source', 'track', 'picture', 'iframe', 'frame', 'object', 'embed', 'meta', 'link', 'base'],
     FORBID_ATTR: ['style', 'srcset', 'sizes', 'ping', 'poster', 'background', 'formaction', 'action'],
     ADD_ATTR: ['data-tex'],
     ALLOW_DATA_ATTR: false,

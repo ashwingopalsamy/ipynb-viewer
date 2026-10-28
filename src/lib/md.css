@@ -9,6 +9,8 @@
 .md p, .md ul, .md ol, .md blockquote, .md pre, .md table, .md details { margin: 0.8em 0; }
 .md ul, .md ol { padding-left: 1.5em; }
 .md li + li { margin-top: 0.25em; }
+.md li:has(> input[type='checkbox'], > p:first-child > input[type='checkbox']) { list-style: none; margin-left: -1.2em; }
+.md input[type='checkbox'] { margin: 0 0.5em 0 0; vertical-align: -0.1em; accent-color: var(--accent); }
 /* Links in the notebook's own content are blue, in both themes. Visited ones are left as they are. */
 .md a, .rich a { color: var(--accent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .md a:hover, .rich a:hover { color: color-mix(in srgb, var(--accent) 78%, var(--fg)); text-decoration-color: currentColor; }
