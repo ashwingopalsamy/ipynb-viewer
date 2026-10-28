@@ -3,7 +3,7 @@ import type { Trace } from './names';
 import type { Report } from './insight/diff';
 
 // State shared by the toolbar, the menus and the outline. It loads with the extras, never with the core.
-export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare' | 'open';
+export type Pop = 'settings' | 'toc' | 'keys' | 'figure' | 'md' | 'search' | 'privacy' | 'info' | 'compare' | 'open' | 'tabs';
 
 /** The picture a reader is about to save: its data, and the button the menu hangs from. */
 export interface Figure {
@@ -58,6 +58,11 @@ try {
 } catch {
   // storage can be blocked; the default applies
 }
+
+// The same switch changed in another page of the app (another tab, or another window) is followed here, and never written back.
+addEventListener('storage', (e) => {
+  if (e.key === 'keys') prefs.keys = e.newValue !== 'off';
+});
 
 export function setKeys(on: boolean) {
   prefs.keys = on;

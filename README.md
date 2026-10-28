@@ -31,6 +31,14 @@ Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.
 
 The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
+## Read several notebooks
+
+Open a second notebook and the first stays where it is. Choose it from the Open button or with `⌘O`, drop one or more files on the page, or paste a link into the Open card, and each one opens in a tab of its own. The tabs sit in the header where the file name was, and when they no longer fit, a count button lists them all. `{` and `}` step between tabs, `W` closes the one you are reading, and opening the same file or link again brings its tab forward instead of a second copy.
+
+Reload the page and the tabs you opened from a link come back. The ones you opened from files do not, because the page cannot read a file again without you.
+
+Each tab is a page of its own, so the privacy promise holds for each one separately: its own network lock, its own answer about web pictures and its own Privacy count. Allowing pictures in one never allows them in the next. Nothing about a notebook is stored. All that is kept is the web address of each link tab, in the browser tab's own session, and it goes when that session ends.
+
 ## Edit a notebook
 
 <p align="center">
@@ -55,6 +63,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 ### Reading
 
 - **Reads like a document.** Prose is set in Inter and code in JetBrains Mono, with math typeset and every code cell highlighted, in light or dark.
+- **Holds several at once.** Notebooks open as tabs in the header, side by side, each with its own privacy settings.
 - **Knows where you are.** A slim rail on the right tracks the chapter you are in and opens into the full outline. When you come back to a notebook, it offers to pick up where you stopped.
 - **Fits the page to you.** Text size, page width, a book face for text, line numbers and wrapping are in Settings, and `c` and `o` hide the code or the outputs of the whole page.
 - **Opens what other tools break.** Notebooks with `NaN` or trailing commas still load, and a file cut off halfway shows every complete cell with a note about the rest. nbformat 3 and 4 both work.
@@ -82,7 +91,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 
 - **Edits where you read.** The page does not change into an editor: the text stays set as it was, with a card behind it and a bar above.
 - **Takes anything back.** `⌘Z` and `⇧⌘Z` undo and redo edits, and the unsaved dot in the header and the tab title follow them.
-- **Checks before it writes.** A cell that changed underneath you is not overwritten, and a closed tab, a reload or a new file warns while edits are unsaved.
+- **Checks before it writes.** A cell that changed underneath you is not overwritten, and closing a tab, closing the page or reloading warns while edits are unsaved.
 
 ### Staying current
 

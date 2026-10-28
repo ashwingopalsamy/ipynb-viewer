@@ -44,23 +44,26 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => !st
 let opened = false
 let loading: Promise<typeof import('../lib/watch')> | undefined
 const watch = () => (loading ??= import('../lib/watch'))
+// A notebook opened beside others runs in a frame of this page (src/lib/tabs).
+const tab = self !== top ? new URLSearchParams(location.search).get('tab') : null
 
-async function open(file?: File, handle?: FileSystemFileHandle) {
+async function open(file?: File, handle?: FileSystemFileHandle, more: { file: File; handle?: FileSystemFileHandle }[] = []) {
   if (opened) return
   opened = true
-  const { mountReader } = await import('../main')
+  const m = await import('../main')
   // The reader brings its own styles, which would clash with the landing page's, so the landing page's go with its markup and listeners.
   listening.abort()
   if (landing) landing.disabled = true
   home.remove()
   root.classList.remove('opening')
-  mountReader(file, handle)
+  if (tab) m.mountFrame(tab)
+  else m.mountReader(file, handle, more)
 }
 
 async function choose() {
   if (!window.showOpenFilePicker) return picker.click()
-  const got = await (await watch()).pick()
-  if (got) open(got.file, got.handle)
+  const [first, ...more] = await (await watch()).pick()
+  if (first) open(first.file, first.handle, more)
 }
 
 const hasFiles = (e: DragEvent) => e.dataTransfer?.types.includes('Files') ?? false
@@ -80,9 +83,9 @@ document.querySelector('.next')?.addEventListener(
 picker.addEventListener(
   'change',
   () => {
-    const file = picker.files?.[0]
+    const [file, ...rest] = [...(picker.files ?? [])]
     picker.value = ''
-    if (file) open(file)
+    if (file) open(file, undefined, rest.map((f) => ({ file: f })))
   },
   { signal },
 )
@@ -132,8 +135,11 @@ window.addEventListener(
     e.preventDefault()
     depth = 0
     root.classList.remove('over')
-    const got = await (await watch()).dropped(e.dataTransfer!)
-    if (got) open(got.file, got.handle)
+    // read now: the browser empties a drop's data once the event is over
+    const files = [...e.dataTransfer!.files]
+    const handles = [...e.dataTransfer!.items].filter((i) => i.kind === 'file').map((i) => i.getAsFileSystemHandle?.() ?? Promise.resolve(null))
+    const [first, ...more] = await (await watch()).dropped(files, handles)
+    if (first) open(first.file, first.handle, more)
   },
   { signal },
 )
@@ -155,19 +161,37 @@ window.addEventListener('blur', () => root.classList.remove('mod'), { signal })
 window.addEventListener('pageshow', (e) => e.persisted && root.classList.remove('sent', 'mod'), { signal })
 
 // A notebook link in the address bar goes straight to the reader, which fetches it. The code that reads the link loads beside the
-// reader rather than after it.
-if (/[?#](?:url|nb)=/.test(location.href)) {
+// reader rather than after it. A frame goes straight to the reader too, once the page around it has sent its notebook.
+if (tab) {
+  // The text size and width are read once, when the reader's modules start, so the frame takes the parent's before they load.
+  try {
+    const { pf, width } = parent.document.documentElement.dataset
+    if (pf) root.dataset.pf = pf
+    if (width) root.dataset.width = width
+  } catch {
+    // the page around it is not ours: the frame keeps its defaults
+  }
+  open()
+} else if (/[?#](?:url|nb)=/.test(location.href)) {
   import('../lib/link')
   import('../lib/netstate.svelte')
   open()
+} else root.classList.remove('opening')
+
+// A frame is only a reader: it makes no offline copy and offers no tools of its own.
+if (!tab) {
+  // The offline copy is made from this page too, for a visit that never opens a notebook.
+  setTimeout(() => import('../lib/offline'), 2500)
+
+  // Where the browser lets a page offer tools to an agent working with the person (WebMCP), the empty page offers one: open a link.
+  const tools = (document as any).modelContext ?? (navigator as any).modelContext
+  if (tools) import('../lib/agent').then((m) => m.landing(tools, signal))
+
+  // Notebooks opened from the operating system (an installed copy in Chromium) arrive through the launch queue.
+  if ('launchQueue' in window) {
+    ;(window as any).launchQueue.setConsumer(async (p: any) => {
+      const [first, ...more] = await Promise.all((p.files ?? []).map(async (h: FileSystemFileHandle) => ({ file: await h.getFile(), handle: h })))
+      if (first) open(first.file, first.handle, more)
+    })
+  }
 }
-
-// The offline copy is made from this page too, for a visit that never opens a notebook.
-setTimeout(() => import('../lib/offline'), 2500)
-
-// Where the browser lets a page offer tools to an agent working with the person (WebMCP), the empty page offers one: open a link.
-const tools = (document as any).modelContext ?? (navigator as any).modelContext
-if (tools) import('../lib/agent').then((m) => m.landing(tools, signal))
-
-// A notebook opened from the operating system (an installed copy in Chromium) arrives through the launch queue.
-if ('launchQueue' in window) (window as any).launchQueue.setConsumer(async (p: any) => { const h = p.files?.[0]; if (h) open(await h.getFile(), h) })

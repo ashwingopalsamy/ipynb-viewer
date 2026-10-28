@@ -107,9 +107,10 @@ if (mirror) {
   process.exit(0);
 }
 
-// The viewer reads notebooks from the visitor's own device and never frames or runs anything. Its only requests go to the site itself
-// (the /link/ relay for GitHub files), so the policy allows only the site itself. Inline styles stay allowed for the components and KaTeX.
-const csp = [
+// The viewer reads notebooks from the visitor's own device and runs nothing. It frames only its own page, one frame per extra tab, and its
+// only requests go to the site itself (the /link/ relay for GitHub files), so the policy allows only the site itself. Inline styles stay
+// allowed for the components and KaTeX.
+const policy = (frames) => [
   "default-src 'none'",
   `script-src 'self' ${[...hashes].join(' ')}`.trim(),
   "style-src 'self' 'unsafe-inline'",
@@ -118,13 +119,16 @@ const csp = [
   "connect-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
-  "frame-src 'none'",
+  `frame-src ${frames}`,
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
+  `frame-ancestors ${frames}`,
 ].join('; ');
+// The guide pages frame nothing and cannot be framed; the app page lets its own tabs frame it.
+const csp = policy("'none'");
+const app = policy("'self'");
 
-// The guide pages get the same policy and their own Markdown copy.
+// The guide pages get the strict policy and their own Markdown copy.
 const guides = paths
   .filter((p) => p !== '/')
   .map((p) => `\n${p}\n  Content-Security-Policy: ${csp}\n  Link: <index.md>; rel="alternate"; type="text/markdown"\n\n${p}index.html\n  Content-Security-Policy: ${csp}\n  Link: <index.md>; rel="alternate"; type="text/markdown"\n`)
@@ -139,17 +143,20 @@ writeFileSync(
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000
   X-DNS-Prefetch-Control: off
 
 /
-  Content-Security-Policy: ${csp}
+  Content-Security-Policy: ${app}
   Link: <index.md>; rel="alternate"; type="text/markdown"
 
 /index.html
-  Content-Security-Policy: ${csp}
+  Content-Security-Policy: ${app}
   Link: <index.md>; rel="alternate"; type="text/markdown"
+
+/box.html
+  Content-Security-Policy: frame-ancestors 'none'
 ${guides}
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

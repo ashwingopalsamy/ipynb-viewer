@@ -1,6 +1,7 @@
 // File System Access API pieces that only Chromium ships, so lib.dom leaves them out.
 interface Window {
   showOpenFilePicker?: (options?: {
+    multiple?: boolean;
     types?: { description?: string; accept: Record<string, string[]> }[];
   }) => Promise<FileSystemFileHandle[]>;
 }

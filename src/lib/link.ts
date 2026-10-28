@@ -1,4 +1,5 @@
 import { mount } from 'svelte';
+import { act, strip } from './tabs/state.svelte';
 
 // Reading a notebook from a web address. This loads only when the page is opened with ?url=, and what it returns is a
 // plain File: from there the notebook goes through the same reader, sanitizers and sandbox as one opened from disk.
@@ -432,7 +433,7 @@ export async function start(href: string, say: (text: string) => void, done: (fi
     const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
     if (target.origin !== here.origin && history.state?.asked !== input && !(await import('./netstate.svelte')).trusted(target.host)) {
       say('Waiting for you');
-      if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return location.replace(location.pathname + location.hash);
+      if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return strip.me === 'h' ? location.replace(location.pathname + location.hash) : fail('Nothing was fetched.');
     }
   } catch (e) {
     return fail((e as Error).message);
@@ -442,11 +443,12 @@ export async function start(href: string, say: (text: string) => void, done: (fi
 
 /**
  * A link typed into the open page. A page that has shown a notebook has shut its own connections (guard.ts, netstate lock) and a
- * policy cannot be loosened, so the link opens on a fresh page, the way a shared link arrives. The question is asked here first, so
- * declining keeps the notebook on screen; a yes travels with the new history entry so the new page does not ask again.
- * Resolves false when declined; true when the page is reloading with the link.
+ * policy cannot be loosened, so the link opens on a fresh page, the way a shared link arrives: in a new tab while a notebook shows
+ * (`beside`), else by reloading this page. The question is asked here first, so declining keeps the notebook on screen; a yes
+ * travels with the new history entry (or the new tab) so the new page does not ask again.
+ * Resolves false when declined; true when the link is opening.
  */
-export async function requested(input: string, say: (text: string) => void): Promise<boolean> {
+export async function requested(input: string, say: (text: string) => void, beside = false): Promise<boolean> {
   const here = new URL(location.href);
   const plan = resolve(input, here);
   const target = plan.kind === 'gist' ? new URL('https://gist.github.com/') : plan.url;
@@ -454,10 +456,18 @@ export async function requested(input: string, say: (text: string) => void): Pro
     say('Waiting for you');
     if (!(await ask(target.host, plan.kind === 'gist' ? input : plan.url.href))) return false;
   }
-  history.pushState({ asked: input }, '', `${location.pathname}?url=${encodeURIComponent(input)}`);
+  if (beside) return act.open([{ link: input, asked: true }]), true;
+  // a frame never adds history: its own address changes and it reloads, keeping its tab
+  if (strip.me !== 'h') history.replaceState({ asked: input }, '', `${location.pathname}?url=${encodeURIComponent(input)}&tab=${strip.me}`);
+  else history.pushState({ asked: input }, '', `${location.pathname}?url=${encodeURIComponent(input)}`);
   location.reload();
   return true;
 }
 
-/** A link pasted on the empty screen reloads the page with it, so the download always comes before anything is drawn. */
-export const pasted = (text: string) => /^https?:\/\/\S+\s*$/i.test(text) && (location.search = 'url=' + encodeURIComponent(text));
+/** A link pasted on the empty screen reloads the page with it, so the download always comes before anything is drawn. A frame keeps its tab and adds no history. */
+export function pasted(text: string) {
+  if (!/^https?:\/\/\S+\s*$/i.test(text)) return false;
+  if (strip.me === 'h') location.search = 'url=' + encodeURIComponent(text);
+  else location.replace(`${location.pathname}?url=${encodeURIComponent(text.trim())}&tab=${strip.me}`);
+  return true;
+}

@@ -22,9 +22,13 @@ The core of the reader, script and styles, is held under 30 KB gzipped. Highligh
 
 The editor is not part of the first load. After the first paint the page fetches it when idle (not on a connection that asks to save data), and a double-click waits for it if it has not arrived. A cell is drawn in blocks while editing is possible, so a block that is open is the only part that is live. Closing it commits the block's new markdown into the cell's source if the cell still holds what the edit began from, and a cell that changed underneath is left alone. Saving does not rebuild the notebook: it patches the edited cells' source into the original file text (`src/lib/edit/nbsplice.ts`), so outputs, ids, metadata and the file's own formatting are kept byte for byte. Undo is a stack of those commits.
 
+## Tabs
+
+The first notebook is read by the top page, as ever. Each further notebook runs the same reader in a frame of that page (`index.html?tab=t1`), laid over it with only the active one showing. Frames are there because a page can only ever tighten its Content Security Policy, so one that has shown a notebook can never fetch a link, and because the reader keeps its state (search, folds, edits, the network choice) in singletons that can safely hold one notebook each. The tab host (`src/lib/tabs/host.svelte.ts`) loads when a second notebook opens; the first screen carries only a small state module. A frame says `hello`, is sent its file or link, and then reports its name, status and unsaved edits, while the host sends every page the tab list to draw. Messages go to and are accepted from this origin only, and the host knows a frame by its window, never by an id inside the message. Only the web addresses of open link tabs are written to `sessionStorage`, which is how a reload brings them back; files are not kept. The build prints the first screen's size and fails above 30,000 bytes gzipped.
+
 ## Keeping state
 
-Settings and the theme live in `localStorage` and are applied before the first paint, so the page never flashes the wrong theme. Nothing about the notebook itself is stored, apart from where you stopped reading.
+Settings and the theme live in `localStorage` and are applied before the first paint, so the page never flashes the wrong theme. Pages of the app follow a change made in any other through the `storage` event. Nothing about the notebook itself is stored, apart from where you stopped reading.
 
 ## Exporting
 

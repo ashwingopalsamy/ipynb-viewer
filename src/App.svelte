@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { readNotebook, type Cell, type NotebookEvent, type NotebookMeta } from './lib/notebook';
   import { theme, toggleTheme } from './lib/theme.svelte';
   import CellView from './lib/Cell.svelte';
@@ -7,13 +8,14 @@
   import OpenPanel from './lib/OpenPanel.svelte';
   import Lucide from './lib/Lucide.svelte';
   import { blank } from './lib/blank';
-  import { ui, type Pop } from './lib/ui.svelte';
+  import { ui, single, type Pop } from './lib/ui.svelte';
   import { session, host, rewind, reset, type Host } from './lib/edit/session.svelte';
   import type { Loaded } from './lib/edit/save';
   import type { Watching } from './lib/watch';
+  import * as tabs from './lib/tabs/state.svelte';
 
-  // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead.
-  let { file, handle }: { file?: File; handle?: FileSystemFileHandle } = $props();
+  // The home page hands over the notebook it was given: chosen, dropped, or none when a link is opened instead. `more` are the others chosen with it, which open beside it.
+  let { file, handle, more = [] }: { file?: File; handle?: FileSystemFileHandle; more?: tabs.Want[] } = $props();
 
   let cells = $state.raw<Cell[]>([]);
   let meta = $state.raw<NotebookMeta | null>(null);
@@ -29,6 +31,8 @@
   let Extras = $state<typeof import('./lib/Extras.svelte').default>();
   let Actions = $state<typeof import('./lib/Extras.svelte').Actions>();
   let Veil = $state<typeof import('./lib/Veil.svelte').default>();
+  let Tabs = $state<typeof import('./lib/tabs/Tabs.svelte').default>();
+  let TabList = $state<typeof import('./lib/tabs/TabList.svelte').default>();
   let changed = $state.raw<ReadonlySet<string>>(new Set());
   let stop: (() => void) | undefined;
   let saved: Watching['saved'] | undefined;
@@ -49,7 +53,27 @@
   let run = 0;
   let depth = 0;
 
-  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle) {
+  // The link this page was opened with (`?url=`); '' for a file or a notebook carried in the address.
+  const address = new URL(location.href).searchParams.get('url') ?? '';
+  tabs.mine.link = address;
+  tabs.mine.key = address && `link:${address}`;
+
+  // After a reload, the other link tabs come back (src/lib/tabs); any other visit starts with none.
+  if (tabs.strip.me === 'h') {
+    const how = (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type;
+    if (how === 'reload' || how === 'back_forward') {
+      const all = tabs.saved();
+      if (all.some((l) => l !== address)) import('./lib/tabs/host.svelte').then((m) => m.boot().restore(all, address));
+    } else {
+      try {
+        sessionStorage.removeItem('tabs');
+      } catch {
+        // storage is blocked: nothing was kept
+      }
+    }
+  }
+
+  async function open(file: Pick<File, 'name' | 'stream'>, handle?: FileSystemFileHandle, link = '') {
     const mine = ++run;
     // The notebook the reader is in stays until the new file proves to be one: its first piece is what replaces it.
     let fresh = true;
@@ -123,6 +147,8 @@
       if (fresh) begin();
       flush();
       ready = true;
+      tabs.mine.link = link;
+      tabs.mine.key = link ? `link:${link}` : file instanceof File ? tabs.fileKey(file) : '';
       const why =
         notebook.nbformat < 4
           ? 'This notebook uses format v3, so editing is off.'
@@ -146,7 +172,7 @@
         const ctl = (tools = new AbortController());
         import('./lib/agent').then((m) => m.reader(mc, ctl.signal, () => ({ cells, meta, name, language })));
       }
-      document.title = `${file.name} · ipynb viewer`;
+      if (!tabs.strip.list.length) document.title = `${file.name} · ipynb viewer`;
       if (handle && file instanceof File) await follow(mine, handle, file);
     } catch (e) {
       if (mine !== run) return;
@@ -189,6 +215,7 @@
         changed = u.changed;
         // what the next save patches into is the file as it is now
         if (loaded) Object.assign(loaded, { file: u.file, stamp: `${u.file.lastModified}:${u.file.size}`, text: null, original: u.cells.map((c) => c.source) });
+        tabs.mine.key = tabs.fileKey(u.file);
         reset();
         setTimeout(() => mine === run && (changed = new Set()), 2600);
       },
@@ -205,32 +232,47 @@
   // A link in the address bar: fetched before anything else is drawn, then opened like a file from disk.
   if (/[?#](?:url|nb)=/.test(location.href)) {
     status = 'fetching';
-    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file)), (why) => run || ((status = 'error'), (detail = why))));
+    import('./lib/link').then((m) => m.start(location.href, (text) => (detail = text), (file) => (run ? void file.stream().cancel().catch(() => {}) : open(file, undefined, address)), (why) => run || ((status = 'error'), (detail = why))));
   }
 
   if (file) open(file, handle);
+  if (more.length) tabs.act.open(more);
 
   // A link pasted on the empty screen reloads the page with it, the same way a shared link would arrive.
   const paste = (e: ClipboardEvent) => {
     const text = e.clipboardData?.getData('text') ?? '';
-    if (status !== 'ready' && text.includes('http')) import('./lib/link').then((m) => m.pasted(text));
+    if (status !== 'ready' && text.includes('http') && (tabs.strip.me !== 'h' || !tabs.strip.list.length)) import('./lib/link').then((m) => m.pasted(text));
   };
 
   // Leaving a notebook with unsaved edits asks first.
   const keep = () => (session.flush?.(), session.dirty && !confirm(`Discard unsaved edits to ${name}?`));
+  // Closing this notebook's tab asks the same, and refuses while a save is under way.
+  tabs.hooks.keep = () => session.saving || keep();
+
+  // Closing the first tab unmounts the reader; its watcher and tools go with it.
+  onDestroy(() => {
+    stop?.();
+    tools?.abort();
+  });
+
+  // Files chosen or dropped open beside the notebook on screen; with none showing, the first opens here and the rest beside it.
+  function place(got: { file: File; handle?: FileSystemFileHandle }[]) {
+    if (!got.length) return;
+    if (status === 'ready') return tabs.act.open(got);
+    open(got[0].file, got[0].handle);
+    if (got.length > 1) tabs.act.open(got.slice(1));
+  }
 
   function pick() {
-    const file = picker.files?.[0];
+    const files = [...(picker.files ?? [])];
     picker.value = '';
-    if (file && !keep()) open(file);
+    place(files.map((file) => ({ file })));
   }
 
   // Where the browser allows it, keep a handle so the file can be watched.
   async function choose() {
-    if (keep()) return;
     if (!window.showOpenFilePicker) return picker.click();
-    const got = await (await import('./lib/watch')).pick();
-    if (got) open(got.file, got.handle);
+    place(await (await import('./lib/watch')).pick());
   }
 
   const hasFiles = (e: DragEvent) => e.dataTransfer?.types.includes('Files') ?? false;
@@ -253,9 +295,10 @@
     e.preventDefault();
     depth = 0;
     dragging = false;
-    if (keep()) return;
-    const got = await (await import('./lib/watch')).dropped(e.dataTransfer!);
-    if (got) open(got.file, got.handle);
+    // read now: the browser empties a drop's data once the event is over
+    const files = [...e.dataTransfer!.files];
+    const handles = [...e.dataTransfer!.items].filter((i) => i.kind === 'file').map((i) => i.getAsFileSystemHandle?.() ?? Promise.resolve(null));
+    place(await (await import('./lib/watch')).dropped(files, handles));
   }
 
   // Editing: the notebook's own file is saved back, and a committed edit can be taken back from anywhere but a field.
@@ -291,12 +334,15 @@
         loaded.original = snap.map((c) => c.source);
         if (r.how === 'in-place') {
           Object.assign(loaded, { file: r.file, stamp: `${r.file.lastModified}:${r.file.size}` });
+          tabs.mine.key = tabs.fileKey(r.file);
           saved?.(r.file);
         } else if (r.how === 'as-new') {
           Object.assign(loaded, { file: r.file, handle: r.handle, name: r.name, stamp: `${r.file.lastModified}:${r.file.size}` });
           name = r.name;
+          tabs.mine.key = tabs.fileKey(r.file);
+          tabs.mine.link = '';
           session.detached = false;
-          document.title = `${r.name} · ipynb viewer`;
+          if (!tabs.strip.list.length) document.title = `${r.name} · ipynb viewer`;
           stop?.();
           await follow(run, r.handle, r.file);
         }
@@ -332,8 +378,21 @@
   // While a cell is open, the header's Edit, Save and theme buttons act without taking the focus from its text.
   const hold = (e: Event) => session.active !== null && (e.target as Element).closest('[data-keep]') && e.preventDefault();
 
-  // The tab says there are unsaved edits, whichever way the title was last set.
+  // The strip and its list load when a second notebook opens; until they arrive, the name pill stays.
   $effect(() => {
+    if (tabs.strip.list.length > 1 && !Tabs) Promise.all([import('./lib/tabs/Tabs.svelte'), import('./lib/tabs/TabList.svelte')]).then(([a, b]) => ((Tabs = a.default), (TabList = b.default)));
+  });
+
+  // What the tab strip shows of this notebook (the host reads it here, or a frame sends it).
+  $effect(() => {
+    tabs.mine.name = name;
+    tabs.mine.status = status === 'ready' || status === 'error' ? status : 'loading';
+    tabs.mine.dirty = session.dirty;
+  });
+
+  // The tab says there are unsaved edits, whichever way the title was last set. Once there are tabs, the host writes the title.
+  $effect(() => {
+    if (tabs.strip.list.length) return;
     name;
     const dirty = session.dirty;
     const t = document.title;
@@ -343,6 +402,12 @@
   function keys(e: KeyboardEvent) {
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key === 'o') return e.preventDefault(), choose();
+    // In a tab of its own (a frame), the print key prints this notebook rather than the page around it.
+    if (mod && e.key === 'p' && tabs.strip.me !== 'h') return e.preventDefault(), print();
+    if (tabs.strip.list.length > 1 && single(e)) {
+      if (e.key === '{' || e.key === '}') return e.preventDefault(), tabs.act.step(e.key === '}' ? 1 : -1);
+      if (e.key === 'W') return e.preventDefault(), tabs.act.close(tabs.strip.me);
+    }
     if (!session.on || !mod || e.altKey) return;
     if (e.key.toLowerCase() === 's') {
       e.preventDefault();
@@ -355,14 +420,18 @@
 
 <svelte:window onkeydown={keys} onbeforeunload={(e) => (session.flush?.(), (session.dirty || session.saving) && e.preventDefault())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
-<input bind:this={picker} type="file" accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
+<input bind:this={picker} type="file" multiple accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
 
 <header class="bar">
   <div class="inner" role="presentation" onpointerdown={hold} onmousedown={hold}>
-    <span class="name pill" class:idle={!name} class:two={sections > 1}>
-      <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span>{#if session.dirty}<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>{/if}</span>
-      {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
-    </span>
+    {#if Tabs && tabs.strip.list.length > 1}
+      <Tabs />
+    {:else}
+      <span class="name pill" class:idle={!name} class:two={sections > 1}>
+        <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span>{#if session.dirty}<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>{/if}</span>
+        {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
+      </span>
+    {/if}
     <Opener />
     <div class="tools pill">
       <span class="tool-name">{tool}</span>
@@ -381,6 +450,8 @@
 </header>
 
 <OpenPanel onchoose={choose} />
+
+{#if TabList && tabs.strip.list.length > 1}<TabList />{/if}
 
 {#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
 
@@ -415,4 +486,4 @@
   <span class="line">With love<svg class="heart" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg><span class="sr">by</span><b>Ashwin Gopalsamy</b></span>
 </a>
 
-{#if Veil}<Veil on={dragging} />{/if}
+{#if Veil}<Veil on={dragging} label={status === 'ready' ? 'Drop to open in a new tab' : 'Drop to open'} />{/if}

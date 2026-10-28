@@ -6,7 +6,9 @@ Single keys act on the cell you are reading, except `c` and `o`, which act on th
 |---|---|
 | `j` `k` | Next or previous cell |
 | `[` `]` | Previous or next heading |
+| `{` `}` | Previous or next tab (with two or more open) |
 | `x` | Open or close this cell |
+| `W` | Close this tab (asks first if it has unsaved edits) |
 | `c` | Show or hide code in every cell |
 | `o` | Show or hide outputs in every cell |
 | `s` | Save the cell as an image |

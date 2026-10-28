@@ -33,3 +33,10 @@ export function toggleTheme() {
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
   if (!stored()) apply(e.matches ? 'dark' : 'light');
 });
+
+// A choice made in another page of the app (another tab, or another window) is followed here, and never written back.
+addEventListener('storage', (e) => {
+  if (e.key !== 'theme') return;
+  if (e.newValue === 'light' || e.newValue === 'dark') apply(e.newValue);
+  else if (e.newValue === null) apply(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+});
