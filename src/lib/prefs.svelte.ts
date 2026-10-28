@@ -19,6 +19,13 @@ function save() {
   }
 }
 
+// Options changed in another page of the app (another tab, or another window) are followed here, and never written back.
+addEventListener('storage', (e) => {
+  if (e.key !== 'pf') return;
+  pf.on = (e.newValue ?? '').split(' ').filter(Boolean);
+  root.dataset.pf = pf.on.join(' ');
+});
+
 export function set(token: string, on: boolean) {
   pf.on = on ? [...new Set([...pf.on, token])] : pf.on.filter((t) => t !== token);
   save();

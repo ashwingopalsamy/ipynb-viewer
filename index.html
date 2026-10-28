@@ -18,7 +18,7 @@
 <!--site:alt-->
 <link id="landing" rel="stylesheet" href="/src/about/about.css" />
 <script>
-!function(d,t){try{t=localStorage.theme}catch(e){}d=document.documentElement;/[?#](?:url|nb)=/.test(location.href)&&d.classList.add('opening');d.dataset.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}()
+!function(d,t){try{t=localStorage.theme}catch(e){}d=document.documentElement;/[?#](?:url|nb|tab)=/.test(location.href)&&d.classList.add('opening');d.dataset.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}()
 </script>
 <script type="application/ld+json">
 {
@@ -225,7 +225,7 @@
   <p class="by"><a href="https://ashwingopalsamy.in" rel="noopener" referrerpolicy="no-referrer"><img src="/ashwin.webp" width="22" height="22" alt="" decoding="async" />With love by Ashwin Gopalsamy.</a> Not affiliated with Project Jupyter.</p>
 </footer>
 <div class="carry" aria-hidden="true"><span><svg viewBox="0 0 24 24"><path class="arr" d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>Drop to open</span></div>
-<input id="picker" type="file" accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden />
+<input id="picker" type="file" multiple accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden />
 </div>
 </body>
 </html>

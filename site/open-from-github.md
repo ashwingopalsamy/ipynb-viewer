@@ -46,4 +46,4 @@ A link in the address bar is never fetched silently. The viewer first says which
 
 ## Opening a link while a notebook is on screen
 
-Once a notebook is shown, the page has closed its own connections and cannot loosen that. Opening a link from the Open card therefore reloads the page with the link, after asking the question above. If you decline, the notebook you were reading stays where it is.
+Once a notebook is shown, the page has closed its own connections and cannot loosen that. Opening a link from the Open card therefore opens it in a new tab, which is a fresh page of its own, after asking the question above. If you decline, the notebook you were reading stays where it is.

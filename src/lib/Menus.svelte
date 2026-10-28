@@ -19,7 +19,9 @@
   const keys: [string, string][] = [
     ['j k', 'Next, previous cell'],
     ['[ ]', 'Previous, next heading'],
+    ['{ }', 'Previous, next tab'],
     ['x', 'Open or close this cell'],
+    ['W', 'Close this tab'],
     ['c', 'Show or hide code'],
     ['o', 'Show or hide outputs'],
     ['s', 'Save the cell as an image'],

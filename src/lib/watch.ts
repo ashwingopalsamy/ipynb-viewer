@@ -91,21 +91,33 @@ export interface Opened {
   handle?: FileSystemFileHandle;
 }
 
-/** The picker where the browser has one, which hands back a file that can be watched. */
-export async function pick(): Promise<Opened | null> {
+/** The picker where the browser has one, which hands back files that can be watched. */
+export async function pick(): Promise<Opened[]> {
   try {
-    const [handle] = await window.showOpenFilePicker!({
+    const handles = await window.showOpenFilePicker!({
+      multiple: true,
       types: [{ description: 'Notebook or Markdown', accept: { 'application/json': ['.ipynb', '.json'], 'text/markdown': ['.md', '.markdown'] } }],
     });
-    return { file: await handle.getFile(), handle };
+    return await Promise.all(handles.map(async (handle) => ({ file: await handle.getFile(), handle })));
   } catch {
-    return null; // closed without choosing
+    return []; // closed without choosing
   }
 }
 
-/** A dropped file, with its handle when the browser offers one. */
-export async function dropped(data: DataTransfer): Promise<Opened | null> {
-  const handle = await data.items[0]?.getAsFileSystemHandle?.();
-  if (handle?.kind === 'file') return { file: await (handle as FileSystemFileHandle).getFile(), handle: handle as FileSystemFileHandle };
-  return data.files[0] ? { file: data.files[0] } : null;
+/** Dropped files, each with its handle when the browser offers one. The drop handler copies `files` and asks for the handles itself, because the browser empties a drop's data once the event is over. */
+export async function dropped(files: File[], handles: Promise<FileSystemHandle | null | undefined>[]): Promise<Opened[]> {
+  const got = await Promise.all(handles.map((h) => h.catch(() => null)));
+  return Promise.all(
+    files.map(async (file, i): Promise<Opened> => {
+      const handle = got[i];
+      if (handle?.kind === 'file') {
+        try {
+          return { file: await (handle as FileSystemFileHandle).getFile(), handle: handle as FileSystemFileHandle };
+        } catch {
+          // the file went away or the handle is stale: the dropped copy still opens
+        }
+      }
+      return { file };
+    }),
+  );
 }

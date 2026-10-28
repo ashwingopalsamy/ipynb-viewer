@@ -170,14 +170,26 @@ export function deny(hard = false) {
   if (hard) lock(2);
 }
 
-export function setMode(mode: Mode) {
-  net.mode = mode;
-  store.set('net', mode === 'ask' ? null : mode);
+function again() {
   if (!net.name) return;
   // a page that already refused for good cannot be talked round; anything else is decided again
   if (net.lock === 2) net.choice = net.hosts.length ? 'blocked' : 'none';
   else decide();
 }
+
+export function setMode(mode: Mode) {
+  net.mode = mode;
+  store.set('net', mode === 'ask' ? null : mode);
+  again();
+}
+
+// A mode changed in another page of the app (another tab, or another window) is followed here, and never written back.
+// The tests import this module with no window, hence the optional call.
+globalThis.addEventListener?.('storage', (e) => {
+  if (e.key !== 'net') return;
+  net.mode = e.newValue === 'never' || e.newValue === 'always' ? e.newValue : 'ask';
+  again();
+});
 
 /** Forgets every notebook and site the reader said yes to. */
 export function forget() {

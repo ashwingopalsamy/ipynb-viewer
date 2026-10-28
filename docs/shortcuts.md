@@ -6,7 +6,9 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 |---|---|
 | `j` `k` | Next or previous cell |
 | `[` `]` | Previous or next heading |
+| `{` `}` | Previous or next tab (with two or more open) |
 | `x` | Open or close this cell |
+| `W` | Close this tab (asks first if it has unsaved edits) |
 | `c` | Show or hide code |
 | `o` | Show or hide outputs |
 | `s` | Save the cell as an image |

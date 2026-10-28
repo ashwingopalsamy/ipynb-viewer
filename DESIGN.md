@@ -59,11 +59,12 @@ A 4px base (`s1` to `s6`). Rows are 44px (56px with a second line), controls 32p
 
 - One hover for every control: a fill of its own text colour at 8% (14% pressed). Press scales to 0.97.
 - Focus is a 2px ring at 60% of `fg`, 2px offset, always visible.
+- `{` `}` step through the open tabs and `W` closes the one you are reading, like the other single keys.
 - Nothing runs longer than 300ms and only transform and opacity move. Default easing is `cubic-bezier(0.2, 0.8, 0.2, 1)`; popovers overshoot slightly. Honour `prefers-reduced-motion`.
 
 ## Components
 
-Button (`.btn`: solid, default, quiet), Segmented (`.seg`), Switch (`.sw`), Pill (`.pill`, the glass header). Icons are Lucide-style lines, 16px at stroke 1.9, `currentColor`, `fg-3`; the active tool is filled.
+Button (`.btn`: solid, default, quiet), Segmented (`.seg`), Switch (`.sw`), Pill (`.pill`, the glass header). Tabs (`.tb`) take the name pill's place once a second notebook opens: a chip per notebook, a count button when the chips no longer fit, and on a phone only a list. Icons are Lucide-style lines, 16px at stroke 1.9, `currentColor`, `fg-3`; the active tool is filled.
 
 ## Voice
 

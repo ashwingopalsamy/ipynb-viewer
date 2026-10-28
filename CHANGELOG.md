@@ -2,6 +2,24 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
+## 2.0.0 (2026-10-28)
+
+Read several notebooks at once, each in a tab of its own.
+
+- Opening a notebook while one is on screen now opens it in a new tab and switches to it, instead of replacing it. That holds for `⌘O`, the Open button, a file dropped on the page, and a link typed into the Open card.
+- Choose, drop or open several files at once and each gets a tab. Open the same file or link again and its tab comes forward instead of a second copy opening.
+- The tabs sit in the header where the file name was: a chip for each notebook, marked as a file or a link, with a ring while it opens, a dot for unsaved edits and a close button. When the chips no longer fit, a count button opens a list of them all, and on a phone that list is all there is. Close tabs down to one and the header goes back to the file name.
+- `{` and `}` move to the previous and next tab, and `W` closes the one you are reading. Closing a tab with unsaved edits asks first.
+- Every tab is a page of its own, so it keeps its own network lock, its own answer about web pictures and its own Privacy count. Search, folds, edits and the picture choice in one tab never reach another: allowing pictures in one still asks in the next.
+- A notebook that will not open shows its error in its own tab and leaves the others as they were.
+- Theme, text size, page width, single keys and the pictures mode follow you into every open tab and every other window of the app.
+- Reload, and the tabs you opened from a link come back in order. Tabs opened from a file do not, because a file cannot be read again without you. Only the web addresses are kept, in the browser tab's own session; nothing about a notebook is stored. The address bar names the link you are on, and a link tab you closed does not return.
+- `⌘P` inside a tab prints that tab's whole notebook.
+- With one notebook open, nothing changes: the same header, title and address as 1.1, and none of the tab code loads.
+- The build now fails if the first screen grows past 30,000 bytes gzipped.
+
+Known limits: printing from the browser's menu prints only what is on screen in the tab you are on (use `⌘P` inside the tab for the whole notebook). There is no limit on the number of tabs, and each one is a page of its own with its own memory.
+
 ## 1.1.0 (2026-10-28)
 
 Edit a notebook in the page, and save it back.
