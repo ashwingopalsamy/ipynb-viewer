@@ -40,7 +40,8 @@
 .tr.now .tk { opacity: 1; transform: scale(1.5, 1.4); }
 .tr.now .tk::after { opacity: 1; }
 
-/* Where the margin has room, the heading being read is named beside its tick; hovering the ticks lists them all. */
+/* Where the margin has room, the heading being read is named beside its tick; hovering the ticks lists them all.
+   The name is only a caption: the pointer passes through it, so the list opens from the ticks and not from the text. */
 .lbl {
   position: absolute;
   right: 46px;
@@ -51,6 +52,7 @@
   font: 500 12px/20px var(--sans);
   color: var(--fg-3);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 200ms var(--out);
 }
 .rail:hover .lbl, .rail.pin .lbl, .rail:has(:focus-visible) .lbl { opacity: 0 !important; }

@@ -4,7 +4,9 @@ export async function typeset(root: HTMLElement): Promise<void> {
   if (!nodes.length) return;
   const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')]);
   for (const node of nodes) {
-    katex.render(node.dataset.tex ?? '', node, {
+    // another call may have typeset this one while the library was loading
+    if (node.dataset.tex === undefined) continue;
+    katex.render(node.dataset.tex, node, {
       displayMode: node.classList.contains('display'),
       throwOnError: false,
     });

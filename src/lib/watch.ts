@@ -6,13 +6,15 @@ export interface Update {
   /** Cells reuse their old object when nothing in them changed. */
   cells: Cell[];
   changed: Set<string>;
+  /** The file this reading came from. */
+  file: File;
 }
 
 interface Handle {
   getFile(): Promise<File>;
 }
 
-const stamp = (f: File) => `${f.lastModified}:${f.size}`;
+export const stamp = (f: File) => `${f.lastModified}:${f.size}`;
 
 // Enough of a cell to tell whether it changed, without hashing megabytes of image data.
 function sig(cell: Cell): string {
@@ -27,13 +29,21 @@ function sig(cell: Cell): string {
   return s;
 }
 
+export interface Watching {
+  stop(): void;
+  /** Our own write: the file is now this one, and is not news. */
+  saved(file: File): void;
+}
+
 /**
  * Polls the file once a second and reports a new reading once the writer has settled,
- * so a notebook saved in Jupyter or by an agent updates in place.
+ * so a notebook saved in Jupyter or by an agent updates in place. While `hold` says the page has edits of its own,
+ * a change on disk is not applied; `held` is told once per change instead.
  */
-export function watch(handle: Handle, first: File, current: () => Cell[], apply: (u: Update) => void): () => void {
+export function watch(handle: Handle, first: File, current: () => Cell[], apply: (u: Update) => void, hold: () => boolean = () => false, held: () => void = () => {}): Watching {
   let seen = stamp(first);
   let pending = '';
+  let told = '';
   let busy = false;
   const timer = setInterval(async () => {
     if (busy || document.hidden) return;
@@ -43,7 +53,11 @@ export function watch(handle: Handle, first: File, current: () => Cell[], apply:
       const now = stamp(file);
       if (now === seen) return void (pending = '');
       if (now !== pending) return void (pending = now);
-      const notebook = await readNotebook(file.stream());
+      if (hold()) {
+        if (told !== now) (told = now), held();
+        return;
+      }
+      const notebook = /\.(?:md|markdown)$/i.test(file.name) ? await (await import('./edit/mdfile')).readMarkdown(file) : await readNotebook(file.stream());
       // A half-written file parses as a short notebook; wait for the next tick instead.
       if (notebook.warnings.some((w) => w.startsWith('The file ends early'))) return;
       seen = now;
@@ -56,14 +70,20 @@ export function watch(handle: Handle, first: File, current: () => Cell[], apply:
         changed.add(c.id);
         return c;
       });
-      apply({ notebook, cells, changed });
+      apply({ notebook, cells, changed, file });
     } catch {
       // the file moved or is mid-write; the next tick tries again
     } finally {
       busy = false;
     }
   }, 1000);
-  return () => clearInterval(timer);
+  return {
+    stop: () => clearInterval(timer),
+    saved(file) {
+      seen = stamp(file);
+      pending = '';
+    },
+  };
 }
 
 export interface Opened {
@@ -75,7 +95,7 @@ export interface Opened {
 export async function pick(): Promise<Opened | null> {
   try {
     const [handle] = await window.showOpenFilePicker!({
-      types: [{ description: 'Notebook', accept: { 'application/json': ['.ipynb', '.json'] } }],
+      types: [{ description: 'Notebook or Markdown', accept: { 'application/json': ['.ipynb', '.json'], 'text/markdown': ['.md', '.markdown'] } }],
     });
     return { file: await handle.getFile(), handle };
   } catch {

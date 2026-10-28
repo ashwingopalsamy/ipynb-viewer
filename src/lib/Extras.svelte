@@ -7,6 +7,7 @@
   import './rare.css';
   import './ui.css';
   import './prefs.css';
+  import { session } from './edit/session.svelte';
   import Toc from './Toc.svelte';
   import Shelf from './Shelf.svelte';
   import Resume from './Resume.svelte';
@@ -180,6 +181,7 @@
       ui.shot = cell;
     }
     else if ((e.key === 'n' || e.key === 'p') && ui.trace) trace().then((m) => m.step(e.key === 'n' ? 1 : -1));
+    else if (e.key === 'e' && session.on) here?.dispatchEvent(new CustomEvent('edit'));
     else if (e.key === 'm') toggle('md');
     else if (e.key === 'i') toggle('info');
     else if (e.key === '/') toggle('search');

@@ -10,5 +10,6 @@ ipynb viewer is a free, open source (MIT) web page at https://ipynb.ashwingopals
 - Cells appear while the file is still being read.
 - A notebook is untrusted input. Markdown and HTML outputs are cleaned, and scripts wait behind a button in a sandbox with no network.
 - Made for reading: search, a figures shelf, live refresh in Chromium browsers, run order, share by link, cell screenshots, Copy as Markdown and keyboard shortcuts.
+- Edit in place: double-click any text cell and write, with a bar for undo, bold, links, headings and lists. Code and outputs are never touched. Save writes into the file you opened; from a link, or in a browser that cannot write files, it saves a copy to your computer.
 
 Pages: [open from GitHub](open-from-github/index.md), [privacy](privacy/index.md), [comparison](compare/index.md), [for agents](agents/index.md), [design](design/index.md).

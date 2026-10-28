@@ -11,3 +11,4 @@ python3 hero.py
 python3 social.py
 npm --prefix ../.. run build --silent
 node draw.mjs
+node edit.mjs

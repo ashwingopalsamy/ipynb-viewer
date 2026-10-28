@@ -6,6 +6,14 @@ Drop the file on ipynb viewer, or click the page and choose it. The notebook is 
 
 Yes. Paste a link to a public notebook into the field on the home page, or open `?url=` followed by the address. GitHub file pages (`github.com/user/repo/blob/branch/path.ipynb`), raw links, gists (`gist.github.com/user/id`), and the GitHub and gist forms of Colab and nbviewer addresses all work. On ipynb.ashwingopalsamy.in these links are fetched through the site's own Worker, so only GitHub files and gists open there. The GitHub Pages mirror fetches any https address that allows other sites to read it. The site you link to is named before anything is fetched, and you decide whether to go ahead.
 
+## Can I edit a notebook?
+
+Yes, the text cells. Double-click a paragraph, heading or list, or press `e`, and write; a bar offers undo, bold, italic, code, links, headings and lists. Code and outputs are never changed and nothing runs. Saving changes only the text of the cells you edited, so figures, tables and outputs stay as they were. Markdown (`.md`) files edit the same way.
+
+## Can I edit a notebook from a link and save it?
+
+Yes. A notebook opened from a GitHub link can be edited like any other. It has no file on your computer to write to, so Save makes a copy: in Chromium browsers you choose where to put `name (edited).ipynb`, and other browsers download it. A notebook you opened from your own disk in a Chromium browser is saved into that same file with Save, or into a new one with Save a copy. Nothing is uploaded at any point.
+
 ## Is my notebook uploaded?
 
 No. A file from your disk is read inside the page and goes nowhere. Once a notebook is open, the page shuts its own network connections, and the browser enforces that, so the Privacy sheet in Settings can count what the page has sent since. A notebook opened from a GitHub link is downloaded to your browser from GitHub and is not stored.
