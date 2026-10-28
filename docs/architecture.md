@@ -12,7 +12,7 @@ Real notebooks are not always valid JSON. The parser repairs what some writers e
 
 Each cell renders on its own. Markdown goes through `marked` and then DOMPurify; math is typeset by KaTeX when a cell contains some. Code is highlighted by Shiki with its JavaScript engine, one grammar at a time, so there is no WebAssembly to download.
 
-Outputs are matched by MIME type. Images show as they are, with a light plate behind transparent plots in dark mode. HTML outputs are reduced to table markup; anything else falls back to its plain text. [SECURITY.md](../SECURITY.md) explains why.
+Outputs are matched by MIME type. Images show as they are, with a light plate behind transparent plots in dark mode. HTML outputs are reduced to a list of safe tags, and one that carries a script waits behind a button; anything else falls back to its plain text. [SECURITY.md](../SECURITY.md) explains why.
 
 ## Staying small
 

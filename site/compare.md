@@ -26,7 +26,7 @@ These tools do different jobs. JupyterLab and Colab are for working on a noteboo
 
 ## What the viewer does not do
 
-It does not execute cells, edit notebooks, or show widgets that need a kernel. Interactive outputs are shown as what the notebook saved, and scripts wait behind a button in a sandbox. There is no PDF export; the browser's print dialog covers that.
+It does not execute cells or show widgets that need a kernel. It edits only the text of text cells, never code or outputs. Interactive outputs are shown as what the notebook saved, and scripts wait behind a button in a sandbox. There is no PDF export; the browser's print dialog covers that.
 
 ## Links
 

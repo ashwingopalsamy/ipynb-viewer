@@ -1,6 +1,6 @@
 # Keyboard
 
-Single keys act on the cell you are reading. They stay quiet while you type, and settings can switch them off.
+Single keys act on the cell you are reading, except `c` and `o`, which act on the whole page. They stay quiet while you type, and settings can switch them off.
 
 | Key | Does |
 |---|---|
@@ -9,8 +9,8 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 | `{` `}` | Previous or next tab (with two or more open) |
 | `x` | Open or close this cell |
 | `W` | Close this tab (asks first if it has unsaved edits) |
-| `c` | Show or hide code |
-| `o` | Show or hide outputs |
+| `c` | Show or hide code in every cell |
+| `o` | Show or hide outputs in every cell |
 | `s` | Save the cell as an image |
 | `f` | Trace the selected name |
 | `n` `p` | Next or previous cell that uses it |
@@ -21,6 +21,8 @@ Single keys act on the cell you are reading. They stay quiet while you type, and
 | `/` | Search the notebook (also `⌘K` or `Ctrl K`) |
 | `?` | This list |
 | `esc` | Close a popover or a picture |
+| `⌘O` or `Ctrl O` | Open a file |
+| `↑` `↓` `Home` `End` | Move between the controls in the notebook, which is one Tab stop |
 
 ## Editing
 
