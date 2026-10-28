@@ -56,7 +56,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 
 - **Reads like a document.** Prose is set in Inter and code in JetBrains Mono, with math typeset and every code cell highlighted, in light or dark.
 - **Knows where you are.** A slim rail on the right tracks the chapter you are in and opens into the full outline. When you come back to a notebook, it offers to pick up where you stopped.
-- **Fits the page to you.** Text size and page width are yours to set, and so is whether code and outputs show by default.
+- **Fits the page to you.** Text size, page width, a book face for text, line numbers and wrapping are in Settings, and `c` and `o` hide the code or the outputs of the whole page.
 - **Opens what other tools break.** Notebooks with `NaN` or trailing commas still load, and a file cut off halfway shows every complete cell with a note about the rest. nbformat 3 and 4 both work.
 
 ### Outputs
@@ -87,7 +87,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 ### Staying current
 
 - **Keeps up with your work.** In Chromium browsers, a notebook you dropped refreshes when it changes on disk, so a notebook saved in Jupyter or written by an agent updates in place.
-- **Compares versions.** Put two notebooks side by side, cell by cell, outputs included.
+- **Compares versions.** The notebook sheet lists every cell added, removed or edited since an earlier file, and every output that changed.
 
 Every shortcut is in [docs/shortcuts.md](docs/shortcuts.md), or press `?` in the app. To try it on something real, drop [examples/cooling-coffee.ipynb](examples/cooling-coffee.ipynb).
 

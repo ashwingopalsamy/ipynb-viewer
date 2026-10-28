@@ -36,7 +36,7 @@ The notebook sheet can make a link that carries the notebook after the `#`. The 
 
 ## Can I export a notebook to Markdown, images or PDF?
 
-Markdown and images, yes; PDF, no. Press `m` to copy the notebook as Markdown, with long outputs trimmed, an optional size budget for a language model, and likely secrets hidden. Press `s` to save a cell as an image, and every plot can be saved from the figures shelf as PNG, JPEG or WebP. To make a PDF, use the browser's print dialog.
+Markdown and images, yes; PDF, no. Press `m` to copy the notebook as Markdown, with long outputs trimmed, an optional size budget for a language model, and likely secrets hidden. Press `s` to save a cell as an image, and every plot has a Save figure button for PNG, JPEG or WebP. To make a PDF, use the browser's print dialog.
 
 ## Which browsers support live refresh?
 
