@@ -2,7 +2,7 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
-## 2.0.0 (2026-10-28)
+## 2.0.0 (2026-10-29)
 
 Read several notebooks at once, each in a tab of its own.
 
