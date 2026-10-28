@@ -37,17 +37,19 @@ tools/brand/build.sh
 
 ## The demo notebook
 
-`cooling-coffee.ipynb` is also the demo behind **Open Demo** on the landing page (`?url=cooling-coffee.ipynb`, served from `public/`, kept out of the offline precache). `notebook.py` runs every code cell once, in order, so the outputs are real; the progress bar, the traceback and the `%pip` line are recorded in the shape Jupyter writes them. Regenerating gives a byte-identical file.
+`cooling-coffee.ipynb` is also the demo behind **Demo** on the landing page (`?url=cooling-coffee.ipynb`, served from `public/`, kept out of the offline precache). `notebook.py` runs every code cell once, in order, so the outputs are real; the progress bar, the traceback and the `%pip` line are recorded in the shape Jupyter writes them. Regenerating gives a byte-identical file.
+
+It is also a tour of the app. A **Try it** note sits beside each feature it names, and the last two sections list the rest. Every key, button and label the text names has to exist in the viewer: when a feature is renamed or removed, change the note with it.
 
 `src/lib/notebook/demo.test.ts` checks each row below with the viewer's own functions.
 
 | Feature | Where in the notebook |
 |---|---|
-| Contents rail, chapter chip | H1, six H2s and H3s |
+| Contents rail, chapter chip | H1, nine H2s and five H3s |
 | Math | Opening equation, an `align` block, inline symbols |
 | Markdown table, task list, quote | "The model" |
-| Syntax highlighting | Python cells; `bash` and `sql` fences at the end |
-| Figures shelf, save as image | Four PNGs: overview, fit and residuals, heatmap, small multiples |
+| Syntax highlighting | Python cells. Fences in markdown cells (the `bash` and `sql` at the end) are shown plain |
+| Figures shelf, Save figure, cell as image | Four PNGs: overview, fit and residuals, heatmap, small multiples |
 | Vector output | The thermometer SVG |
 | Sortable table, copy CSV | `readings` (16 rows) |
 | Printed frame becomes a table | `print(readings.head(10))` |
@@ -59,6 +61,11 @@ tools/brand/build.sh
 | Fold handles | The figure cells, the frame, the long listing |
 | Insights: secrets, needs, weight | The made-up `SCALE_API_TOKEN`, the home folder in the traceback, `%pip install tqdm`, the pictures |
 | Editing in place, save back | "Edit it": the section before "Before you share this". It is a text cell, so it can be edited on the spot |
+| Name tracing | "Fitting k": click `readings` |
+| Fold, show or hide code and outputs | "The model" |
+| Notebook sheet (Share, Run, Weight), Copy as Markdown | "Before you share this" |
+| Open, settings, live refresh, Compare, offline, install, print | "What else it does" |
+| Ten inventive uses | "Small things worth trying" |
 | Run order switch | Not shown: the cells ran in order |
 
 Redraw it with `python3 notebook.py ../../examples/cooling-coffee.ipynb ../../public/cooling-coffee.ipynb`. The hero images and the file-size chip in `scenes.py` come from this notebook, so run `build.sh` after changing it.

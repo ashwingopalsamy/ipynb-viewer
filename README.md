@@ -27,7 +27,7 @@
 
 ## Read a notebook
 
-Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` anywhere on the page. No notebook to hand? **Open Demo**, at the top right, loads one that shows everything below. It explains what it does and shows the numbers behind it. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
+Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` anywhere on the page. No notebook to hand? **Demo**, at the top right of the home page, loads one that is also a tour of the app: a note beside each feature says what to press, and the last sections list everything else. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
 
 The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
