@@ -36,7 +36,7 @@ Cell screenshots and figure exports are drawn on a canvas in the page. No image 
 
 ## Offline and the network
 
-The home page is the app: `index.html` shows the landing page until a notebook is opened, and the reader then takes its place. A small service worker, `tools/sw.template.js`, is filled in at build time with every file the app can ask for, so after the first visit opening a notebook makes no request at all. It never calls `skipWaiting`, so a new version takes over on the next visit and never swaps files under a notebook you are reading. The build leaves out source maps, the `.woff` and `.ttf` font fallbacks and the share image, which keeps the copy under 1 MB gzipped.
+The home page is the app: `index.html` shows the landing page until a notebook is opened, and the reader then takes its place. A small service worker, `tools/sw.template.js`, is filled in at build time with every file the app can ask for, so after the first visit opening a notebook makes no request at all. A new version takes over on the next load when that page is the app's only window, and otherwise once the other windows close, so files never change under a notebook you are reading. The build leaves out source maps, the `.woff` and `.ttf` font fallbacks and the share image, which keeps the copy under 1 MB gzipped.
 
 Once a notebook is open the page narrows its own Content Security Policy. A policy can only be tightened at runtime, so the order is fixed: connections are shut first, and pictures from the web stay blocked until a card asks. The Privacy sheet reads the browser's resource timing and policy violation events, so its count is the browser's, not ours.
 

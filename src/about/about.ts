@@ -183,6 +183,13 @@ if (!tab) {
   // The offline copy is made from this page too, for a visit that never opens a notebook.
   setTimeout(() => import('../lib/offline'), 2500)
 
+  // A new version already waiting is asked in now, which the worker allows only when this is the app's one window; the reload brings it in.
+  navigator.serviceWorker?.getRegistration().then((r) => {
+    if (!r?.waiting || !navigator.serviceWorker.controller) return
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true })
+    r.waiting.postMessage('update')
+  })
+
   // Where the browser lets a page offer tools to an agent working with the person (WebMCP), the empty page offers one: open a link.
   const tools = (document as any).modelContext ?? (navigator as any).modelContext
   if (tools) import('../lib/agent').then((m) => m.landing(tools, signal))

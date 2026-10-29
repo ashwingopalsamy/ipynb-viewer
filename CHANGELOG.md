@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
+## 2.0.1 (2026-10-29)
+
+New versions arrive with a reload.
+
+- A new version of the app used to wait until every tab of the site was closed, so a reload kept the old one. Now, when the page is the app's only window, it reloads once into the new version as it opens, and tabs opened from a link come back. With other windows of the site open, nothing changes under them: the new version still waits for those to close.
+- This takes effect from the next update on. To get 2.0.1 itself, close every tab of the site once more.
+
 ## 2.0.0 (2026-10-29)
 
 Read several notebooks at once, each in a tab of its own.
