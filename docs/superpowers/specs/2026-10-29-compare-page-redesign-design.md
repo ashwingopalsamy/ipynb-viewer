@@ -43,7 +43,7 @@ Checked in the code on 2026-10-29. The page must not claim more than this.
 - **Text cells in a notebook.** Double-click a paragraph, heading or list, or press `e`, and write. Code and outputs are never changed and nothing runs. Saving changes only the text of the cells that were edited, so figures, tables and outputs stay as they were. From disk in Chromium, Save writes the same file; from a link or in other browsers, it saves a copy (`site/faq.md`).
 - **Copy as Markdown** hides likely secrets by default (`ui.hide` defaults to `true`; `src/lib/Handoff.svelte`, `src/lib/insight/secrets.ts`).
 - **Keys** the homepage names: `j` `k` cells, `[` `]` headings, `t` contents, `{` `}` tabs (`App.svelte`), `?` every key, `/` search, `s` cell image, `m` Copy as Markdown, `e` edit, `f` trace a name.
-- **Links.** On the main site a link is fetched through this site's Worker relay, which allows only GitHub files and gists, passes the bytes through and keeps no record of the address (`site/privacy.md`). The GitHub Pages mirror fetches directly from the browser. Links are capped at 50 MB.
+- **Links.** On the main site a link is fetched through this site's Worker relay, which allows only GitHub files and gists, passes the bytes through and keeps no record of the address (`site/faq.md`, "What happens when I open a link?"). The GitHub Pages mirror fetches directly from the browser. Links are capped at 50 MB.
 - **Build facts.** `finish()` in `vite.config.ts` computes `core` (first screen, gzipped), `offline` (one-time download), `files`, `benchsize`, `benchcells`, `benchfirst`, `benchtotal` and `benchnote`. Today it fills `<!--fact:key-->` in `dist/index.html` only. The bench numbers come from `src/about/bench.json`, measured by `npm run bench`, not by the build.
 
 ## Architecture
@@ -82,7 +82,7 @@ Components: `sprite`, `jobs`, `figures`, `teaser`, `matrix`, `demos`, `routes`, 
 - `teaser` is the homepage's card to the full comparison (see Homepage).
 - `count` is the number of rows as a word ("Thirty"), so the prose that names it ("Thirty things, checked.") follows the data. It covers twenty to forty and throws outside that range.
 - `editor` takes a variant: `editor:file` draws `field-notes.md` (the compare page), `editor:notebook` draws `cooling-coffee.ipynb` (the homepage). Both pictures are data in `site/compare.ts`: the file name, the heading and the blocks under it.
-- `figures` takes `figures:home`, which points each tile's link at a section of the homepage instead of the compare page and the privacy guide.
+- `figures` takes `figures:home`, which points each tile's link at a section of the homepage instead of the compare page.
 
 The homepage uses `fill(html)`, a third export that replaces placeholders in an HTML string and nothing else, since `index.html` is written as HTML, not Markdown. The same component functions serve both pages, so a shared component cannot differ between them.
 
@@ -141,10 +141,10 @@ Two columns from 960px (1.15fr / 1fr, 72px gap), stacked below.
 - Contents row, one line: The table · Reading · Your file · Markdown · Choosing · Sources. Each item is an anchor with a small chevron.
 - Right column, `jobs`: a paper card holding three of the landing page's lanes. "Shows": nbviewer, GitHub, "rendered on a server". "Runs": Colab, JupyterLab, VS Code, "on a kernel". "Reads": ipynb viewer, "in your browser, nothing else". The "Reads" lane is tinted (`--tick-soft`) with a `--ring` hairline and a blue label.
 - `figures`, four tiles in a row (2 × 2 on phones), 34px figures, each with a link to its evidence:
-  - **0 bytes** leave your device when you open a file from disk. → Check it yourself (privacy, "Check it yourself").
+  - **0 bytes** leave your device when you open a file from disk. → Check it yourself (`../#privacy`, the homepage's "Check it yourself" card).
   - **`core`** for the first screen, gzipped. The rest loads only when a notebook needs it. → What loads when (the homepage's size chart, `../#speed`).
   - **`benchtotal`** to read a `benchsize` notebook of `benchcells` cells. → How it is measured (Sources and method).
-  - **`offline`** downloaded once; after that it opens with the wifi off. → What is kept (privacy, "The offline copy").
+  - **`offline`** downloaded once; after that it opens with the wifi off. → What is kept (`../#offline`).
 - Under the tiles, 13px `fg-3`: "Sizes are measured by the build on every release; read times come from the project's benchmark."
 
 ### 2. The table
@@ -238,7 +238,7 @@ A paper sheet, 28px radius: **Try it on a notebook of your own.** "It opens in t
 - A real `<table>`, `table-layout: fixed`, in a wrapper with `container-type: inline-size`.
 - **Full table** when the container is at least 1200px wide: label column 204px (a 16px toggle, a 6px gap and at most 156px of label), our column 180px, the five rivals share the rest (at least 163.2px each). Cells 12px side padding, 14px text, an 18px glyph with an 8px gap, `white-space: nowrap`.
 - **Picker layout** below 1200px: the label sits above a pair of cells, ours and one rival. The pair is two columns down to a 328px container (a 360px phone) and stacks below that, so 320px phones never clip.
-- The header row is sticky under the guide header (`top: 56px`) in the full table. In the picker layout, the "ipynb viewer vs [rival]" bar is sticky instead, so the chosen rival stays named while rows scroll.
+- The header row is sticky under the guide header (`top: 60px`: the header's 8px inset, its 44px pill and 8px of air) in the full table. In the picker layout, the "ipynb viewer vs [rival]" bar is sticky instead, so the chosen rival stays named while rows scroll.
 
 ### Look (as approved)
 
@@ -305,7 +305,7 @@ Nothing from today's eight blocks is lost. Blocks 1 and 2 become "Where your fil
 ### 1. Compared (`#compared`)
 
 - Two columns from 960px, as the compare opening. Kicker "Compared". H2 **Six ways to open a notebook.** Lede: "nbviewer and GitHub show a notebook from a server. Colab, JupyterLab and VS Code run one, on a kernel. **This page reads it in your browser:** nothing to install, no account, no upload, and no code runs." Right: `jobs`.
-- `figures`, the same four tiles, but each links down this page: 0 bytes → Where your file goes (`#your-file`); `core` → Small on purpose (`#speed`); `benchtotal` → Cells while it reads (`#speed`); `offline` → The offline copy (`#offline`). The variant is `figures:home`.
+- `figures`, the same four tiles, but each links down this page: 0 bytes → Where your file goes (`#privacy`); `core` → Small on purpose (`#speed`); `benchtotal` → Cells while it reads (`#speed`); `offline` → The offline copy (`#offline`). The variant is `figures:home`.
 - `teaser`: one paper card under the figures, full width, the whole card a link to `compare/`. Left: kicker "The full comparison", heading "`count` things, checked against five tools.", and "Filter by what you care about, hide the rows that are the same everywhere, and open any row for its source." Right, end-aligned: the five rivals as quiet chips (`well-2`, 13px) above a solid pill in `--tick-ink` (`--tick` in dark), "Compare them →". One row from 960px; below that it stacks, and the chips wrap between chips. Hover adds the `--ring` hairline. The names and the count come from the data; the chips are `aria-hidden`, so the link reads as its heading and "Compare them".
 
 ### 2. Markdown (`#markdown`)
@@ -323,13 +323,15 @@ Right, `editor:notebook`: `cooling-coffee.ipynb` with its unsaved dot, "Edited",
 
 `demos`, as on `/compare/` (section 3 there), with the same H2 and aside. The lede says "This page reads it" where `/compare/` says "ipynb viewer reads it".
 
-### 4. Where your file goes (`#your-file`)
+### 4. Where your file goes (`#privacy`)
+
+The section keeps today's `id="privacy"`: the app's Privacy sheet links to `./#privacy`.
 
 Kicker "Privacy". H2 **Where your file goes.** Lede: "Opening a notebook usually means a server, and sharing one means putting it on somebody else's. This page reads the file where it is, and once it is open the page shuts its own connections. The browser enforces that, so even a bug could not send your file out." Aside as on `/compare/`. Then `routes`, the same seven lanes. Under them three cards in a row (stacked on phones):
 
 - **The Privacy sheet:** today's picture of the sheet, moved as it is ("0 requests left this page since the notebook opened"; Offline copy, Ready; Connections, Closed; Web pictures, Asked per notebook), captioned "The Privacy sheet, in Settings." Its labels follow `src/lib/Privacy.svelte`.
 - **The offline copy** (`id="offline"`): "After the first visit the app keeps its own files on your device: `files` files and about `offline`, downloaded once. Open a notebook with the wifi off and it still opens."
-- **Check it yourself:** three numbered steps, the privacy guide's first three: open the browser's developer tools and the Network tab; switch the wifi off and reload; drop a notebook, and nothing is requested. A link to the full steps follows.
+- **Check it yourself:** three numbered steps, the first three of the FAQ's "How can I check this myself?": open the browser's developer tools and the Network tab; switch the wifi off and reload; drop a notebook, and nothing is requested. A link to that question (`#faq`) follows.
 
 ### 5. Safety (`#safety`)
 
@@ -362,7 +364,7 @@ Kicker "Everything else". H2 **Made for reading, and for small edits.** Lede: "E
 
 ### 8. Questions (`#faq`)
 
-Kicker "Questions". H2 **Asked often.** `<!--site:faq-->` as today, in two columns from 960px. The FAQ fill in `vite.config.ts` wraps each question and its answer in one `<div>` with `break-inside: avoid`, so no answer splits from its question. The FAQ JSON-LD is unchanged.
+Kicker "Questions". H2 **Asked often.** `<!--site:faq-->` as today: since 2.1.0 it renders `<div class="faq">` with one numbered `<details>` per question, so a question and its answer are already one element. The two columns are a grid on `.faq` from 960px; `vite.config.ts` is unchanged here. The FAQ JSON-LD is unchanged.
 
 ### Close
 
@@ -440,12 +442,11 @@ If the build shows the homepage adding more than 8 KB, the demos leave the homep
 
 ## Coordination
 
-The sibling worktree `notebook-ui-controls-polish-1f7925` rewrites the `pages()` plugin (it adds dev-server rendering of the guides), deletes `site/privacy.md` and edits the footer, `site/faq.md` and `about.css`. This branch lands after it and is rebased onto it:
+The sibling branch `notebook-ui-controls-polish-1f7925` landed on main as 2.1.0 (#32) and is merged into this branch (ca63cc3). What it changed that this work builds on:
 
-- `tools/compare.ts` is a pure module, so its dev-server hook is one call in that branch's middleware.
-- Links into the privacy guide ("Check it yourself", "What is kept", the relay) follow wherever that content lives after the merge. The link check fails the build if they do not.
-- The changes to `vite.config.ts` here are a few lines, which keeps the conflict small.
-- That branch also edits `about.css`, `site/faq.md` and the footer, which the homepage work touches. Rebase before moving the shared styles into `about.css`, and keep the moved rules in one contiguous block so the conflict, if any, is one hunk.
+- `pages()` renders the guides in the dev server too (`render(guide(slug), sheets)`), so the compare page's renderer is called from both the build and the middleware.
+- `site/privacy.md` is gone; its steps and the relay's description now live in `site/faq.md`, and `/privacy` redirects home. Links that went to the privacy guide go to the homepage's `#privacy` and `#offline`.
+- The FAQ renders as numbered `<details>`, and the guide header is a floating 44px pill.
 
 ## Out of scope
 
