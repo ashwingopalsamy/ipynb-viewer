@@ -1,6 +1,6 @@
-# Compare page redesign
+# Compare page and homepage redesign
 
-Date: 2026-10-29. Branch: `feat/compare-page-redesign-0c5447`. Status: design approved in the visual companion; this document is the written spec.
+Date: 2026-10-29. Branch: `feat/compare-page-redesign-0c5447`. Status: both pages approved in the visual companion (`page-v1` for `/compare/`, `home-v3` for the homepage); this document is the written spec.
 
 ## Goal
 
@@ -14,6 +14,8 @@ Success means:
 - It claims Markdown support only as far as it works: open from disk, edit in the rendered page, save back to the same file.
 - Agents and answer engines get the same content as clean Markdown (`compare/index.md`, `llms-full.txt`).
 
+The homepage's "how it works" blocks get the same treatment. A visitor should see the proof without finding `/compare/`: what kind of tool this is, the figures, the reading demos, where the file goes and Markdown editing. The full table stays on `/compare/`, and one card links to it.
+
 ## Decisions already made
 
 | Question | Decision |
@@ -25,6 +27,9 @@ Success means:
 | Architecture | Approach A: one data module, rendered twice (rich HTML for the page, GFM for the Markdown copy). |
 | Matrix | The "spotlight" table, refined: blue verified tick, one-line phrases, "Only here" as a caption. Approved in `spotlight-v3`. |
 | Rest of page | Approved in `page-v1` (opening, demos, routes, Markdown, choosing, limits and sources, close). |
+| Homepage | Proof on the homepage, full page kept. The homepage reuses the jobs card, figures, demos, routes and editor picture, built from the same data. The table is not on the homepage (tried in `home-v1`, rejected); a card under the figures links to it. Approved in `home-v3`. |
+| Homepage Markdown | Leads with editing a notebook's Markdown cells; `.md` files come third. It sits second, right after the comparison. |
+| Homepage accent | The landing page's green "this path" highlight (`--ran`) becomes the tick blue, so both pages have one colour for "ours". |
 
 ## Facts the page relies on
 
@@ -35,6 +40,9 @@ Checked in the code on 2026-10-29. The page must not claim more than this.
 - **Progress bars.** A bar saved as one line per frame (tqdm without a terminal, Keras) keeps only the last frame of each run (`src/lib/streams.ts`, `foldBars()`); carriage returns are collapsed too.
 - **Long outputs.** Past 24 lines an output keeps its first 12 and last 8 lines. Not used as a demo: VS Code also truncates long text outputs, so it is not unique.
 - **Markdown files.** `.md` and `.markdown` open by picker, drop or the operating system (`src/lib/edit/mdfile.ts`, `watch.ts`), render as one Markdown cell, edit the same way as text cells (double-click or `e`; a bar with undo, bold, italic, code, links, headings and lists), and save into the same file in Chromium browsers; other browsers download a copy. Live refresh works for them too.
+- **Text cells in a notebook.** Double-click a paragraph, heading or list, or press `e`, and write. Code and outputs are never changed and nothing runs. Saving changes only the text of the cells that were edited, so figures, tables and outputs stay as they were. From disk in Chromium, Save writes the same file; from a link or in other browsers, it saves a copy (`site/faq.md`).
+- **Copy as Markdown** hides likely secrets by default (`ui.hide` defaults to `true`; `src/lib/Handoff.svelte`, `src/lib/insight/secrets.ts`).
+- **Keys** the homepage names: `j` `k` cells, `[` `]` headings, `t` contents, `{` `}` tabs (`App.svelte`), `?` every key, `/` search, `s` cell image, `m` Copy as Markdown, `e` edit, `f` trace a name.
 - **Links.** On the main site a link is fetched through this site's Worker relay, which allows only GitHub files and gists, passes the bytes through and keeps no record of the address (`site/privacy.md`). The GitHub Pages mirror fetches directly from the browser. Links are capped at 50 MB.
 - **Build facts.** `finish()` in `vite.config.ts` computes `core` (first screen, gzipped), `offline` (one-time download), `files`, `benchsize`, `benchcells`, `benchfirst`, `benchtotal` and `benchnote`. Today it fills `<!--fact:key-->` in `dist/index.html` only. The bench numbers come from `src/about/bench.json`, measured by `npm run bench`, not by the build.
 
@@ -48,11 +56,14 @@ Checked in the code on 2026-10-29. The page must not claim more than this.
 | `site/compare.md` | Rewritten. The page's prose in reading order, with block placeholders (`<!--compare:matrix-->` and so on) where data-driven parts go. Front matter gains VS Code in the title and a new description. |
 | `tools/compare.ts` | New. Pure functions: `page(body)` returns the page's `<main>` HTML; `markdown(body)` returns the Markdown copy. Validates the data and throws on any rule below. |
 | `tools/widths.json` | New. Advance widths of Inter Medium (weight 500), in thousandths of an em, for printable ASCII plus `’ “ ” – — × ·`. Measured once in a browser with canvas `measureText` at 1000px; regenerate only if the font changes. A comment at the top of `tools/compare.ts` says how. |
-| `src/about/compare.css` | New. Page-only styles, in the landing page's tokens plus the page-scoped tokens below. |
-| `vite.config.ts` | Small hooks: `pages()` renders the compare page through `tools/compare.ts`, links `compare.css` on that page only, and uses the expanded Markdown for `compare/index.md` and `llms-full.txt`. `finish()` fills facts in four files instead of one. |
-| `DESIGN.md` | One line under Colour for the page's tick colour (see Visual language). |
+| `src/about/compare.css` | New. Styles only the compare page uses: the opening, the matrix and its controls, choosing, limits and sources. |
+| `src/about/about.css` | The tick tokens, the sprite glyphs and the shared components (section layout, kicker, `jobs`, `figures`, `teaser`, `demos`, `routes`, `editor`) move here, because both pages load it. The numbered `.block` and the `.keys` list go. `--ran` goes; its four uses take the tick colours. |
+| `index.html` | `#how` is rewritten as eight sections and a close (see Homepage), with `<!--compare:…-->` placeholders for the shared components. The hero, the head, the JSON-LD and the FAQ placeholders are unchanged. |
+| `site/home.md` | Rewritten to follow the new homepage, one bullet per section, plus a line pointing to the comparison. |
+| `vite.config.ts` | Small hooks: `pages()` renders the compare page through `tools/compare.ts`, links `compare.css` on that page only, and uses the expanded Markdown for `compare/index.md` and `llms-full.txt`. The existing `order: 'pre'` `transformIndexHtml` that fills `<!--site:faq-->` also fills `<!--compare:…-->` in `index.html`. `finish()` fills facts in four files instead of one. |
+| `DESIGN.md` | One line under Colour for the tick colour (see Visual language). |
 
-No app code changes. No new dependencies.
+No app code changes (`about.ts` already binds every `[data-choose]`, so the close's button needs no script). No new dependencies.
 
 ### Rendering
 
@@ -60,12 +71,20 @@ No app code changes. No new dependencies.
 
 - The `#` heading and the paragraphs before the first `##` are the opening. `<!--compare:jobs-->` and `<!--compare:figures-->` in that stretch place the opening's card and figures.
 - Each `##` heading starts a section, `<section id="{slug}">`. Its first paragraph is the section's lede. A small table in `tools/compare.ts` maps each slug to its kicker (the small capitals line above the heading) and its layout: `full`, `split` (prose left, component right) or `half` (two consecutive half sections share a row).
-- An HTML token matching `<!--compare:(\w+)-->` is replaced by that component's HTML. Any other token goes through `marked.parser()` unchanged.
+- An HTML token matching `<!--compare:(\w+)(?::(\w+))?-->` is replaced by that component's HTML; the optional second word picks a variant. Any other token goes through `marked.parser()` unchanged.
 - The close and the footer are appended by the shell, as the guide pages' call to action is today.
+- `page()` returns `<main class="compare">`, not the guides' `.doc`, so `guide.css`'s 720px article column and its `display: block` tables never reach the components.
 
 `markdown(body)` walks the same tokens and replaces each placeholder with the component's Markdown (empty for the editor window, which is only a picture). Everything else is copied as written. So the page and its Markdown copy cannot drift: they come from one source.
 
-Components: `jobs`, `figures`, `matrix`, `demos`, `routes`, `editor`, `choose`, `sources`. Each has `html()` and `md()`.
+Components: `sprite`, `jobs`, `figures`, `teaser`, `matrix`, `demos`, `routes`, `editor`, `choose`, `sources`, `count`. Each has `html()` and `md()`. Three are new for the homepage:
+
+- `teaser` is the homepage's card to the full comparison (see Homepage).
+- `count` is the number of rows as a word ("Thirty"), so the prose that names it ("Thirty things, checked.") follows the data. It covers twenty to forty and throws outside that range.
+- `editor` takes a variant: `editor:file` draws `field-notes.md` (the compare page), `editor:notebook` draws `cooling-coffee.ipynb` (the homepage). Both pictures are data in `site/compare.ts`: the file name, the heading and the blocks under it.
+- `figures` takes `figures:home`, which points each tile's link at a section of the homepage instead of the compare page and the privacy guide.
+
+The homepage uses `fill(html)`, a third export that replaces placeholders in an HTML string and nothing else, since `index.html` is written as HTML, not Markdown. The same component functions serve both pages, so a shared component cannot differ between them.
 
 ### Data model
 
@@ -96,17 +115,17 @@ Derived, never written by hand:
 - a `say` is wider than **112px** at 14px Inter Medium, or a `label` wider than **156px**, measured with `tools/widths.json` (a character missing from the table is an error);
 - a group has no row that differs between tools (the "Only differences" switch would empty it);
 - a link to another guide points at a slug that is not built (the list is `GUIDES` in `vite.config.ts`);
-- a placeholder in `site/compare.md` names no component, or a component is never placed.
+- a placeholder in `site/compare.md` or `index.html` names no component or no variant, or a component meant for a page is never placed on it.
 
 The width budget is what keeps every phrase on one line. It is derived from the layout in "The matrix" below: the narrowest rival column leaves 113.2px for text at weight 400, our column 130px, and a phone cell at 360px wide 112px at 13.5px. The label budget leaves room for the row's detail toggle. 112px at 14px Medium fits all three, since Medium is wider than Regular and 13.5px is narrower than 14px. Pixels, not characters, because "WWW" and "iii" differ by a factor of three.
 
 ### Facts
 
-`finish()` replaces `<!--fact:key-->` in `dist/index.html`, `dist/compare/index.html`, `dist/compare/index.md` and `dist/llms-full.txt`, with the same values and the same error for an unknown key. The compare page uses `core`, `offline`, `benchsize`, `benchcells` and `benchtotal`.
+`finish()` replaces `<!--fact:key-->` in `dist/index.html`, `dist/compare/index.html`, `dist/compare/index.md` and `dist/llms-full.txt`, with the same values and the same error for an unknown key. The compare page uses `core`, `offline`, `benchsize`, `benchcells` and `benchtotal`. The homepage keeps every fact it uses today (`files`, `offline`, `core`, `chart`, the four bench facts and `benchnote`), now inside the new sections. Components emit fact placeholders, never numbers, so the figures stay correct on both pages.
 
 ### CSP and the shell
 
-The page keeps the guide shell: head, theme script, header pill, footer. It links the home stylesheet, `guide.css` and `compare.css`. Its policy is the guides' strict one, unchanged. The page adds an inline SVG sprite (symbols only, no script) and inline `style` attributes on symbol children, which `style-src 'unsafe-inline'` already allows. The inputs sit outside any form, so `form-action 'none'` is never exercised.
+The page keeps the guide shell: head, theme script, header pill, footer. It links the home stylesheet, `guide.css` and `compare.css`. Its policy is the guides' strict one, unchanged. The page adds an inline SVG sprite (symbols only, no script) and inline `style` attributes on symbol children, which `style-src 'unsafe-inline'` already allows. The inputs sit outside any form, so `form-action 'none'` is never exercised. The homepage keeps the app's policy, unchanged: the sprite and the demo radios are markup and CSS, and the page adds no script.
 
 ## Page structure
 
@@ -123,14 +142,14 @@ Two columns from 960px (1.15fr / 1fr, 72px gap), stacked below.
 - Right column, `jobs`: a paper card holding three of the landing page's lanes. "Shows": nbviewer, GitHub, "rendered on a server". "Runs": Colab, JupyterLab, VS Code, "on a kernel". "Reads": ipynb viewer, "in your browser, nothing else". The "Reads" lane is tinted (`--tick-soft`) with a `--ring` hairline and a blue label.
 - `figures`, four tiles in a row (2 × 2 on phones), 34px figures, each with a link to its evidence:
   - **0 bytes** leave your device when you open a file from disk. → Check it yourself (privacy, "Check it yourself").
-  - **`core`** for the first screen, gzipped. The rest loads only when a notebook needs it. → What loads when (the home page's size chart).
+  - **`core`** for the first screen, gzipped. The rest loads only when a notebook needs it. → What loads when (the homepage's size chart, `../#speed`).
   - **`benchtotal`** to read a `benchsize` notebook of `benchcells` cells. → How it is measured (Sources and method).
   - **`offline`** downloaded once; after that it opens with the wifi off. → What is kept (privacy, "The offline copy").
 - Under the tiles, 13px `fg-3`: "Sizes are measured by the build on every release; read times come from the project's benchmark."
 
 ### 2. The table
 
-Kicker "Side by side". H2 **Thirty things, checked.** Lede: "Grouped by what you would ask. Every tick has words beside it, and every row opens to the detail and its source." Then the matrix (next section of this spec).
+Kicker "Side by side". H2 **Thirty things, checked.** ("Thirty" is `<!--compare:count-->`.) Lede: "Grouped by what you would ask. Every tick has words beside it, and every row opens to the detail and its source." Then the matrix (next section of this spec).
 
 ### 3. Reading
 
@@ -145,7 +164,7 @@ Kicker "Reading". H2 **The same notebook, read better.** Lede: "Most tools show 
   - "The error is named first, then the line in your own code. The library frames wait behind one row."
   - "A bar saved as one line per frame keeps only its last frame. Everything printed after it stays."
 
-The demo content lives in `site/compare.ts` as the raw text plus hand-written "as read" HTML that reuses the reader's look (`.tbl`, `.exc`). It is written by hand because `tabular.ts` imports `tbl.css` and cannot run in the build config. The three states share one grid area, so the sheet is as tall as the tallest state and switching never moves the page. The Markdown copy gives each demo as "As saved" in a fenced block and "As read" in words (a GFM table for the DataFrame).
+The demo content lives in `site/compare.ts` as the raw text plus hand-written "as read" HTML that copies the reader's look (`.tbl`, `.exc`). It is written by hand because `tabular.ts` imports `tbl.css` and cannot run in the build config. Neither page loads the reader's styles, so the demo restates that look in `about.css`, scoped under `.demos` so it can never reach a real notebook. The three states share one grid area, so the sheet is as tall as the tallest state and switching never moves the page. The Markdown copy gives each demo as "As saved" in a fenced block and "As read" in words (a GFM table for the DataFrame).
 
 Below a 720px container, the chips stay and a segmented control chooses the pane: Elsewhere | ipynb viewer, defaulting to ipynb viewer.
 
@@ -177,7 +196,7 @@ Kicker "Markdown". H2 **Markdown files, too.** Layout `split`.
   - A bar for bold, italic, code, links, headings and lists, with undo
   - Save writes the same file in Chromium browsers; others download a copy
 - Under a hairline, two quiet lines: "GitHub: edit the source, preview in another tab." "VS Code: the source, with a preview beside it."
-- Right, `editor`: a still picture of the reader editing `field-notes.md`, built in HTML and `aria-hidden`. A header with the name pill and its unsaved dot, "Edited", "Save a copy" and a solid "Save". The heading "Field notes". A paragraph in edit mode (`--ring` outline) with a selected word, a caret, and the edit bar floating above it, clear of the text. A math line, a two-item list with inline code.
+- Right, `editor:file`: a still picture of the reader editing `field-notes.md`, built in HTML and `aria-hidden`. A header with the name pill and its unsaved dot, "Edited", "Save a copy" and a solid "Save". The heading "Field notes". A paragraph in edit mode (`--ring` outline) with a selected word, a caret, and the edit bar floating above it, clear of the text. A math line, a two-item list with inline code.
 
 ### 6. Choosing
 
@@ -277,10 +296,107 @@ Thirty rows, five groups. Our draft verdicts follow. Every rival verdict, and ev
 
 "Only here" is derived, so its count follows the checked verdicts rather than this draft.
 
+## Homepage
+
+The hero stays as it is: logo, H1, lede, the Choose button, the hint and the "How it works" cue. It is the app's first screen and where a file is dropped. Below it, `#how` becomes eight sections and a close, on the compare page's grid: 1240px content, a 24px gutter (16px on phones), one left edge, sections 112px apart (56px on phones), `.reveal` on each. The numbered badges go; each section has a kicker and an H2, as on `/compare/`, and an `id` the figures can link to.
+
+Nothing from today's eight blocks is lost. Blocks 1 and 2 become "Where your file goes"; 3 and 4 become "Speed"; 5 is "Safety"; 6 and 7 become "Everything else"; 8 is "Questions". Every section's prose is written in `index.html`; the shared components come from `tools/compare.ts`.
+
+### 1. Compared (`#compared`)
+
+- Two columns from 960px, as the compare opening. Kicker "Compared". H2 **Six ways to open a notebook.** Lede: "nbviewer and GitHub show a notebook from a server. Colab, JupyterLab and VS Code run one, on a kernel. **This page reads it in your browser:** nothing to install, no account, no upload, and no code runs." Right: `jobs`.
+- `figures`, the same four tiles, but each links down this page: 0 bytes → Where your file goes (`#your-file`); `core` → Small on purpose (`#speed`); `benchtotal` → Cells while it reads (`#speed`); `offline` → The offline copy (`#offline`). The variant is `figures:home`.
+- `teaser`: one paper card under the figures, full width, the whole card a link to `compare/`. Left: kicker "The full comparison", heading "`count` things, checked against five tools.", and "Filter by what you care about, hide the rows that are the same everywhere, and open any row for its source." Right, end-aligned: the five rivals as quiet chips (`well-2`, 13px) above a solid pill in `--tick-ink` (`--tick` in dark), "Compare them →". One row from 960px; below that it stacks, and the chips wrap between chips. Hover adds the `--ring` hairline. The names and the count come from the data; the chips are `aria-hidden`, so the link reads as its heading and "Compare them".
+
+### 2. Markdown (`#markdown`)
+
+Split layout. Kicker "Markdown". H2 **Edit the text. Keep the outputs.**, on two lines at 40px by design (non-breaking spaces hold "Keep the outputs." together). Lede: "Double-click a Markdown cell and write in the page you are reading. Saving changes only the text you edited, so code, figures and tables stay exactly as they were. A `.md` file from your disk opens the same way." Blue-tick list:
+
+- Edit any Markdown cell: double-click it, or press `e`
+- Code and outputs are never changed, and nothing runs
+- Opens `.md` and `.markdown` files too, by picking or dropping
+- Save writes the same file in Chromium; others download a copy
+
+Right, `editor:notebook`: `cooling-coffee.ipynb` with its unsaved dot, "Edited", "Save a copy" and "Save"; the notebook's title; a Markdown paragraph in edit mode with the edit bar above it; a code cell under it in a `well-2` strip (`[n]` and one line of code), marked "Code · unchanged"; a math line. The text is taken from cells that really are in `public/cooling-coffee.ipynb`, so the demo link shows the same notebook.
+
+### 3. Reading (`#reading`)
+
+`demos`, as on `/compare/` (section 3 there), with the same H2 and aside. The lede says "This page reads it" where `/compare/` says "ipynb viewer reads it".
+
+### 4. Where your file goes (`#your-file`)
+
+Kicker "Privacy". H2 **Where your file goes.** Lede: "Opening a notebook usually means a server, and sharing one means putting it on somebody else's. This page reads the file where it is, and once it is open the page shuts its own connections. The browser enforces that, so even a bug could not send your file out." Aside as on `/compare/`. Then `routes`, the same seven lanes. Under them three cards in a row (stacked on phones):
+
+- **The Privacy sheet:** today's picture of the sheet, moved as it is ("0 requests left this page since the notebook opened"; Offline copy, Ready; Connections, Closed; Web pictures, Asked per notebook), captioned "The Privacy sheet, in Settings." Its labels follow `src/lib/Privacy.svelte`.
+- **The offline copy** (`id="offline"`): "After the first visit the app keeps its own files on your device: `files` files and about `offline`, downloaded once. Open a notebook with the wifi off and it still opens."
+- **Check it yourself:** three numbered steps, the privacy guide's first three: open the browser's developer tools and the Network tab; switch the wifi off and reload; drop a notebook, and nothing is requested. A link to the full steps follows.
+
+### 5. Safety (`#safety`)
+
+Split layout. Kicker "Safety". H2 **A notebook is untrusted input.** Lede: "Markdown and HTML outputs are cleaned before they are shown, and styles that could fetch anything are dropped. An output that carries a script waits behind a button and runs in a sandboxed frame that cannot reach your page, or the network unless you turn that on." Right, in a `jobs`-style card, today's two lanes: Markup: notebook → cleaner → page ("drops `onerror=…`"); Scripts: notebook → your click → sandbox, no network. The sandbox node keeps its outline, now in `--tick`.
+
+### 6. Speed (`#speed`)
+
+Kicker "Speed". H2 **Small on purpose, quick on big files.** Lede: "The first screen weighs **`core`** gzipped; math and highlighting load only when a notebook asks. The file is read in chunks, and each cell is handed over the moment it is whole." Two cards side by side from 960px:
+
+- **What loads when:** `<!--fact:chart-->` as today, with a 200px label column so no label wraps, and the first bar in `--tick`. Caption "Gzipped, from this build."
+- **Cells while it reads:** today's stream rail, its cells tinted with `--tick-soft`, the scale, then two figures, `benchfirst` "to the first cell" and `benchtotal` "for all `benchcells` cells of a `benchsize` file", with `benchnote` as the caption.
+
+### 7. Everything else (`#features`)
+
+Kicker "Everything else". H2 **Made for reading, and for small edits.** Lede: "Every action has a single key. Keys stand down in text fields and when you hold a modifier." Nine tiles, three across (one column on phones), each with today's icon and, where it has one, its key at the right of the title:
+
+| Tile | Key | Line |
+|---|---|---|
+| Search | `/` | Across text, code and outputs, with each match marked in its cell. |
+| Figures | | Every plot on one shelf, and each one saves as an image. |
+| Run order | | See the cells in the order they ran, and the ones that ran out of turn. |
+| Live refresh | | Save the notebook and the view follows, in Chromium browsers. |
+| Share by link | | The link carries the notebook after the #, so no server sees it. |
+| Screenshots | `s` | A clean image of a cell, ready for a post or a doc. |
+| Copy as Markdown | `m` | The notebook as text, for a doc or for a model, secrets hidden. |
+| Edit in place | `e` | Double-click any text and write. Code and outputs are never touched. |
+| Trace a name | `f` | Every cell that defines or uses it, one key apart. |
+
+"Trace a name" is new and needs one Lucide-style icon. Under the tiles, one line of keys: `j` `k` cells, `[` `]` headings, `t` contents, `{` `}` tabs, `?` every key. Today's "Save it back" tile moves into the Markdown list. The "Keyboard" tile and the Keys block become that line.
+
+### 8. Questions (`#faq`)
+
+Kicker "Questions". H2 **Asked often.** `<!--site:faq-->` as today, in two columns from 960px. The FAQ fill in `vite.config.ts` wraps each question and its answer in one `<div>` with `break-inside: avoid`, so no answer splits from its question. The FAQ JSON-LD is unchanged.
+
+### Close
+
+A paper sheet as on `/compare/`: **Try it on a notebook of your own.** "It opens in this tab. Nothing is uploaded." Buttons:
+
+- A solid `<button data-choose>` "Choose a notebook" with the upload icon. It does not use the hero's `.ask` class, which `about.ts` looks up on its own.
+- A default "See the demo" (`./?url=cooling-coffee.ipynb`).
+- A quiet "The full comparison →" (`compare/`).
+
+Today's footer follows.
+
+### Phones
+
+Every split stacks, prose first. The figures go 2 × 2. The teaser, the three privacy cards and the two speed cards stack. The routes stack as on `/compare/`.
+
+### Markdown copy
+
+`site/home.md` follows the new order, one bullet per section, in prose without figures (as today, since no facts are filled into it), plus "Compared with nbviewer, GitHub, Colab, JupyterLab and VS Code: [the comparison](compare/index.md)." `index.md` stays `home.md` plus the FAQ.
+
+### First-screen budget
+
+`index.html` and what it loads count toward the 30,000-byte budget, so every byte added here is a first-screen byte.
+
+- **Today:** the live homepage reports 15 KB (read on 2026-10-29).
+- **Markup, measured on `home-v3`:** the new `#how` gzips about 3 KB larger than today's (`index.html` source 5.8 → 8.7 KB gzipped), plus about 0.5 KB for the sprite. By section: demos 1.25 KB, everything else 0.88, your file 0.77, Markdown 0.62, compared 0.53, speed 0.49, safety 0.26, close 0.14, questions 0.13.
+- **Styles:** the shared components add an estimated 2.5 to 3.5 KB gzipped to `about.css`, less the `.block` and `.keys` rules.
+- **Expected:** `core` about 21 to 22 KB, still well under 30.
+
+If the build shows the homepage adding more than 8 KB, the demos leave the homepage first (they are the heaviest, and `/compare/` keeps them). The budget is not raised, and no styles are deferred behind script: the page publishes its own first-screen figure, and that figure must stay true.
+
 ## Visual language
 
 - Tokens are the landing page's (`src/about/about.css`): `page`, `paper`, `well`, `well-2`, `sunk`, `fg` to `fg-3`, `line`, `line-2`, `lift`, `dip`, `glass`, Inter and JetBrains Mono from `/fonts/`.
-- Page-scoped tokens, defined on the compare page's root element for both themes:
+- New tokens, defined in `about.css` on `:root` for both themes, used by both pages:
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
@@ -291,7 +407,9 @@ Thirty rows, five groups. Our draft verdicts follow. Every rival verdict, and ev
 | `--part` | `#86868f` (3.61:1 on paper) | `#74747e` (3.74:1 on paper) | partly glyph |
 
   `--tick-ink` and the darker `--part` correct two contrast failures in the approved mockup: blue caption text at 3.6:1 and a grey glyph at 2.1:1. The look barely changes.
-- DESIGN.md gains one line under Colour: "The comparison page adds one exception: a verified-tick blue (`tick`, with `tick-ink` for text) for its small marks, the hairline round its own column and its captions, and at most a 9% tint behind its own column head, lane and card. Nowhere else."
+- The landing page's `--ran` green goes. Its four uses take the tick: the "here" arrow (`.here .arrow`) and the outlined node (`.node.box`) use `--tick`, the first chart bar (`.row.first .track i`) uses `--tick`, and the stream scale's label (`.scale span:nth-child(2)`), which is text, uses `--tick-ink`. The green in the logo mark is the mark's own and stays.
+- DESIGN.md gains one line under Colour: "The homepage and the comparison page add one exception: a verified-tick blue (`tick`, with `tick-ink` for text) marks what is ours: its small glyphs, the hairline round its own column, card or lane, its captions, and at most a 9% tint behind them. Never in the app."
+- Every shared component's rules sit under its own root class (`.jobs`, `.figs`, `.teaser`, `.demos`, `.routes`, `.editor`). None styles a bare class the app or the guides already use (`.doc`, `.cell`, `.tbl`, `.exc`). `about.css` is switched off when a notebook opens (the `#landing` link), but the guide pages load it too.
 - No gradients and no new shadows. The edit bar in the Markdown picture uses `glass` and the existing `float` shadow.
 - Type: H1 58px (38px on phones). H2 40px (28px), weight 700, −0.032em, `text-wrap: balance`. Ledes 17px, `fg-2`, `text-wrap: pretty`. Figures 34px weight 600 (26px on phones), tabular. Table 14px. Captions 12 to 13px.
 - Radii: sheets 22 to 24px, cards and figures 18 to 20px, panes 16px, lanes 16px, pills 999px.
@@ -317,7 +435,7 @@ Thirty rows, five groups. Our draft verdicts follow. Every rival verdict, and ev
 ## Print, performance, robustness
 
 - **Print:** controls are hidden, all thirty rows show regardless of the filters, detail rows stay closed, and each demo prints all three states one after another. `.reveal` is already neutralised for print.
-- **Performance:** the page is static HTML and CSS: no script beyond the theme, no images beyond the mark, fonts already cached by the app. The first screen budget applies only to `index.html` and is unchanged.
+- **Performance:** the page is static HTML and CSS: no script beyond the theme, no images beyond the mark, fonts already cached by the app. The first-screen budget applies to `index.html` and is unchanged; the homepage's share is under Homepage, "First-screen budget". `compare.css` loads only on `/compare/`, so the matrix's styles never reach the first screen.
 - **No horizontal scroll at 320px:** pre blocks scroll inside their pane, chips and lane nodes wrap between items, phrases are bounded by the width check.
 
 ## Coordination
@@ -327,11 +445,13 @@ The sibling worktree `notebook-ui-controls-polish-1f7925` rewrites the `pages()`
 - `tools/compare.ts` is a pure module, so its dev-server hook is one call in that branch's middleware.
 - Links into the privacy guide ("Check it yourself", "What is kept", the relay) follow wherever that content lives after the merge. The link check fails the build if they do not.
 - The changes to `vite.config.ts` here are a few lines, which keeps the conflict small.
+- That branch also edits `about.css`, `site/faq.md` and the footer, which the homepage work touches. Rebase before moving the shared styles into `about.css`, and keep the moved rules in one contiguous block so the conflict, if any, is one hunk.
 
 ## Out of scope
 
 - Opening Markdown from a link (an app change, for its own task).
-- Changes to other guide pages, the landing page or its JSON-LD.
+- Changes to other guide pages, and to the homepage's hero, head and JSON-LD.
+- The comparison table on the homepage (tried and rejected).
 - Structured data for the compare page.
 - Automated tests. The build-time checks are part of the renderer, not a test suite.
 
@@ -339,7 +459,8 @@ The sibling worktree `notebook-ui-controls-polish-1f7925` rewrites the `pages()`
 
 The smallest set worth a look once it is built:
 
-- `npm run build` passes the data and width checks. Read `dist/compare/index.md` once.
+- `npm run build` passes the data and width checks. Read `dist/compare/index.md` once. Compare its "first screen" line with the 15 KB of today.
+- The homepage at 1440, 1024, 375 and 320px, in light and dark: no sideways scroll, the figures' links land on their sections, the closing button opens the file picker, and opening a notebook still clears the homepage and switches its stylesheet off.
 - The page at 1440, 1248 (just above the table's switch), 1200 (just below), 1024, 375, 360 and 320px, in light and dark: no wrapped verdict, no sideways scroll.
 - Keyboard through the chips, the switch, a row toggle and the rival picker. VoiceOver reading a row in the picker layout.
 - The rival picker in Safari (iOS) and Firefox, and the switch between layouts around a 1200px container. If it does not restyle on change, switch to the radio fallback.
@@ -350,4 +471,6 @@ The smallest set worth a look once it is built:
 
 - **Rival facts age.** The stamp, the per-row sources and the issue link limit the damage; the date lives in one place.
 - **`select` and `:has()`.** Restyling on `option:checked` is expected in current Chromium, Safari and Firefox but is checked by hand; the radio fallback is specified.
+- **First-screen growth.** The published `core` figure rises from about 15 KB to about 21 to 22 KB. It stays well under budget and "Small on purpose" stays true; the fallback order is under Homepage.
+- **Shared components.** A change to `jobs`, `figures`, `demos`, `routes` or `editor` shows on both pages. That is the point, but check both when one changes.
 - **Width table drift.** If Inter is updated, `tools/widths.json` must be measured again; until then the check can be off by a pixel or two, and the budgets leave about 3px of slack in the tightest column.
