@@ -112,12 +112,12 @@ Derived, never written by hand:
 
 - a row lacks a tool, or two rows share an `id`;
 - a rival cell has no `src`, or a `src` is not `https:`;
-- a `say` is wider than **112px** at 14px Inter Medium, or a `label` wider than **156px**, measured with `tools/widths.json` (a character missing from the table is an error);
+- a `say` is wider than **114px** at 14px Inter Medium, or a `label` wider than **156px**, measured with `tools/widths.json` (a character missing from the table is an error);
 - a group has no row that differs between tools (the "Only differences" switch would empty it);
 - a link to another guide points at a slug that is not built (the list is `GUIDES` in `vite.config.ts`);
 - a placeholder in `site/compare.md` or `index.html` names no component or no variant, or a component meant for a page is never placed on it.
 
-The width budget is what keeps every phrase on one line. It is derived from the layout in "The matrix" below: the narrowest rival column leaves 113.2px for text at weight 400, our column 130px, and a phone cell at 360px wide 112px at 13.5px. The label budget leaves room for the row's detail toggle. 112px at 14px Medium fits all three, since Medium is wider than Regular and 13.5px is narrower than 14px. Pixels, not characters, because "WWW" and "iii" differ by a factor of three.
+The width budget is what keeps every phrase on one line. It is derived from the layout in "The matrix" below: the narrowest rival column leaves 113.2px for text at weight 400, our column 130px, and a phone cell at 360px wide 112px at 13.5px. The label budget leaves room for the row's detail toggle. The check sums per-character advances without kerning, which reads 1 to 2px wider than rendered text ("Never, by design" sums to 113.9px and renders at 112px). A sum of 114px at 14px Medium fits all three: Regular is about 3% narrower than Medium (about 110.6px, under 113.2), 13.5px scales it to 109.9px (under 112), and our column has 130px. Pixels, not characters, because "WWW" and "iii" differ by a factor of three.
 
 ### Facts
 

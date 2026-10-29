@@ -17,7 +17,7 @@
 - TypeScript (`tsconfig.node.json`): `erasableSyntaxOnly` (no enums, namespaces or parameter properties), `verbatimModuleSyntax` (`import type` for types), relative imports end in `.ts`, `noUnusedLocals` and `noUnusedParameters`. Style as in `vite.config.ts`: two spaces, single quotes, no semicolons, few comments.
 - No script on any page. The guide CSP and the app CSP are unchanged.
 - Built numbers appear only as `<!--fact:key-->`, never as literals.
-- Phrase budgets at 14px Inter Medium: a cell's `say` at most **112px**, a row `label` at most **156px**, measured with `width()` from `tools/compare/text.ts`.
+- Phrase budgets at 14px Inter Medium: a cell's `say` at most **114px**, a row `label` at most **156px**, measured with `width()` from `tools/compare/text.ts`.
 - Copy: plain, sentence case, curly apostrophes (’), no exclamation marks, no "best ever" superlatives.
 - Colour: the tick family (`--tick`, `--tick-ink`, `--tick-soft`, `--ring`) marks only what is ours. No gradients, no new shadows.
 - Each agent edits only the files its task **Owns**.
@@ -189,9 +189,9 @@ Token rules this plan relies on:
 - Produces: everything in Contract → `types.ts` and `text.ts`.
 
 - [ ] **Step 1: Measure the width table.** In the browser pane, on a page where `/fonts/inter.woff2` is same-origin: the running dev server at `localhost:5317`, or else the live site after confirming with `shasum` that its `/fonts/inter.woff2` matches `public/fonts/inter.woff2`. Load `new FontFace('M', 'url(/fonts/inter.woff2)', { weight: '500' })`, add it to `document.fonts` and await it. For each character in printable ASCII (32–126) plus `’ “ ” – — × ·`, take a canvas `measureText` at `500 1000px M` and round it. Write `{ "font": "Inter 500", "unit": "1/1000 em", "advances": { "a": 553, … } }` to `widths.json`.
-- [ ] **Step 2: Check it against the spec's figures.** `width('Google’s machines')` ≈ 126 and `width('Never, by design')` ≈ 112, within 1px.
+- [ ] **Step 2: Check it against the spec's figures.** `width('Google’s machines')` ≈ 127.5 and `width('Never, by design')` ≈ 113.9 (sums without kerning, 1–2px over the rendered 126 and 112).
 - [ ] **Step 3: Write `types.ts`** exactly as in Contract.
-- [ ] **Step 4: Write `text.ts`** with the seven helpers in Contract. `width` reads `widths.json` with `readFileSync(new URL('./widths.json', import.meta.url))` and `JSON.parse` (no JSON import attributes).
+- [ ] **Step 4: Write `text.ts`** with the seven helpers in Contract. `width` reads `tools/compare/widths.json` with `readFileSync` relative to the project root, as `vite.config.ts` reads `site/`, and `JSON.parse` (no JSON import attributes).
 - [ ] **Step 5: Commit**
 
 ```bash
