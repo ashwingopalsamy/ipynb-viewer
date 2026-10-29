@@ -17,9 +17,9 @@
 }
 /* it lifts as editing begins, with the toolbar's rise; opening another cell from this one moves it there without */
 @media (prefers-reduced-motion: no-preference) {
-  body:has(> .fmt.rise) .md:has(> :is(.editing, .editing-src))::before { animation: lift 180ms var(--out) both; }
+  body:has(> .fmt.rise) .md:has(> :is(.editing, .editing-src))::before { animation: slab-in var(--t2) var(--out) both; }
 }
-@keyframes lift { from { opacity: 0; transform: scale(0.992); } }
+@keyframes slab-in { from { opacity: 0; transform: scale(0.992); } }
 /* on a phone the text is 12px from the screen's edges, so the card runs edge to edge rather than past them */
 @media (max-width: 720px) {
   .md:has(> :is(.editing, .editing-src))::before { inset-inline: -12px; border-radius: 0; }
@@ -106,14 +106,17 @@
   border-radius: 999px;
   box-shadow: var(--float);
 }
-/* The header stays: the file, Open, Edit, Save and the tools. Only its centre pill, the section heading, gives way to this bar,
-   and the file's name, which could run long, gives up its width to the bar (the unsaved dot does not). */
-body:has(> .fmt) .mid { visibility: hidden; }
-body:has(> .fmt) .bar .name { max-width: 220px; }
+/* The header stays: the notebooks, Open, Edit, Save and the tools. The left pill, which could run long, gives up its width to this bar (the unsaved dot does not). */
+body:has(> .fmt) .bar .tb { max-width: 260px; }
+/* where the header's row cannot hold the bar between its pills, editing takes the row, as on a phone (Toolbar.svelte decides) */
+:root.fmt-crowd .bar .tb { visibility: hidden; }
+:root.fmt-crowd .bar .tools > :not([data-keep]) { display: none; }
+/* the search field gives the header's middle to the bar while a cell is open */
+body:has(> .fmt) .find.centre { opacity: 0; visibility: hidden; }
 .fmt .icon { width: var(--btn); height: var(--btn); }
 :is(.fmt, .bar) .icon[aria-pressed='true'] { color: var(--fg); }
-:is(.fmt, .bar) .icon[aria-pressed='true']::before { opacity: 0.12; }
-:is(.fmt, .bar) .icon[aria-pressed='true']:hover::before { opacity: 0.16; }
+:is(.fmt, .bar) .icon[aria-pressed='true']::before { opacity: var(--held); }
+:is(.fmt, .bar) .icon[aria-pressed='true']:hover::before { opacity: var(--held-hover); }
 :is(.fmt, .bar) .icon:disabled { opacity: 0.3; cursor: default; color: var(--fg-2); }
 :is(.fmt, .bar) .icon:disabled::before { opacity: 0; }
 .fmt .icon:focus-visible { outline-offset: -2px; }
@@ -134,8 +137,8 @@ body:has(> .fmt) .bar .name { max-width: 220px; }
 /* on a phone it runs the width of the screen */
 @media (max-width: 720px) {
   .fmt { inset-inline: 12px; translate: none; width: auto; max-width: none; }
-  /* the file and Open sit where the bar does; the dock keeps what works on the open cell and gives the rest back after Done */
-  body:has(> .fmt) .bar :is(.name, .opener) { visibility: hidden; }
+  /* the notebooks and Open sit where the bar does; the dock keeps what works on the open cell and gives the rest back after Done */
+  body:has(> .fmt) .bar .tb { visibility: hidden; }
   body:has(> .fmt) .bar .tools > :not([data-keep]) { display: none; }
 }
 /* Windows high contrast drops shadows and fills, which is all the slab and a pressed button are made of */

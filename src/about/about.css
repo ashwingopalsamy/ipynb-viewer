@@ -23,6 +23,13 @@
   --io: cubic-bezier(0.65, 0, 0.35, 1);
   --in: cubic-bezier(0.4, 0, 1, 1);
   --pop: cubic-bezier(0.2, 0.9, 0.3, 1.06);
+  /* the app's four timings: feedback, fades and exits, movement and entrances, the largest moves */
+  --t1: 100ms;
+  --t2: 160ms;
+  --t3: 220ms;
+  --t4: 300ms;
+  /* every icon's line, at every size, as in the app */
+  --stroke: 1.3px;
   --sans: Inter, -apple-system, system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   color-scheme: light;
@@ -81,10 +88,10 @@ b { font-weight: 600; }
   border-radius: inherit;
   background: currentColor;
   opacity: 0;
-  transition: opacity 100ms var(--out);
+  transition: opacity var(--t1) var(--out);
 }
 .icon:hover::before { opacity: 0.08; }
-.icon:active { transform: scale(0.97); transition-duration: 100ms; }
+.icon:active { transform: scale(0.97); transition-duration: var(--t1); }
 .tools { flex: none; gap: 2px; padding: 4px; margin-left: auto; }
 .icon {
   display: grid;
@@ -94,11 +101,11 @@ b { font-weight: 600; }
   height: 36px;
   border-radius: 999px;
   color: var(--fg-2);
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
 .icon:hover { color: var(--fg); }
 .demo { display: inline-flex; gap: 7px; width: auto; padding: 0 14px 0 11px; font-size: 13px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; text-decoration: none; color: var(--fg); }
-.demo path { transform-box: fill-box; transform-origin: center; transition: transform 240ms var(--rel); }
+.demo path { transform-box: fill-box; transform-origin: center; transition: transform var(--t3) var(--rel); }
 .demo:hover path { transform: translateX(1.5px); }
 .swap .glyph {
   position: absolute;
@@ -106,7 +113,7 @@ b { font-weight: 600; }
   place-items: center;
   opacity: 0;
   transform: rotate(-60deg) scale(0.6);
-  transition: transform 300ms var(--io), opacity 200ms var(--out);
+  transition: transform var(--t4) var(--io), opacity var(--t2) var(--out);
 }
 .swap .moon { opacity: 1; transform: none; }
 :root[data-theme='dark'] .swap .moon { opacity: 0; transform: rotate(60deg) scale(0.6); }
@@ -127,18 +134,18 @@ main.home { padding-bottom: 0; }
 
 /* the one place to act: the system's primary pill, and under it the other two ways in */
 .cta { display: grid; justify-items: center; gap: 14px; margin-top: 28px; }
-.ask { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 24px 0 20px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 16px/1 var(--sans); letter-spacing: -0.01em; transition: transform 200ms var(--rel); }
-.ask::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--page); opacity: 0; transition: opacity 120ms var(--out); }
+.ask { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 24px 0 20px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 16px/1 var(--sans); letter-spacing: -0.01em; transition: transform var(--t3) var(--rel); }
+.ask::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--page); opacity: 0; transition: opacity var(--t1) var(--out); }
 .ask:hover::before { opacity: 0.14; }
-.ask:active { transform: scale(0.97); transition-duration: 100ms; }
+.ask:active { transform: scale(0.97); transition-duration: var(--t1); }
 .ask:focus-visible { outline-offset: 3px; }
 .ask-ico { display: grid; width: 20px; height: 20px; }
-.ask-ico svg { grid-area: 1 / 1; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: opacity 160ms var(--out); }
+.ask-ico svg { grid-area: 1 / 1; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--t2) var(--out); }
 /* the arrow lifts out of its tray under the pointer: this sends a file up */
-.ask .arr { transition: transform 240ms var(--rel); }
+.ask .arr { transition: transform var(--t3) var(--rel); }
 .ask:hover .arr, .ask:focus-visible .arr { transform: translateY(-2px); }
 .ask-txt { display: grid; }
-.ask-txt > span { grid-area: 1 / 1; text-align: center; transition: opacity 160ms var(--out), transform 240ms var(--out); }
+.ask-txt > span { grid-area: 1 / 1; text-align: center; transition: opacity var(--t2) var(--out), transform var(--t3) var(--out); }
 .i-wait, .ask .busy { opacity: 0; }
 .ask .busy { transform: translateY(6px); }
 /* a pasted link: the button itself says it is on its way */
@@ -149,11 +156,11 @@ main.home { padding-bottom: 0; }
 .sent .i-wait { animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(1turn); } }
 /* a paste that held no link: one short shake, the way a wrong password does */
-.ask.nope { animation: nope 320ms var(--io); }
+.ask.nope { animation: nope var(--t4) var(--io); }
 @keyframes nope { 20% { transform: translateX(-5px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } }
 
 .hint { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; margin: 0; font-size: 14px; line-height: 22px; color: var(--fg-3); }
-.hint kbd { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; font-size: 12px; transition: transform 100ms var(--out), box-shadow 100ms var(--out), background-color 100ms var(--out); }
+.hint kbd { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; font-size: 12px; transition: transform var(--t1) var(--out), box-shadow var(--t1) var(--out), background-color var(--t1) var(--out); }
 .hint kbd.m { margin-left: 4px; }
 /* the modifier key goes down with the reader's own */
 .mod .hint kbd.m { transform: translateY(1px); box-shadow: none; background: var(--well); }
@@ -163,18 +170,18 @@ main.home { padding-bottom: 0; }
 @media (hover: none) { .hint { display: none; } }
 
 /* a file carried over the page: the page steps back and the button comes forward as the place to let go */
-.carry { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--page) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 160ms var(--out), visibility 0s 160ms; }
+.carry { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--page) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--t2) var(--out), visibility 0s var(--t2); }
 .over .carry { opacity: 1; visibility: visible; transition-delay: 0s; }
-.carry span { display: inline-flex; align-items: center; gap: 12px; height: 60px; padding: 0 30px 0 24px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 19px/1 var(--sans); letter-spacing: -0.01em; transform: scale(0.9); transition: transform 240ms var(--pop); }
+.carry span { display: inline-flex; align-items: center; gap: 12px; height: 60px; padding: 0 30px 0 24px; border-radius: 999px; background: var(--fg); color: var(--page); font: 600 19px/1 var(--sans); letter-spacing: -0.01em; transform: scale(0.9); transition: transform var(--t3) var(--pop); }
 .over .carry span { transform: none; }
-.carry svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.carry svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; }
 .over .carry .arr { animation: bob 700ms var(--io) infinite alternate; }
 @keyframes bob { to { transform: translateY(2.5px); } }
 
 /* the cue: two chevrons fall in turn, three times, then rest; it fades as the reader starts down, its job done */
-.next { display: inline-flex; align-items: center; gap: 8px; height: 36px; margin: 0 auto 28px; padding: 0 12px 0 16px; border-radius: 999px; color: var(--fg-3); font-size: 14px; text-decoration: none; transition: color 150ms var(--out), background-color 150ms var(--out); animation: cue-in 500ms var(--out) 600ms both; }
+.next { display: inline-flex; align-items: center; gap: 8px; height: 36px; margin: 0 auto 28px; padding: 0 12px 0 16px; border-radius: 999px; color: var(--fg-3); font-size: 14px; text-decoration: none; transition: color var(--t2) var(--out), background-color var(--t2) var(--out); animation: cue-in var(--t4) var(--out) 600ms both; }
 .next:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 6%, transparent); }
-.next svg { width: 16px; height: 16px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.next svg { width: 16px; height: 16px; overflow: visible; fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; }
 .next path { animation: fall 1.8s var(--io) 1.4s 3 both; }
 .next path + path { animation-delay: 1.52s; }
 .next:hover path { animation-iteration-count: infinite; }
@@ -183,7 +190,7 @@ main.home { padding-bottom: 0; }
 @keyframes cue-out { to { opacity: 0; transform: translateY(10px); } }
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
-    .next { animation: cue-in 500ms var(--out) 600ms both, cue-out linear both; animation-timeline: auto, scroll(root); animation-range: normal, 0 180px; }
+    .next { animation: cue-in var(--t4) var(--out) 600ms both, cue-out linear both; animation-timeline: auto, scroll(root); animation-range: normal, 0 180px; }
   }
 }
 
@@ -199,6 +206,21 @@ h2 i { flex: none; align-self: center; display: grid; place-items: center; width
 .block p { color: var(--fg-2); text-wrap: pretty; }
 .block p b { color: var(--fg); }
 .block h3 { margin: 10px 0 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+/* the questions: one list, each opening in place under its own line; the number says how far down the list it is */
+.faq { display: grid; margin-top: 6px; border-bottom: 1px solid var(--line); }
+.faq details { border-top: 1px solid var(--line); }
+.faq summary { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 12px 6px; cursor: pointer; list-style: none; font-size: 16.5px; font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; color: var(--fg); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary i { flex: none; width: 20px; font: 500 13px/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--fg-3); }
+.faq summary span { flex: 1; min-width: 0; text-wrap: balance; }
+.faq summary svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--fg-3); stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; transition: transform var(--t3) var(--out); }
+.faq summary:hover svg { stroke: var(--fg); }
+.faq details[open] summary svg { transform: rotate(180deg); }
+.faq summary:focus-visible { outline-offset: -2px; border-radius: 12px; }
+.faq .ans { display: grid; gap: 10px; padding: 0 6px 22px 40px; }
+.faq .ans > * { margin: 0; }
+.faq .ans ol, .faq .ans ul { display: grid; gap: 6px; padding-left: 20px; color: var(--fg-2); }
+@media (prefers-reduced-motion: no-preference) { .faq details[open] .ans { animation: settle var(--t3) var(--out); } }
 .block p a { color: var(--fg); }
 .block p code { font: 0.9em var(--mono); }
 figure { margin: 10px 0 0; }
@@ -212,7 +234,7 @@ figcaption { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--f
 .node { position: relative; flex: none; display: grid; place-items: center; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--paper); box-shadow: var(--lift); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .node.cloud { color: var(--fg-3); }
 .here .node, .node.keep, .node.box { font-weight: 600; }
-.arrow { flex: none; width: 36px; height: 12px; fill: none; stroke: var(--fg-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.arrow { flex: none; width: 36px; height: 12px; fill: none; stroke: var(--fg-3); stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; }
 .arrow.long { flex: 1 1 auto; width: auto; min-width: 36px; }
 .here .arrow { stroke: var(--ran); }
 .drop { margin-left: auto; font-size: 12.5px; color: var(--fg-3); }
@@ -250,7 +272,7 @@ figcaption { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--f
 /* tiles */
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
 .tiles li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; align-content: start; padding: 16px; border-radius: 20px; corner-shape: squircle; background: var(--paper); box-shadow: var(--lift); }
-.tiles svg { grid-row: span 2; width: 40px; height: 40px; padding: 9px; border-radius: 14px; corner-shape: squircle; background: var(--well-2); fill: none; stroke: var(--fg-2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tiles svg { grid-row: span 2; width: 40px; height: 40px; padding: 9px; border-radius: 14px; corner-shape: squircle; background: var(--well-2); fill: none; stroke: var(--fg-2); stroke-width: var(--stroke); stroke-linecap: round; stroke-linejoin: round; }
 .tiles b { align-self: end; font-size: 15px; }
 .tiles span { font-size: 13.5px; line-height: 1.5; color: var(--fg-3); }
 
@@ -263,16 +285,51 @@ kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; 
 
 /* the end */
 
+/* the way into the source, one quiet row of links, then who made it; on every page that is not a notebook */
 footer { display: grid; justify-items: center; gap: 14px; padding: 0 24px calc(40px + env(safe-area-inset-bottom)); text-align: center; font-size: 13px; color: var(--fg-3); }
 footer p { margin: 0; }
 footer a { text-decoration: none; }
-footer .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
-footer .links a { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 999px; color: var(--fg-2); }
-footer .links a:hover { background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); }
-footer .by { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; }
-footer .by a { display: inline-flex; align-items: center; gap: 8px; color: var(--fg-2); font-weight: 500; }
-footer .by a:hover { color: var(--fg); }
-footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--well); }
+/* the one call to action: the source, to read it, report a bug or send a fix */
+footer .give { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 14px 0 13px; border-radius: 999px; background: var(--paper); box-shadow: var(--lift); font-size: 13.5px; font-weight: 500; color: var(--fg); transition: transform var(--t3) var(--rel); }
+footer .give::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+footer .give:hover::before { opacity: 0.05; }
+footer .give:active { transform: scale(0.97); transition-duration: var(--t1); }
+footer .give svg { flex: none; }
+/* the arrow says the link leaves the site, and leans out a little when pointed at */
+footer .ext { display: inline-flex; margin-left: -3px; color: var(--fg-3); transition: transform var(--t2) var(--out), color var(--t1) var(--out); }
+footer .give:hover .ext { color: var(--fg); transform: translate(1.5px, -1.5px); }
+footer .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 900px; }
+footer .links a { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; color: var(--fg-2); transition: background-color var(--t1) var(--out), color var(--t1) var(--out); }
+footer .links a:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); color: var(--fg); }
+footer .links svg { flex: none; color: var(--fg-3); transition: color var(--t1) var(--out); }
+footer .links a:hover svg { color: inherit; }
+/* on a guide page, home: the app's mark, whose green dot is a cell that ran, and runs once more when pointed at */
+footer .app circle { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  footer .app:hover circle { animation: ran 0.5s var(--out); }
+}
+@keyframes ran {
+  40% { transform: scale(1.7); }
+}
+footer .by { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; font-size: 12.5px; }
+footer .by a { display: inline-flex; align-items: center; gap: 8px; color: inherit; }
+footer .by img { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--well); }
+footer .by .line { display: inline-flex; align-items: center; gap: 6px; }
+footer .by b { font-weight: 650; letter-spacing: -0.005em; color: var(--fg-2); transition: color var(--t2) var(--out); }
+footer .by a:hover b { color: var(--fg); }
+footer .by > span::before { content: '·'; margin-right: 6px; }
+/* the same heart as under a notebook: at rest, and beating, lub-dub and a rest, while the line is pointed at */
+footer .heart { flex: none; fill: currentColor; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; color: #ee4b6a; transform-origin: 50% 60%; }
+@media (prefers-reduced-motion: no-preference) {
+  footer .by a:hover .heart, footer .by a:focus-visible .heart { animation: heartbeat 1.2s var(--out) infinite; }
+}
+@keyframes heartbeat {
+  0%, 40%, 100% { transform: none; }
+  10% { transform: scale(1.18); }
+  20% { transform: scale(0.98); }
+  30% { transform: scale(1.1); }
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Blocks settle in as they scroll into view. A block already on screen when the page loads is simply there, so a refresh never replays the reveal. */
 @keyframes settle { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -284,6 +341,12 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
 
 @media (max-width: 640px) {
   main, footer { padding-inline: 16px; }
+  /* on a phone the links sit in two even columns, and who made it takes a line of its own over the note */
+  footer .links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 320px); }
+  footer .give { width: min(100%, 320px); }
+  footer .links a { justify-content: flex-start; }
+  footer .by { flex-direction: column; gap: 6px; }
+  footer .by > span::before { content: none; }
   .bar .inner { padding: 8px 12px 0; }
   .lane { flex-direction: column; align-items: flex-start; gap: 0; padding: 12px 14px; }
   .lane > b { width: auto; margin-bottom: 8px; }
@@ -304,3 +367,7 @@ footer .by img { display: block; width: 22px; height: 22px; border-radius: 50%; 
   body { background: #fff; }
   .block { break-inside: avoid; }
 }
+
+/* One line for every icon, whatever its size: strokes are drawn at --stroke on screen rather than scaled with the icon. */
+svg[stroke='currentColor'] { stroke-width: var(--stroke); }
+svg :is(path, circle, rect, line, polyline, polygon, ellipse) { vector-effect: non-scaling-stroke; }

@@ -13,7 +13,7 @@
   import { typeset } from './math';
   import { has } from './prefs.svelte';
   import Row from './Row.svelte';
-  import Save from './Save.svelte';
+  import Save, { tagFor } from './Save.svelte';
 
   // `n` and `i` say where a picture came from (the cell's run count, and its place among the outputs), for its file name.
   let { output, n = null, i = 0 }: { output: Output; n?: number | null; i?: number } = $props();
@@ -129,7 +129,16 @@
       <button class="zoom" tabindex="-1" aria-label="Enlarge {name}" onclick={(e) => zoom(e.currentTarget, src)}>
         <img class="out-image" class:plate={shown.alpha} src={shown.src} alt={name} loading="lazy" decoding="async" />
       </button>
-      {#if !has('nobtn')}<Save src={shown.src} alpha={shown.alpha} tag="figure{n === null ? '' : `-${n}`}{i ? `-${i + 1}` : ''}" />{/if}
+      {#if !has('nobtn')}
+        <span class="pic-acts">
+          <button class="enlarge" tabindex="-1" title="Enlarge" aria-label="Enlarge figure" onclick={(e) => zoom(e.currentTarget, src)}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          </button>
+          <Save src={shown.src} alpha={shown.alpha} tag={tagFor(n, i)} />
+        </span>
+      {/if}
     </span>
   </div>
 {:else if table}

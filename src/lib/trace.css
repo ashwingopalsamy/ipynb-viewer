@@ -29,18 +29,18 @@
   opacity: 0;
   visibility: hidden;
   transform: translate(-50%, 8px) scale(0.97);
-  transition: opacity 150ms var(--in), transform 150ms var(--in), visibility 0s 150ms;
+  transition: opacity var(--t2) var(--in), transform var(--t2) var(--in), visibility 0s var(--t2);
 }
-.tpill.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity 200ms var(--out), transform 250ms var(--pop), visibility 0s; }
+.tpill.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity var(--t2) var(--out), transform var(--t3) var(--pop), visibility 0s; }
 .tpill code { max-width: 16ch; overflow: hidden; text-overflow: ellipsis; font: 600 13px/1 var(--mono); color: var(--fg); }
 .tpill .key { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
 .tpill .key i { width: 10px; height: 10px; box-sizing: border-box; border-radius: 3px; border: 1.5px solid var(--accent); }
 .tpill .key i.use { border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
 .go { display: flex; gap: 2px; margin-left: 2px; }
-.go button { position: relative; isolation: isolate; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-3); transition: transform 200ms var(--rel); }
-.go button::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.go button { position: relative; isolation: isolate; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--fg-3); transition: transform var(--t3) var(--rel); }
+.go button::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
 .go button:hover { color: var(--fg); }
-.go button:hover::before { opacity: 0.08; }
-.go button:active { transform: scale(0.94); transition-duration: 100ms; }
+.go button:hover::before { opacity: var(--hover); }
+.go button:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .go button:focus-visible { outline-offset: -2px; }
 @media (pointer: coarse) { .go button { width: 44px; height: 44px; } .tpill { padding-right: 0; } }

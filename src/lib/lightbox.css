@@ -8,19 +8,19 @@
   backdrop-filter: blur(18px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 200ms var(--out), visibility 0s 200ms;
+  transition: opacity var(--t2) var(--out), visibility 0s var(--t2);
 }
 .lb.on { opacity: 1; visibility: visible; transition-delay: 0s; }
 .lb .lb-box { position: absolute; inset: 0; outline: 0; }
-.lb .lb-view { position: absolute; inset: 0; display: flex; overflow: auto; padding: 64px 24px 56px; overscroll-behavior: contain; }
-.lb .lb-pic { display: block; margin: auto; padding: 0; border-radius: 10px; corner-shape: squircle; cursor: zoom-in; transform: scale(0.97); transition: transform 220ms var(--pop); }
+.lb .lb-view { position: absolute; inset: 0; display: flex; overflow: auto; padding: 64px 24px 72px; overscroll-behavior: contain; }
+.lb .lb-pic { display: block; margin: auto; padding: 0; border-radius: 10px; corner-shape: squircle; cursor: zoom-in; transform: scale(0.97); transition: transform var(--t3) var(--pop); }
 .lb.on .lb-pic { transform: none; }
 .lb .full .lb-pic { cursor: zoom-out; }
-.lb img { display: block; max-width: calc(100vw - 48px); max-height: calc(100vh - 120px); max-height: calc(100dvh - 120px); border-radius: inherit; background: var(--paper); box-shadow: var(--float); }
+.lb img { display: block; max-width: calc(100vw - 48px); max-height: calc(100vh - 136px); max-height: calc(100dvh - 136px); border-radius: inherit; background: var(--paper); box-shadow: var(--float); }
 .lb img.plate { background: #f3f3f5; }
 .lb .full img { max-width: none; max-height: none; }
 
-.lb .lb-x, .lb .lb-go, .lb .lb-count { position: absolute; z-index: 1; }
+.lb .lb-x, .lb .lb-go, .lb .lb-bar { position: absolute; z-index: 1; }
 .lb .lb-x, .lb .lb-go {
   display: grid;
   place-items: center;
@@ -32,23 +32,44 @@
   -webkit-backdrop-filter: blur(22px) saturate(1.7);
   backdrop-filter: blur(22px) saturate(1.7);
   color: var(--fg-2);
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
 .lb .lb-x:hover, .lb .lb-go:hover:not(:disabled) { color: var(--fg); }
-.lb .lb-x:active, .lb .lb-go:active:not(:disabled) { transform: scale(0.94); transition-duration: 100ms; }
+.lb .lb-x:active, .lb .lb-go:active:not(:disabled) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .lb .lb-go:disabled { opacity: 0.35; cursor: default; }
 .lb .lb-x { top: 8px; right: 20px; }
 .lb .lb-go { top: 50%; margin-top: -22px; }
 .lb .lb-prev { left: 16px; }
 .lb .lb-next { right: 16px; }
 .lb .lb-x:focus-visible, .lb .lb-go:focus-visible { outline-offset: 2px; }
-.lb .lb-count { left: 0; right: 0; bottom: 16px; margin: 0; text-align: center; font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-3); pointer-events: none; }
+/* The glass bar at the bottom centre: which figure, then Save and Go to cell. */
+.lb .lb-bar {
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  max-width: calc(100% - 16px);
+  margin: 0 auto;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+}
+.lb .lb-cap { min-width: 0; margin: 0 8px 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.lb .lb-jump { height: var(--ctl); padding: 0 var(--s3); }
 @media (max-width: 720px) {
-  .lb .lb-view { padding: 64px 8px 56px; }
-  .lb img { max-width: calc(100vw - 16px); }
+  .lb .lb-view { padding: 64px 8px calc(116px + env(safe-area-inset-bottom)); }
+  .lb img { max-width: calc(100vw - 16px); max-height: calc(100vh - 180px); max-height: calc(100dvh - 180px - env(safe-area-inset-bottom)); }
   .lb .lb-x { right: 12px; }
   .lb .lb-go { top: auto; margin: 0; }
-  .lb .lb-go, .lb .lb-count { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .lb .lb-go { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  /* the bar rides above the arrows, which keep the bottom corners */
+  .lb .lb-bar { bottom: calc(60px + env(safe-area-inset-bottom)); }
   .lb .lb-prev { left: 16px; }
   .lb .lb-next { right: 16px; }
 }

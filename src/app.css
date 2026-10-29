@@ -62,11 +62,20 @@
   --fs-num: 34px;
   /* 16px at 1.9 draws the same 1.27px line as the 18px toolbar icons at 1.7 */
   --icon: 16px;
-  --stroke: 1.9;
+  /* every icon's line, at every size (see the rule under `button`) */
+  --stroke: 1.3px;
   --t1: 100ms;
   --t2: 160ms;
   --t3: 220ms;
   --t4: 300ms;
+  /* One set of states for every control: a fill of its own ink under the pointer, while it is chosen or its card is open, and while it is
+     held down; and one press, a control shrinking a little (a large surface, a tile or the drop area, a little less). */
+  --hover: 0.08;
+  --held: 0.12;
+  --held-hover: 0.16;
+  --press: 0.14;
+  --press-scale: 0.97;
+  --press-surface: 0.985;
   --fill: color-mix(in srgb, var(--fg) 6%, transparent);
   --track: color-mix(in srgb, var(--fg) 7%, transparent);
   --thumb: #ffffff;
@@ -133,6 +142,12 @@ body {
 
 button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* One line for every icon, whatever its size: strokes are drawn at --stroke on screen rather than scaled with the icon, so a 14px mark in a
+   tab and an 18px tool in the dock read as one set. */
+svg[aria-hidden='true'][stroke='currentColor'] { stroke-width: var(--stroke); }
+svg[aria-hidden='true'][stroke='currentColor'] * { vector-effect: non-scaling-stroke; }
+/* the ring is the keyboard's: Tab, or an arrow moving through a list, brings it; a click or a tap never draws it (App.svelte marks the page) */
+:root:not([data-kb]) :focus-visible { outline: none; }
 
 /* One hover for every control: a fill of the text colour at 8%, behind the content. */
 .icon, .handle, .row { position: relative; isolation: isolate; }
@@ -145,12 +160,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   corner-shape: inherit;
   background: currentColor;
   opacity: 0;
-  transition: opacity 100ms var(--out);
+  transition: opacity var(--t1) var(--out);
 }
-.icon:hover::before, .handle:hover::before, .row:hover::before { opacity: 0.08; }
-.row:active::before { opacity: 0.14; }
+.icon:hover::before, .handle:hover::before, .row:hover::before { opacity: var(--hover); }
+.row:active::before { opacity: var(--press); }
 
-/* header: pills of glass float over the page, the file on the left, Open and the tools on the right */
+/* header: pills of glass float over the page, what is being read on the left and the tools on the right */
 
 /* the header is its own layer, so the page's scroll and bounce never repaint the glass pills under it */
 .bar { position: fixed; z-index: 16; inset: 0 0 auto; height: 56px; pointer-events: none; will-change: transform; }
@@ -166,33 +181,72 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   pointer-events: auto;
 }
 
-.name {
-  gap: 8px;
-  min-width: 0;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  color: var(--fg);
+/* The left pill is what is being read: a chip for each open notebook (a single static one when there is one), then the plus that opens another. */
+.tb { flex: 0 1 auto; min-width: 0; gap: 2px; padding: 4px; }
+@media (min-width: 721px) { .tb { max-width: calc(50vw - 140px); } }
+/* On a wide window the search field holds the header's middle (Search.svelte): the strip keeps clear of it, and the dock's search button,
+   which the field replaces, is not drawn. The room is kept from the first paint, so nothing moves when the field arrives. */
+@media (min-width: 1200px) {
+  :root { --find: clamp(280px, 24vw, 380px); }
+  .tb { max-width: calc(50vw - var(--find) / 2 - 36px); }
+  .tools [data-pop='search'] { display: none; }
 }
-/* The clip box is padded so descenders (g, y, j) sit inside it; the margin keeps the layout where it was. */
-.name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
-.name.idle { font-weight: 500; color: var(--fg-2); }
-/* a file for the name, a heading for the chapter: the icons say which is which */
-.name svg { flex: none; width: 15px; height: 15px; color: var(--fg-3); }
-/* the app's own mark stands in front of the file name, on one line; the name keeps its ellipsis and its descenders */
-.file { display: flex; align-items: center; gap: 8px; min-width: 0; }
-/* a dot after the name says there are edits not yet saved */
-.dirty { flex: none; color: var(--accent); font-size: 18px; line-height: 1; }
-.fname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
+.tb-chip { position: relative; isolation: isolate; display: flex; align-items: center; flex: none; min-width: 0; max-width: min(200px, var(--most, 200px)); height: 36px; border-radius: 999px; color: var(--fg-3); transition: transform var(--t3) var(--rel); }
+.tb-chip::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.tb-chip:hover::before { opacity: var(--hover); }
+.tb-chip:has(.tb-go:active) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
+.tb-chip.on, .tb-chip.one { color: var(--fg); }
+.tb-chip.on::before, .tb-chip.one::before { opacity: var(--held); }
+/* a chip may shrink below its name (min-width 0), so the name gives way inside the pill rather than pushing the chip and the plus out of it;
+   while the chips overflow, the strip caps them at its own width less its two fades (--most, Tabs.svelte), so the one being read can always be seen whole; the one notebook has the whole pill to itself and gives way to its name's length */
+.tb-chip.one { flex: 0 1 auto; max-width: none; }
+.tb-go { display: flex; align-items: center; gap: 7px; flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 4px 0 12px; border-radius: inherit; font: 500 13px/1 var(--sans); color: inherit; }
+.tb-go:focus-visible { outline-offset: -2px; }
+.tb-ico { display: grid; place-items: center; flex: none; width: 14px; height: 16px; }
+.tb-ico svg { color: var(--fg-3); }
+.tb-ico img { display: block; }
+.tb-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-block: 0.2em; margin-block: -0.2em; }
+/* Close has a slot of its own at the chip's end, so the icon never changes: × on the chip being read, × on any chip under the pointer
+   or the keyboard, and otherwise the unsaved dot when there are edits, as an editor's tabs do. */
+.tb-end { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-right: 5px; }
+.tb-end > * { grid-area: 1 / 1; }
+.tb-x { position: relative; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; color: var(--fg-3); }
+.tb-x:hover { background: color-mix(in srgb, var(--fg) calc(var(--hover) * 100%), transparent); color: var(--fg); }
+.tb-end .tb-x { opacity: 0; pointer-events: none; transition: opacity var(--t1) var(--out); }
+.tb-chip:is(.on, .one) .tb-end .tb-x { opacity: 1; pointer-events: auto; }
+.tb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); transition: opacity var(--t1) var(--out); }
+.tb-chip.dirty .tb-end .tb-x { opacity: 0; pointer-events: none; }
+@media (hover: hover) {
+  .tb-chip:hover .tb-end .tb-x { opacity: 1; pointer-events: auto; }
+  .tb-chip.dirty:hover .tb-dot { opacity: 0; }
+}
+/* on touch, with no pointer to be over a chip, the one being read always offers to close */
+@media (hover: none) {
+  .tb-chip.dirty:is(.on, .one) .tb-end .tb-x { opacity: 1; pointer-events: auto; }
+  .tb-chip.dirty:is(.on, .one) .tb-dot { opacity: 0; }
+  .tb-x::after { content: ''; position: absolute; inset: -10px; }
+}
+:root[data-kb] .tb-chip:has(:focus-visible) .tb-end .tb-x { opacity: 1; pointer-events: auto; }
+:root[data-kb] .tb-chip.dirty:has(:focus-visible) .tb-dot { opacity: 0; }
+/* a notebook opened a moment ago comes into the strip; the ones already there do not move */
+.tb-chip.new { animation: rise var(--t3) var(--out); }
+.tb-spin { flex: none; width: 12px; height: 12px; border: 2px solid color-mix(in srgb, var(--fg-2) 18%, transparent); border-top-color: var(--fg-2); border-radius: 50%; animation: tb-spin 800ms linear infinite; }
+@keyframes tb-spin { to { transform: rotate(360deg); } }
+.tb-bad { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
+@media (pointer: coarse) {
+  .tb { padding: 0; }
+  .tb-chip { height: 44px; }
+  .tb .tb-new { width: 44px; height: 44px; }
+}
+@media (forced-colors: active) { .tb-chip.on, .tb-chip.one { outline: 1px solid CanvasText; outline-offset: -1px; } }
 .tools { flex: none; gap: 2px; padding: 4px; margin-left: auto; }
+/* a hairline between the groups of tools */
+.tools .sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: var(--line-2); }
 /* While a card is open the dock names it and widens to the card's width; the active tool's icon is filled. Desktop only: on a phone the dock is the bottom bar. */
 .tool-name { display: none; }
 @media (min-width: 721px) {
   .tools:has(.tool-name:not(:empty)) { min-width: 344px; }
-  .tools:has(.tool-name:not(:empty)) .tool-name { display: block; flex: 1 0 112px; padding: 0 12px 0 16px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: swap 200ms var(--out) both; }
-  .bar:has(.tool-name:not(:empty)) [data-tip]::after { display: none; }
+  .tools:has(.tool-name:not(:empty)) .tool-name { display: block; flex: 1 0 112px; padding: 0 12px 0 11px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: swap var(--t3) var(--out) both; }
 }
 .icon {
   display: grid;
@@ -202,10 +256,10 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   height: 36px;
   border-radius: 999px;
   color: var(--fg-2);
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
 .icon:hover, .handle:hover { color: var(--fg); }
-.icon:active, .handle:active { transform: scale(0.97); transition-duration: 100ms; }
+.icon:active, .handle:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 
 .swap .glyph {
   position: absolute;
@@ -213,7 +267,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   place-items: center;
   opacity: 0;
   transform: rotate(-60deg) scale(0.6);
-  transition: transform 300ms var(--io), opacity 200ms var(--out);
+  transition: transform var(--t4) var(--io), opacity var(--t2) var(--out);
 }
 .swap .glyph.on { opacity: 1; transform: none; }
 
@@ -232,48 +286,63 @@ main { flex: 1; }
   padding: 0;
   text-align: center;
   border-radius: 14px;
-  transition: transform 200ms var(--rel);
-  animation: rise 300ms var(--out) both;
+  transition: transform var(--t3) var(--rel);
+  animation: rise var(--t4) var(--out) both;
 }
-.drop:active { transform: scale(0.99); }
+.drop:active { transform: scale(var(--press-surface)); }
 .drop strong { font-size: clamp(28px, 6vw, 44px); line-height: 1.1; font-weight: 650; letter-spacing: -0.03em; text-wrap: balance; }
 .drop span { color: var(--fg-3); font-size: 16px; }
 .drop:hover span { color: var(--fg-2); }
+.drop.fail:active { transform: none; }
+.drop.fail:hover span { color: var(--fg-3); }
+.drop small { max-width: 46ch; margin-inline: auto; font-size: 13.5px; line-height: 1.5; color: var(--fg-3); text-wrap: pretty; }
+.drop .again { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
 
-/* footer: the last thing on the page, never over it */
+/* footer: the last thing on the page, never over it. Where to go next, the app's home and its source, then who made it. */
 
-.made {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: max-content;
-  max-width: calc(100% - 32px);
-  margin: 0 auto;
-  padding: 0 0 28px;
-  color: var(--fg-3);
-  font-size: 12.5px;
-  text-decoration: none;
-  white-space: nowrap;
+.made { display: grid; justify-items: center; gap: 4px; padding: 0 16px 28px; color: var(--fg-3); font-size: 12.5px; }
+.made nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.made nav a { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; font-weight: 500; color: var(--fg-2); text-decoration: none; white-space: nowrap; transition: color var(--t1) var(--out), transform var(--t3) var(--rel); }
+.made nav a::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.made nav a:hover { color: var(--fg); }
+.made nav a:hover::before { opacity: var(--hover); }
+.made nav a:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
+.made nav a:focus-visible { outline-offset: -2px; }
+.made nav svg { flex: none; color: var(--fg-3); transition: color var(--t1) var(--out); }
+.made nav a:hover svg { color: inherit; }
+/* the arrow says the link leaves the page, and leans out a little when pointed at */
+.made .ext { display: inline-flex; margin-left: -3px; transition: transform var(--t2) var(--out); }
+.made .gh:hover .ext { transform: translate(1.5px, -1.5px); }
+/* the app's mark: its green dot is a cell that ran, and runs once more when pointed at */
+.made .home circle { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .made .home:hover circle { animation: ran 0.5s var(--out); }
 }
+@keyframes ran {
+  40% { transform: scale(1.7); }
+}
+
+.made .by { position: relative; display: flex; align-items: center; gap: 8px; max-width: 100%; color: inherit; text-decoration: none; white-space: nowrap; }
 .made .line { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; }
-.made b { font-weight: 650; letter-spacing: -0.005em; color: var(--fg-2); transition: color 150ms var(--out); }
-.made:hover b, .made:focus-visible b { color: var(--fg); }
-/* The picture is not there until the footer is pointed at; then it comes in from the left of the line, in colour. It sits
+.made b { font-weight: 650; letter-spacing: -0.005em; color: var(--fg-2); transition: color var(--t2) var(--out); }
+.made .by:hover b, .made .by:focus-visible b { color: var(--fg); }
+/* The picture is not there until the line is pointed at; then it comes in from the left of the line, in colour. It sits
    outside the line, so the words do not move when it arrives. */
-.made img { position: absolute; top: -1px; right: calc(100% + 8px); width: 24px; height: 24px; border-radius: 50%; background: var(--well); opacity: 0; transform: translateX(8px) scale(0.6); pointer-events: none; transition: opacity 160ms var(--out), transform 320ms var(--pop), box-shadow 220ms var(--out); }
+.made .by img { position: absolute; top: -1px; right: calc(100% + 8px); width: 24px; height: 24px; border-radius: 50%; background: var(--well); opacity: 0; transform: translateX(8px) scale(0.6); pointer-events: none; transition: opacity var(--t2) var(--out), transform var(--t4) var(--pop), box-shadow var(--t2) var(--out); }
 @media (hover: hover) {
-  .made:hover img { opacity: 1; transform: none; box-shadow: 0 0 0 2px var(--paper), 0 4px 12px rgba(20, 24, 40, 0.22); }
+  .made .by:hover img { opacity: 1; transform: none; box-shadow: 0 0 0 2px var(--paper), 0 4px 12px rgba(20, 24, 40, 0.22); }
 }
-.made:focus-visible img { opacity: 1; transform: none; box-shadow: 0 0 0 2px var(--paper), 0 4px 12px rgba(20, 24, 40, 0.22); }
-/* a heart that beats, lub-dub and a rest; faster while the footer is pointed at */
-.made .heart { flex: none; fill: #ee4b6a; transform-origin: 50% 55%; animation: beat 1.7s ease-in-out infinite; transition: filter 200ms var(--out); }
-.made:hover .heart, .made:focus-visible .heart { animation-duration: 0.85s; filter: drop-shadow(0 0 5px rgba(238, 75, 106, 0.55)); }
-@keyframes beat {
-  0%, 38%, 100% { transform: scale(1); }
-  8% { transform: scale(1.28); }
-  18% { transform: scale(1); }
-  26% { transform: scale(1.18); }
+.made .by:focus-visible img { opacity: 1; transform: none; box-shadow: 0 0 0 2px var(--paper), 0 4px 12px rgba(20, 24, 40, 0.22); }
+/* a heart at rest that beats, lub-dub and a rest, while the line is pointed at; the round stroke softens its tip */
+.made .heart { flex: none; fill: currentColor; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; color: #ee4b6a; transform-origin: 50% 60%; }
+@media (prefers-reduced-motion: no-preference) {
+  .made .by:hover .heart, .made .by:focus-visible .heart { animation: heartbeat 1.2s var(--out) infinite; }
+}
+@keyframes heartbeat {
+  0%, 40%, 100% { transform: none; }
+  10% { transform: scale(1.18); }
+  20% { transform: scale(0.98); }
+  30% { transform: scale(1.1); }
 }
 
 /* notebook */
@@ -325,11 +394,11 @@ main { flex: 1; }
   margin: 21px 0 0 0;
   border-radius: 999px;
   color: var(--fg-3);
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
 .gutter.first .handle { margin-top: 16px; }
 .handle.quiet { visibility: hidden; pointer-events: none; }
-.handle svg, .row svg { flex: none; width: 16px; height: 16px; transition: transform 200ms var(--io); }
+.handle svg, .row svg { flex: none; width: 16px; height: 16px; transition: transform var(--t3) var(--io); }
 .handle[aria-expanded='true'] svg, .row[aria-expanded='true'] svg { transform: rotate(90deg); }
 @media (pointer: coarse) { .handle::after { content: ''; position: absolute; inset: -8px; } }
 
@@ -422,7 +491,7 @@ pre { margin: 0; font-family: var(--mono); }
 
 @keyframes swap { from { opacity: 0; transform: translateY(6px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
-.rise { animation: rise 200ms var(--out) both; }
+.rise { animation: rise var(--t3) var(--out) both; }
 
 @media (max-width: 720px) {
   .notebook { padding-inline: 12px; }
@@ -432,9 +501,9 @@ pre { margin: 0; font-family: var(--mono); }
   /* a transformed or will-change parent would make the dock's fixed position the bar's, 56px tall, not the screen's */
   .bar { will-change: auto; }
   .bar .inner { padding: 8px 12px 0; }
-  .name { padding: 0 16px; }
   .tools { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); justify-content: space-evenly; height: 52px; padding: 0; }
   .bar .icon { width: 44px; height: 44px; flex: 0 1 auto; min-width: 38px; }
+  .tools .sep { display: none; }
   /* a copy is saved with a shift-click, which a phone has not; the button comes with the editing toolbar */
   body:not(:has(> .fmt)) .bar .copy { display: none; }
   .handle { position: absolute; top: 29px; left: calc(var(--bleed) + 12px); margin: 0; z-index: 1; }

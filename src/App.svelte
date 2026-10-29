@@ -7,6 +7,7 @@
   import Opener from './lib/Opener.svelte';
   import OpenPanel from './lib/OpenPanel.svelte';
   import Lucide from './lib/Lucide.svelte';
+  import Mark from './lib/tabs/Mark.svelte';
   import { blank } from './lib/blank';
   import { ui, single, type Pop } from './lib/ui.svelte';
   import { session, host, rewind, reset, type Host } from './lib/edit/session.svelte';
@@ -44,11 +45,10 @@
   const language = $derived(meta ? (meta.language ?? 'python') : null);
 
   // The name the dock gives the card that is open. A card with no name (the save-picture menu hangs from its picture) leaves the dock as it was.
-  const TOOL: Partial<Record<Pop, string>> = { settings: 'Settings', toc: 'Contents', search: 'Search', info: 'Notebook', md: 'Markdown', privacy: 'Privacy', keys: 'Shortcuts', compare: 'Compare' };
-  const tool = $derived(ui.shelf ? 'Figures' : ui.pop ? (TOOL[ui.pop] ?? '') : '');
-
-  let sections = $state(0);
-  let chapter = $state('');
+  const TOOL: Partial<Record<Pop, string>> = { settings: 'Settings', toc: 'Contents', info: 'Notebook', md: 'Markdown', privacy: 'Privacy', keys: 'Shortcuts', compare: 'Compare' };
+  // a card fading out keeps its name until it has gone, so the dock never narrows under it
+  const shown = $derived(ui.pop ?? ui.leaving);
+  const tool = $derived(ui.shelf ? 'Figures' : shown ? (TOOL[shown] ?? '') : '');
 
   let run = 0;
   let depth = 0;
@@ -240,6 +240,8 @@
 
   // A link pasted on the empty screen reloads the page with it, the same way a shared link would arrive.
   const paste = (e: ClipboardEvent) => {
+    // the Open card takes a link pasted while it is up (OpenPanel.svelte)
+    if (ui.pop === 'open') return;
     const text = e.clipboardData?.getData('text') ?? '';
     if (status !== 'ready' && text.includes('http') && (tabs.strip.me !== 'h' || !tabs.strip.list.length)) import('./lib/link').then((m) => m.pasted(text));
   };
@@ -380,7 +382,8 @@
 
   // The strip and its list load when a second notebook opens; until they arrive, the name pill stays.
   $effect(() => {
-    if (tabs.strip.list.length > 1 && !Tabs) Promise.all([import('./lib/tabs/Tabs.svelte'), import('./lib/tabs/TabList.svelte')]).then(([a, b]) => ((Tabs = a.default), (TabList = b.default)));
+    // a tab of its own always sits among others, so its strip loads at once
+    if ((tabs.strip.list.length > 1 || tabs.strip.me !== 'h') && !Tabs) Promise.all([import('./lib/tabs/Tabs.svelte'), import('./lib/tabs/TabList.svelte')]).then(([a, b]) => ((Tabs = a.default), (TabList = b.default)));
   });
 
   // What the tab strip shows of this notebook (the host reads it here, or a frame sends it).
@@ -399,13 +402,32 @@
     if (dirty !== t.startsWith('• ')) document.title = dirty ? `• ${t}` : t.slice(2);
   });
 
+  // Focus rings are the keyboard's alone: Tab, or an arrow moving through a list or the notebook, marks the page and shows them; the
+  // next click or tap clears the mark. An arrow that scrolls the page or moves a caret does not.
+  const WALK = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  function walked(e: KeyboardEvent) {
+    const on = e.target as Element;
+    if (e.key === 'Tab' || (WALK.includes(e.key) && !on.closest?.('input, textarea, [contenteditable]') && on.closest?.('.pop, .tb, [role=radiogroup], .rail, .notebook'))) document.documentElement.toggleAttribute('data-kb', true);
+  }
+
+  // A pointer press ends keyboard mode, and the button pressed keeps its name to itself until the pointer leaves it: a card it closed is
+  // still fading where the name would show.
+  function quiet(e: PointerEvent) {
+    document.documentElement.removeAttribute('data-kb');
+    const tip = (e.target as Element).closest?.('[data-tip]');
+    if (!tip || tip.hasAttribute('data-quiet')) return;
+    tip.setAttribute('data-quiet', '');
+    tip.addEventListener('pointerleave', () => tip.removeAttribute('data-quiet'), { once: true });
+  }
+
   function keys(e: KeyboardEvent) {
+    walked(e);
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key === 'o') return e.preventDefault(), choose();
     // In a tab of its own (a frame), the print key prints this notebook rather than the page around it.
     if (mod && e.key === 'p' && tabs.strip.me !== 'h') return e.preventDefault(), print();
     if (tabs.strip.list.length > 1 && single(e)) {
-      if (e.key === '{' || e.key === '}') return e.preventDefault(), tabs.act.step(e.key === '}' ? 1 : -1);
+      if (e.key === '{' || e.key === '}') return e.preventDefault(), tabs.act.step(e.key === '}' ? 1 : -1, tabs.here());
       if (e.key === 'W') return e.preventDefault(), tabs.act.close(tabs.strip.me);
     }
     if (!session.on || !mod || e.altKey) return;
@@ -418,21 +440,24 @@
   }
 </script>
 
-<svelte:window onkeydown={keys} onbeforeunload={(e) => (session.flush?.(), (session.dirty || session.saving) && e.preventDefault())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
+<svelte:window onkeydown={keys} onpointerdown={quiet} onbeforeunload={(e) => (session.flush?.(), (session.dirty || session.saving) && e.preventDefault())} ondragenter={enter} ondragover={(e) => hasFiles(e) && e.preventDefault()} ondragleave={leave} ondrop={drop} onpaste={paste} />
 
 <input bind:this={picker} type="file" multiple accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden onchange={pick} />
 
 <header class="bar">
   <div class="inner" role="presentation" onpointerdown={hold} onmousedown={hold}>
-    {#if Tabs && tabs.strip.list.length > 1}
-      <Tabs />
-    {:else}
-      <span class="name pill" class:idle={!name} class:two={sections > 1}>
-        <span class="file"><img src="mark.svg" alt="" width="15" height="18" style="flex:none" /><span class="fname">{name || 'ipynb viewer'}</span>{#if session.dirty}<span class="dirty" title="Unsaved edits. ⌘S saves.">•</span>{/if}</span>
-        {#if sections > 1}<span class="chapter"><Lucide name="heading" />{#key chapter}<span>{chapter || '\u00a0'}</span>{/key}</span>{/if}
-      </span>
-    {/if}
-    <Opener />
+    <nav class="tb pill" aria-label="Open notebooks">
+      {#if Tabs && tabs.strip.list.length > 1}
+        <Tabs />
+      {:else}
+        <span class="tb-chip one" class:dirty={session.dirty} title={name || undefined}>
+          <span class="tb-go"><span class="tb-ico"><Mark t={{ status: 'ready', web: !!tabs.mine.link, name }} /></span><span class="tb-nm">{tabs.bare(name) || 'ipynb viewer'}</span></span>
+          <!-- the one notebook closes like a tab: it asks first about unsaved edits, and the last tab to go leaves for the home page -->
+          {#if name}<span class="tb-end">{#if session.dirty}<span class="tb-dot" title="Unsaved edits. ⌘S saves."></span>{/if}<button class="tb-x" aria-label="Close {name}" title="Close" onclick={() => tabs.act.close(tabs.strip.me)}><Lucide name="x" size={14} /></button></span>{/if}
+        </span>
+      {/if}
+      <Opener />
+    </nav>
     <div class="tools pill">
       <span class="tool-name">{tool}</span>
       {#if session.on}<button class="icon" data-keep aria-pressed={session.active !== null} aria-label="Edit mode" data-tip={session.active !== null ? 'Done editing · Esc' : 'Edit mode · e'} onclick={toggleEdit}><Lucide name="pencil" /></button>{/if}
@@ -440,6 +465,7 @@
         <button class="icon" data-keep aria-label="Save edits" data-tip={session.conflict || session.detached ? 'Save a copy · ⌘S' : 'Save · ⌘S'} disabled={session.saving} onclick={(e) => editing.save(e.shiftKey)}><Lucide name="save" /></button>
         {#if !(session.conflict || session.detached)}<button class="icon copy" data-keep aria-label="Save a copy" data-tip="Save a copy · ⇧⌘S" disabled={session.saving} onclick={() => editing.save(true)}><Lucide name="download" /></button>{/if}
       {/if}
+      {#if session.on}<i class="sep" aria-hidden="true"></i>{/if}
       {#if Actions}<Actions />{/if}
       <button class="icon swap" data-keep onclick={toggleTheme} aria-label={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'} data-tip={theme.value === 'dark' ? 'Switch to light' : 'Switch to dark'}>
         <span class="glyph" class:on={theme.value === 'light'}><Lucide name="moon" /></span>
@@ -453,19 +479,32 @@
 
 {#if TabList && tabs.strip.list.length > 1}<TabList />{/if}
 
-{#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:sections bind:chapter bind:replayed bind:reorder />{/if}
+{#if Extras}<Extras cells={rows} raw={cells} {meta} {name} {language} {ready} bind:replayed bind:reorder />{/if}
 
 <main>
   {#if status !== 'ready'}
-    <button class="drop" onclick={choose}>
-      {#if status === 'empty'}
-        <strong>Jupyter notebooks, without Jupyter.</strong>
-        <span>Drop a .ipynb here, or click to choose one.</span>
-      {:else}
-        <strong>{status === 'error' ? 'That one would not open' : 'Fetching the notebook'}</strong>
+    {#if status === 'error'}
+      <!-- a notebook that would not open leaves a way on: another file, or back (a tab of its own closes instead) -->
+      <div class="drop fail" role="alert">
+        <strong>That one would not open</strong>
         <span>{detail || '\u00a0'}</span>
-      {/if}
-    </button>
+        {#if address || tabs.mine.link}<small>Link to the notebook file itself, such as github.com/user/repo/blob/main/notebook.ipynb.</small>{/if}
+        <div class="again">
+          <button class="btn solid" onclick={choose}>Choose a file</button>
+          {#if tabs.strip.me === 'h'}<a class="btn quiet" href={new URL('./', document.baseURI).href}>Back to home</a>{:else}<button class="btn quiet" onclick={() => tabs.act.close(tabs.strip.me)}>Close this tab</button>{/if}
+        </div>
+      </div>
+    {:else}
+      <button class="drop" onclick={choose}>
+        {#if status === 'empty'}
+          <strong>Jupyter notebooks, without Jupyter.</strong>
+          <span>Drop a .ipynb or .md here, or click to choose one.</span>
+        {:else}
+          <strong>Fetching the notebook</strong>
+          <span>{detail || '\u00a0'}</span>
+        {/if}
+      </button>
+    {/if}
   {:else}
     <div class="notebook">
       {#if warnings.length}
@@ -481,9 +520,16 @@
   {/if}
 </main>
 
-<a class="made" href="https://ashwingopalsamy.in" target="_blank" rel="noopener" referrerpolicy="no-referrer">
-  <img src="ashwin.webp" width="22" height="22" alt="" decoding="async" />
-  <span class="line">With love<svg class="heart" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg><span class="sr">by</span><b>Ashwin Gopalsamy</b></span>
-</a>
+<!-- the way to the app's home page and to its source, then who made it; each opens in a new browser tab, so no open notebook is left -->
+<footer class="made">
+  <nav aria-label="About this viewer">
+    <a class="home" href={new URL('./', document.baseURI).href} target="_blank" rel="noopener"><svg viewBox="0 0 40 48" width="13" height="16" aria-hidden="true"><rect width="40" height="48" rx="10" fill="#1d1d1f" /><circle cx="12" cy="13" r="4" fill="#4cc38a" /><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9" /><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55" /></svg>ipynb viewer</a>
+    <a class="gh" href="https://github.com/ashwingopalsamy/ipynb-viewer" target="_blank" rel="noopener" referrerpolicy="no-referrer" aria-label="Contribute on GitHub"><Lucide name="github" size={15} />Contribute<span class="ext"><Lucide name="arrow-up-right" size={12} /></span></a>
+  </nav>
+  <a class="by" href="https://ashwingopalsamy.in" target="_blank" rel="noopener" referrerpolicy="no-referrer">
+    <img src="ashwin.webp" width="22" height="22" alt="" decoding="async" />
+    <span class="line">With love<svg class="heart" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 20.6c-.4 0-.8-.15-1.1-.4C6.1 16.2 3 13.3 3 9.3 3 6.4 5.2 4.2 8 4.2c1.6 0 3 .8 4 2.1 1-1.3 2.4-2.1 4-2.1 2.8 0 5 2.2 5 5.1 0 4-3.1 6.9-7.9 10.9-.3.25-.7.4-1.1.4Z" /></svg><span class="sr">by</span><b>Ashwin Gopalsamy</b></span>
+  </a>
+</footer>
 
 {#if Veil}<Veil on={dragging} label={status === 'ready' ? 'Drop to open in a new tab' : 'Drop to open'} />{/if}

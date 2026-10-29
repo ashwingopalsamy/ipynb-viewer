@@ -5,11 +5,7 @@
   import Pop from './Pop.svelte';
   import './toc.css';
 
-  let {
-    cells,
-    count = $bindable(0),
-    chapter = $bindable(''),
-  }: { cells: readonly Cell[]; count: number; chapter: string } = $props();
+  let { cells, count = $bindable(0) }: { cells: readonly Cell[]; count: number } = $props();
 
   // One outline in one place: tick marks along the right edge, and a popover on a phone, where the edge has no room.
   const LINE = 150;
@@ -33,12 +29,6 @@
   const away = $derived((!!ui.pop && !(ui.pop === 'toc' && desk)) || ui.shelf || !!ui.light || !!ui.shot);
   const found = $derived(outline(cells));
   const entries = $derived(found.headings);
-  const now = $derived(entries[current]?.text ?? '');
-  // The section being read, at the notebook's top level: the last such heading at or above the reading line, else the first.
-  const head = $derived.by(() => {
-    for (let i = Math.max(0, current); i >= 0; i--) if (!entries[i]?.depth) return entries[i]?.text ?? '';
-    return entries.find((h) => !h.depth)?.text ?? '';
-  });
   const at = $derived(Math.max(0, current));
   // A long outline slides under a fixed window that keeps the current row in view.
   const shift = $derived(Math.min(Math.max(0, at - (ROWS >> 1)), Math.max(0, entries.length - ROWS)));
@@ -97,9 +87,6 @@
       marking = 0;
       for (const el of page.querySelectorAll<HTMLElement>('[data-h]')) delete el.dataset.h;
     };
-  });
-  $effect(() => {
-    chapter = now;
   });
 
   const words = (t: string | null) => (t ?? '').replace(/\s+/g, ' ').trim();
@@ -240,5 +227,3 @@
     </nav>
   </Pop>
 {/if}
-
-{#if head && ui.pop !== 'search'}<div class="mid pill" aria-hidden="true">{#key head}<span>{head}</span>{/key}</div>{/if}

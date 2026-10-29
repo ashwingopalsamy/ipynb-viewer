@@ -3,7 +3,7 @@
   import Pop from './Pop.svelte';
   import Seg from './Seg.svelte';
   import Icon from './Lucide.svelte';
-  import { ui } from './ui.svelte';
+  import { ui, showing } from './ui.svelte';
   import { toMarkdown, tokens, type Detail } from './handoff';
   import { findSecrets, redact } from './insight/secrets';
   import { fileName, save, size } from './export';
@@ -44,7 +44,7 @@
   };
 
   // Only worked out while the menu is up: a large notebook should not be rewritten as it streams in.
-  const made = $derived.by(() => (ui.pop === 'md' ? toMarkdown(cells, { file: name, language, outputs: detail, budget }) : null));
+  const made = $derived.by(() => (showing('md') ? toMarkdown(cells, { file: name, language, outputs: detail, budget }) : null));
   // what a notebook gives away by accident stays out of the copy unless the reader says otherwise
   const hits = $derived(made && ui.hide ? findSecrets(cells) : []);
   const text = $derived(made ? (hits.length ? redact(made.text, hits) : made.text) : '');

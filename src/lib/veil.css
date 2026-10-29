@@ -9,7 +9,7 @@
   backdrop-filter: blur(14px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 200ms var(--out);
+  transition: opacity var(--t2) var(--out);
 }
 .veil.on { opacity: 1; }
 .veil .pill {
@@ -19,6 +19,6 @@
   box-shadow: var(--float);
   font-weight: 500;
   transform: scale(0.94);
-  transition: transform 200ms var(--pop);
+  transition: transform var(--t3) var(--pop);
 }
 .veil.on .pill { transform: none; }

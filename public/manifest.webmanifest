@@ -7,7 +7,7 @@
   "scope": "./",
   "display": "standalone",
   "categories": ["developer", "productivity", "utilities"],
-  "file_handlers": [{ "action": "./", "accept": { "application/x-ipynb+json": [".ipynb"] } }],
+  "file_handlers": [{ "action": "./", "accept": { "application/x-ipynb+json": [".ipynb"], "text/markdown": [".md", ".markdown"] } }],
   "launch_handler": { "client_mode": "navigate-new" },
   "background_color": "#f5f5f7",
   "theme_color": "#f5f5f7",

@@ -6,7 +6,8 @@
   align-items: center;
   gap: var(--s3);
   height: 44px;
-  padding: 0 6px 0 var(--s4);
+  /* measured by what is painted: the glyph and the key cap each about 15px from their end, as a header tool's glyph is */
+  padding: 0 15px 0 13px;
   border-radius: 999px;
   background: var(--glass);
   box-shadow: var(--float);
@@ -48,9 +49,9 @@
   font-size: 13.5px;
   line-height: 1.45;
 }
-.hit::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
-.hit:hover::before, .hit:focus-visible::before { opacity: 0.06; }
-.hit:active::before { opacity: 0.1; }
+.hit::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.hit:hover::before, .hit:focus-visible::before { opacity: var(--hover); }
+.hit:active::before { opacity: var(--press); }
 @media (pointer: coarse) { .hit { min-height: 44px; } }
 .hit:focus-visible { outline-offset: -2px; }
 .hit .kind { font: 12px/1.45 var(--mono); color: var(--fg-3); white-space: nowrap; }
@@ -58,3 +59,22 @@
 .hit mark { background: color-mix(in srgb, var(--accent) 24%, transparent); color: var(--fg); border-radius: 3px; }
 .find .none { margin: 0; padding: var(--s2) var(--inset); font-size: var(--fs-sm); color: var(--fg-3); }
 ::highlight(find) { background-color: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; }
+
+/* On a wide window the field stays in the middle of the header, centred on the window and as tall as the pills beside it. It steps up and
+   out of the way while the page is read downward, and back the moment it might be wanted (Search.svelte); only opacity and transform move. */
+.find.centre { position: fixed; z-index: 16; top: 8px; left: 50%; width: var(--find); transform: translateX(-50%); transition: opacity var(--t2) var(--out), transform var(--t3) var(--out); }
+.find.centre.away { opacity: 0; transform: translate(-50%, -8px); pointer-events: none; transition-timing-function: var(--in); transition-duration: var(--t2); }
+.find.centre .field { gap: 10px; cursor: text; }
+/* the glyph at a header tool's size, here and in the card */
+.find .field > svg { flex: none; width: 18px; height: 18px; }
+.find.centre input { font-size: var(--fs-md); }
+.find.centre kbd { flex: none; }
+.find.centre .n { flex: none; white-space: nowrap; }
+.find .walk { display: grid; place-items: center; flex: none; width: 28px; height: 28px; margin: 0 -4px; border-radius: 999px; color: var(--fg-3); }
+.find .walk:hover { background: color-mix(in srgb, var(--fg) calc(var(--hover) * 100%), transparent); color: var(--fg); }
+.find .walk svg { width: 16px; height: 16px; }
+.find .walk:not(.next) svg { transform: rotate(180deg); }
+/* the list hangs under the field, wider than it and centred on the same line */
+.find.centre .res { position: absolute; top: 52px; left: 50%; width: min(520px, calc(100vw - 48px)); transform: translateX(-50%); }
+.hit.at::before { opacity: var(--held); }
+
