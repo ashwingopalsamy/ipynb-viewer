@@ -2,6 +2,34 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
+## 2.1.0 (2026-10-29)
+
+A calmer header with search in its middle, pictures that save as PNG, JPEG or WebP, footers that lead somewhere, and the whole app moving and answering one way.
+
+- The header is two pills. On the left is what you are reading, a chip for each notebook, and a `+` that opens another. The `+` is always a plus, with one notebook or many. On the right are the tools. The section heading in the middle of the header is gone, and so is the section line under the file name on a phone.
+- Tabs size to their names, so short names are no longer cut short to make room. A long name loses its middle, not its end, cut to the width the tab has: two notebooks that start alike still read apart. Close has a place of its own at the end of each tab: always on the tab you are reading, on any other when you point at it, and the unsaved dot sits there until you do; the tab's icon never changes. One notebook on its own gets the same close, which takes you back home. The tab you are on looks the same width on every tab, and switching tabs no longer makes the row of tabs jump.
+- Each tab shows what it holds, in a quiet line drawing: a notebook, a Markdown file or a link. The app's logo no longer repeats on every tab; it stands only in front of the app's own name, before a notebook is open.
+- When the tabs no longer fit, they scroll with fading ends. The mouse wheel scrolls them sideways, and the tab you are on stays in view when the window changes size. `←` `→` move between tabs, `Delete` closes the one in hand, and the list of every tab names the site a linked notebook came from. A long list scrolls and opens on the tab you are on.
+- A new tab no longer blinks the header empty while it loads: the page you are on stays until the new one has drawn its tabs, and the new tab slides in at once in the row you are looking at.
+- On a wide window, search is a field in the middle of the header, centred on the window. It steps out of the way while you read down and comes back when you scroll up, as the page slows to a stop, or when the pointer comes up to the header. Enter and Shift+Enter walk through the matches, with a count, and `Esc` clears them. On a narrower window the search card is centred on the window too.
+- The Open card puts choosing a file first, with `⌘O`, and a link second. Press `⌘V` while the card is open and a copied link opens, with no need to click the field.
+- The tools keep still. The ones only some notebooks have sit at the left, hairlines part the groups, and a tool whose card is open is filled, on a phone too. Search no longer widens the tools, and no tooltip draws over an open card.
+- Every sheet (Settings, the notebook sheet, Markdown, Privacy, Open, the picture dialog) sets its rows on the sheet itself, with no grey boxes around them that looked like the notebook's cells. Sections are parted by a hairline; only code keeps its grey well.
+- The focus ring shows only while you move with the keyboard. A click or a tap, opening a card, or closing one with `Esc` no longer leaves a ring behind.
+- Settings is sorted into Page, Code and Outputs, every row in line, with new page-width pictures. **Show code** and **Show outputs** are back, so the dot on Settings when code or outputs are hidden leads to a switch that brings them back. Privacy, Shortcuts and Home stay at the foot of the sheet when it scrolls.
+- The home page says up front that Markdown files open too: a `.md` reads, and edits, like a notebook of one text cell. Installed as an app, it opens `.md` files as well as `.ipynb`.
+- The questions on the home page are numbered and open one at a time. The privacy page is gone: what it said beyond the home page now sits in the questions (what happens with a link, what is kept, how to check it yourself), and old links to it go to the home page.
+- The footer on the home and guide pages leads with Contribute on GitHub, then a row of links, each with its icon, and a line on who made it, in two even columns on a phone. A guide's footer leads home first. Under a notebook, the footer offers the app's home page and its source, each in a new browser tab so no open notebook is left, above the line on who made it.
+- Every picture has Enlarge and Save under it, always in view rather than on hover, and Save offers PNG, JPEG or WebP at 1 to 3 times the size. The Figures sheet and the full-screen viewer have Save and Go to cell for each figure too. Long tables have Copy as CSV under them, in view.
+- The notebook sheet's Weight shows where the size goes in colour: pictures, other outputs, and code and text, each with its share, and the heaviest cells in the colour of what makes them heavy.
+- A long file name stays inside its tab and gives way with an ellipsis, at every width, reading or editing. While you edit on a window too narrow for the editing bar beside the tabs and tools, the tabs and the reading tools step aside until Done, as they already did on a phone.
+- Near the end of a long notebook, Back to top takes you up to its title. At the very end it rides up with the footer and never covers it.
+- Everything moves and answers the same way: every animation runs on one of four timings, every control has the same hover, chosen and pressed fills and the same press, and every icon is drawn with the same line at every size. The search field's icon and key cap sit the same distance from its two ends. A card that closes now fades out whole, rather than shrinking to an empty bar first, the tools keep their title until it has gone, and the button you just pressed does not pop its name up over it.
+- A notebook that will not open offers Choose a file and Back to home, and for a link, what a good one looks like. Coming back to a notebook offers to continue reading where you stopped, naming the section.
+- The heart in the footer is drawn whole and rests until you point at it. It used to fade on a loop, because another animation had taken its name.
+- Fixed: on a window too narrow for the search bar's full width, opening Search could stop the page's controls from responding.
+- Fixed: the "back to where you stopped" pill rose in the wrong way once the editor had loaded.
+
 ## 2.0.1 (2026-10-29)
 
 New versions arrive with a reload.

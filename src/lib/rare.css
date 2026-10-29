@@ -6,7 +6,7 @@
 .out-image.plate { padding: 12px; background: #f3f3f5; }
 
 
-/* Seldom needed: warnings, raw cells, the chapter under the file name. Loads with the extras. */
+/* Seldom needed: warnings and raw cells. Loads with the extras. */
 .notice {
   margin: 0 0 20px var(--gut);
   font-size: 13.5px;
@@ -33,14 +33,6 @@
   white-space: pre-wrap;
   color: var(--fg-2);
 }
-/* Where the outline lives in a popover, the chapter being read follows the file name. */
-.chapter { display: none; }
-.chapter > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding-block: 0.2em; margin-block: -0.2em; animation: swap 200ms var(--out) both; }
-@media (max-width: 720px) {
-  .name.two { display: grid; gap: 1px; align-content: center; }
-  .name.two .file { font-size: 11.5px; font-weight: 400; color: var(--fg-3); }
-  .chapter { display: flex; flex: 1 1 0; gap: 8px; font-size: 14px; font-weight: 600; color: var(--fg); }
-}
 @media (max-width: 720px) { .notice { margin-left: 0; } }
 
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
@@ -55,7 +47,7 @@
   }
   :root[data-theme='dark'] .hl span { color: var(--shiki-light); font-style: var(--shiki-light-font-style); font-weight: var(--shiki-light-font-weight); }
   :root[data-theme='dark'] .out-image:not(.plate) { filter: none; }
-  .bar, .rail, .made, .acts, .handle, .save, .tpill, .back, .pop, .figs-shelf, .veil, .shot, .lb, .notice-pill { display: none !important; }
+  .bar, .rail, .made, .acts, .pic-acts, .csv-row, .handle, .tpill, .back, .pop, .figs-shelf, .veil, .shot, .lb, .notice-pill { display: none !important; }
   :root[data-pf] .notebook > .cell { zoom: 1; opacity: 1; }
   .notebook { width: 100%; padding: 0; }
   .cell { content-visibility: visible; }
@@ -66,13 +58,20 @@
   .md a { color: inherit; }
 }
 
-/* Tables sort from their header, and copy as CSV from a chip that shows when the pointer is over them */
+/* Tables sort from their header, and copy as CSV from a quiet button in a row under them */
 .notebook :is(.tbl, .rich, .md) thead th { cursor: pointer; user-select: none; }
 .notebook :is(.tbl, .rich, .md) thead th:hover { color: var(--fg); }
 .notebook th[aria-sort='ascending']::after { content: ' \2191'; }
 .notebook th[aria-sort='descending']::after { content: ' \2193'; }
-.csv-box { position: relative; }
-.csv { position: absolute; right: 10px; bottom: 10px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--glass); box-shadow: 0 0 0 1px var(--line), 0 2px 8px rgba(20, 24, 40, 0.14); font-size: 12px; font-weight: 550; opacity: 0; transform: scale(0.94); transition: opacity 150ms var(--out), transform 200ms var(--out); }
-.csv-box:hover > .csv, .csv:focus-visible { opacity: 1; transform: none; }
-@media (hover: none) { .csv { display: none; } }
+/* under the table and starting where it starts, so it reads as the table's own, however narrow the table is; the pill's padding hangs
+   out to the left so its word lines up with the table's edge */
+.csv-row { display: flex; justify-content: flex-start; margin: 0 var(--pr, 20px) 4px 20px; }
+.csv-row .csv { margin-left: calc(-1 * var(--s3)); }
+.md > .csv-row { margin: -0.55em 0 0.2em; }
+.csv { position: relative; isolation: isolate; height: var(--ctl); padding: 0 var(--s3); border-radius: 999px; font: 500 var(--fs-xs)/1 var(--sans); color: var(--fg-3); transition: transform var(--t3) var(--rel); }
+.csv::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.csv:hover { color: var(--fg); }
+.csv:hover::before { opacity: var(--hover); }
+.csv:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
+.csv:focus-visible { outline-offset: -2px; }
 .made:has(+ .made) { padding-bottom: 6px; }

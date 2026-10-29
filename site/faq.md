@@ -2,6 +2,10 @@
 
 Drop the file on ipynb viewer, or click the page and choose it. The notebook is read in your browser, so there is no server to start, no kernel to install and no account to make. Prose, code, math and outputs are shown as a document, and the file is never executed.
 
+## Can it open Markdown files?
+
+Yes. Drop or choose a `.md` file and it opens as a notebook of one text cell, with headings, lists, tables, code blocks and math drawn the same way. You can edit it in place and save it back like any notebook. A Markdown file opens from your disk; links open notebooks.
+
 ## Can I open a notebook from a GitHub link?
 
 Yes. Paste a link to a public notebook into the field on the home page, or open `?url=` followed by the address. GitHub file pages (`github.com/user/repo/blob/branch/path.ipynb`), raw links, gists (`gist.github.com/user/id`), and the GitHub and gist forms of Colab and nbviewer addresses all work. On ipynb.ashwingopalsamy.in these links are fetched through the site's own Worker, so only GitHub files and gists open there. The GitHub Pages mirror fetches any https address that allows other sites to read it. The site you link to is named before anything is fetched, and you decide whether to go ahead.
@@ -16,7 +20,24 @@ Yes. A notebook opened from a GitHub link can be edited like any other. It has n
 
 ## Is my notebook uploaded?
 
-No. A file from your disk is read inside the page and goes nowhere. Once a notebook is open, the page shuts its own network connections, and the browser enforces that, so the Privacy sheet in Settings can count what the page has sent since. A notebook opened from a GitHub link is downloaded to your browser from GitHub and is not stored.
+No. A file from your disk is read inside the page and goes nowhere. Once a notebook is open, the page shuts its own network connections, and the browser enforces that: a policy can be tightened but never loosened for the life of a page, so even a bug in the app could not send the file out. The Privacy sheet in Settings counts what the page has sent since, from the browser's own record. A notebook opened from a GitHub link is downloaded to your browser from GitHub and is not stored.
+
+## What happens when I open a link?
+
+The site is named first, and nothing is fetched until you say yes. The file is downloaded before anything is drawn, so the page can shut its connections after. On ipynb.ashwingopalsamy.in the download goes through a small Worker on the same site, which allows only GitHub files and gists, passes the bytes through, and keeps no record of the address. Cloudflare's stored logs are off; the Worker keeps only counts of how downloads ended, by GitHub host and country, with no address, IP or identifier. The GitHub Pages mirror fetches straight from your browser.
+
+## Does it keep anything about my notebook?
+
+Only where you stopped reading, so it can offer to take you back. After the first visit the app keeps its own files on your device so it works offline, and a new version takes over only when no notebook you are reading would change under you. For tabs opened from links, their web addresses are kept for the browser tab's session, so a reload brings them back; files are never kept.
+
+## How can I check this myself?
+
+1. Open the browser's developer tools and the Network tab.
+2. Switch the wifi off and reload. The app still loads from its offline copy.
+3. Drop a notebook. Nothing is requested.
+4. Open the Privacy sheet in Settings and read the count.
+
+The source is public on GitHub under the MIT licence, and SECURITY.md there says how to report a problem.
 
 ## Does it run the code?
 
@@ -32,7 +53,7 @@ A notebook opened from a link can be up to 50 MB. A file from disk has no limit 
 
 ## How do I share a notebook?
 
-The notebook sheet can make a link that carries the notebook after the `#`. The part after the `#` is never sent to a server, so the link works without anyone hosting the file. Pictures are dropped first and then outputs when the notebook is too long for a link. For a notebook that already lives on GitHub, share the GitHub link as `?url=` instead.
+The notebook sheet can make a link that carries the notebook after the `#`. The part after the `#` is never sent to a server, so the link works without anyone hosting the file. Pictures are dropped first and then outputs when the notebook is too long for a link. Before you share, the same sheet looks for keys and tokens in code and outputs, and Copy as Markdown hides likely secrets unless you turn that off. For a notebook that already lives on GitHub, share the GitHub link as `?url=` instead.
 
 ## Can I export a notebook to Markdown, images or PDF?
 

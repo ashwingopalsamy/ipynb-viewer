@@ -47,22 +47,35 @@
     ui.pop = null;
     onchoose();
   }
+
+  // A link pasted while the card is up opens, with no need to click the field first. A paste into a field is that field's own.
+  function pasted(e: ClipboardEvent) {
+    if (!open || (e.target as Element | null)?.closest?.('input, textarea, [contenteditable]')) return;
+    const text = (e.clipboardData?.getData('text') ?? '').trim();
+    if (!/^https?:\/\/\S+$/i.test(text)) return;
+    e.preventDefault();
+    link = text;
+    go();
+  }
 </script>
 
 <svelte:window
   onkeydown={(e) => e.key === 'Escape' && open && (ui.pop = null)}
   onpointerdown={(e) => open && !(e.target as Element).closest('.pop, [data-pop]') && (ui.pop = null)}
+  onpaste={pasted}
 />
 
-<Pop id="open" label="Open a notebook" width={328} anchor={() => document.querySelector('[data-pop=open]')}>
-  <div class="set">
+<Pop id="open" label="Open a notebook" width={344} anchor={() => document.querySelector('[data-pop=open]')}>
+  <div class="set opener-card">
+    <div class="set-group">
+      <button class="sw opener-pick" onclick={choose}><Icon name="folder-open" /><span>Choose a file<small>or drop one anywhere on the page</small></span><kbd>⌘O</kbd></button>
+    </div>
     <div class="set-group">
       <form class="set-row opener-link" novalidate onsubmit={(e) => (e.preventDefault(), go())}>
         <Icon name="link" />
-        <input type="url" inputmode="url" placeholder="Paste a link to a notebook" aria-label="Link to a notebook" autocomplete="off" spellcheck="false" bind:value={link} />
-        <button type="submit" disabled={!link.trim() || busy}>Open</button>
+        <input type="url" inputmode="url" placeholder="Paste a link" aria-label="Link to a notebook" autocomplete="off" spellcheck="false" bind:value={link} />
+        {#if link.trim()}<button type="submit" disabled={busy}>Open</button>{:else}<kbd>⌘V</kbd>{/if}
       </form>
-      <button class="sw" onclick={choose}><Icon name="folder-open" /><span>Choose a file on this device</span></button>
     </div>
     {#if status}<p class="set-note" class:bad={failed} role="status">{status}</p>{/if}
   </div>

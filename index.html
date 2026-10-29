@@ -4,11 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
-<meta name="description" content="Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
+<meta name="description" content="Open .ipynb notebooks and .md files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="ipynb viewer" />
 <meta property="og:title" content="ipynb viewer: open Jupyter notebooks online, privately" />
-<meta property="og:description" content="Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
+<meta property="og:description" content="Open .ipynb notebooks and .md files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline." />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="theme-color" content="#f5f5f7" />
 <link rel="icon" href="/favicon.svg" />
@@ -29,7 +29,7 @@
       "@id": "https://ipynb.ashwingopalsamy.in/#app",
       "name": "ipynb viewer",
       "url": "https://ipynb.ashwingopalsamy.in/",
-      "description": "Open .ipynb files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline.",
+      "description": "Open .ipynb notebooks and .md files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline.",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Any",
       "browserRequirements": "A current browser with JavaScript",
@@ -48,6 +48,7 @@
         "Cell screenshots",
         "Copy as Markdown",
         "Edit text cells in place and save the notebook back, or a copy of it",
+        "Markdown (.md) files open and edit like a notebook of one text cell",
         "Keyboard shortcuts for every action"
       ],
       "image": "https://ipynb.ashwingopalsamy.in/social-preview.png",
@@ -105,7 +106,7 @@
     <div class="hero">
       <svg class="logo" viewBox="0 0 40 48" aria-hidden="true"><rect width="40" height="48" rx="10" fill="#1d1d1f"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></svg>
       <h1>Jupyter notebooks, <span>without Jupyter.</span></h1>
-      <p class="lede">Drop a file and read it. Nothing runs, and nothing is sent anywhere.</p>
+      <p class="lede">Drop a notebook or a Markdown file and read it. Nothing runs, and nothing is sent anywhere.</p>
       <div class="cta">
         <button class="ask" type="button" data-choose aria-describedby="hint">
           <span class="ask-ico" aria-hidden="true"><svg class="i-up" viewBox="0 0 24 24"><path class="arr" d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg><svg class="i-wait" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.56"/></svg></span>
@@ -126,10 +127,10 @@
     </figure>
   </section>
 
-  <section class="block reveal">
+  <section class="block reveal" id="privacy">
     <h2><i>2</i>Your file stays here.</h2>
     <p>After the first visit the app keeps its own files on your device, <!--fact:files--> files and about <!--fact:offline--> to download once. Open a notebook with the wifi off and it still opens.</p>
-    <p>Once a notebook is open, the page shuts its own connections. The browser enforces that, so even a bug in the app could not send your file out. A picture that lives on the web waits for your yes, and the Privacy sheet in Settings counts what the page has sent since the notebook opened. <a href="privacy/">How the privacy model works</a>.</p>
+    <p>Once a notebook is open, the page shuts its own connections. The browser enforces that, so even a bug in the app could not send your file out. A picture that lives on the web waits for your yes, and the Privacy sheet in Settings counts what the page has sent since the notebook opened. The <a href="#faq">questions</a> below say what happens with a link, what is kept, and how to check it all yourself.</p>
     <figure class="sheet" role="img" aria-label="The Privacy sheet: zero requests, offline copy ready, connections closed.">
       <div class="tally"><b>0</b><span>requests left this page since the notebook opened.</span></div>
       <dl>
@@ -182,7 +183,7 @@
       <li><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="3.5"/><path d="M7 15v-5l2.5 3 2.5-3v5M16 10v5m-2-2 2 2 2-2"/></svg><b>Copy as Markdown</b><span>The notebook as text, for a doc or for a model.</span></li>
       <li><svg viewBox="0 0 24 24"><path d="M15.5 5.5l3 3M5 19l.8-3.6L16.4 4.8a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1L8.6 18.2Z"/></svg><b>Edit in place</b><span>Double-click any text and write. Code and outputs are never touched.</span></li>
       <li><svg viewBox="0 0 24 24"><path d="M12 4.5v9M8.5 10l3.5 3.5 3.5-3.5M5 15.5V18a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18v-2.5"/></svg><b>Save it back</b><span>Into the file you opened, or a copy on your computer, even from a link.</span></li>
-      <li><svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="11" rx="3.5"/><path d="M7.5 11h.01M11 11h.01M14.5 11h.01M8 14h8"/></svg><b>Keyboard</b><span>Every action has a key. Press ? in the app for the list.</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M14.5 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V7.5Z"/><path d="M14.5 3.5v4h4M9 12h6M9 16h4"/></svg><b>Markdown files</b><span>A .md opens too, and reads and edits like a notebook of one text cell.</span></li>
     </ul>
   </section>
 
@@ -209,20 +210,17 @@
   </div>
 </main>
 <footer>
-  <nav class="links" aria-label="Project">
-    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/LICENSE"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>MIT licence</a>
-    <a href="https://github.com/ashwingopalsamy/ipynb-viewer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4M9 18c-4.51 2-5-2-7-2"/></svg>GitHub</a>
-    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/SECURITY.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Security</a>
-    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/CHANGELOG.md"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>Changelog</a>
+  <a class="give" href="https://github.com/ashwingopalsamy/ipynb-viewer" rel="noopener" referrerpolicy="no-referrer"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4M9 18c-4.51 2-5-2-7-2"/></svg>Contribute on GitHub<span class="ext"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10M7 17 17 7"/></svg></span></a>
+  <nav class="links" aria-label="More">
+    <a href="open-from-github/"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Open from GitHub</a>
+    <a href="compare/"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M11 18H8a2 2 0 0 1-2-2V9"/></svg>Compare</a>
+    <a href="agents/"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>For agents</a>
+    <a href="design/"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>Design</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/CHANGELOG.md"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>Changelog</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/SECURITY.md"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Security</a>
+    <a href="https://github.com/ashwingopalsamy/ipynb-viewer/blob/main/LICENSE"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>MIT licence</a>
   </nav>
-  <nav class="links" aria-label="Guides">
-    <a href="open-from-github/">Open from GitHub</a>
-    <a href="privacy/">Privacy</a>
-    <a href="compare/">Compared with nbviewer, GitHub and Colab</a>
-    <a href="agents/">For agents</a>
-    <a href="design/">Design</a>
-  </nav>
-  <p class="by"><a href="https://ashwingopalsamy.in" rel="noopener" referrerpolicy="no-referrer"><img src="/ashwin.webp" width="22" height="22" alt="" decoding="async" />With love by Ashwin Gopalsamy.</a> Not affiliated with Project Jupyter.</p>
+  <p class="by"><a href="https://ashwingopalsamy.in" rel="noopener" referrerpolicy="no-referrer"><img src="/ashwin.webp" width="22" height="22" alt="" decoding="async" /><span class="line">With love<svg class="heart" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 20.6c-.4 0-.8-.15-1.1-.4C6.1 16.2 3 13.3 3 9.3 3 6.4 5.2 4.2 8 4.2c1.6 0 3 .8 4 2.1 1-1.3 2.4-2.1 4-2.1 2.8 0 5 2.2 5 5.1 0 4-3.1 6.9-7.9 10.9-.3.25-.7.4-1.1.4Z"/></svg><span class="sr">by</span><b>Ashwin Gopalsamy</b></span></a><span>Not affiliated with Project Jupyter.</span></p>
 </footer>
 <div class="carry" aria-hidden="true"><span><svg viewBox="0 0 24 24"><path class="arr" d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>Drop to open</span></div>
 <input id="picker" type="file" multiple accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden />

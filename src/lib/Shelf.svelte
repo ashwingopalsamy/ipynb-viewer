@@ -3,6 +3,7 @@
   import { figures, type Figure } from './shelf';
   import { jump, ui } from './ui.svelte';
   import Icon from './Lucide.svelte';
+  import Save, { tagOf } from './Save.svelte';
   import './shelf.css';
 
   let {
@@ -49,10 +50,12 @@
   }
 </script>
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && (open = false)} />
+<!-- Esc that has closed a card (the save menu) is that card's, not the sheet's -->
+<svelte:window onkeydown={(e) => e.key === 'Escape' && !e.defaultPrevented && (open = false)} />
 
 <div class="figs-shelf" class:on={open} role="dialog" aria-modal="true" aria-label="Figures" aria-hidden={!open} onpointerdown={(e) => e.target === e.currentTarget && (open = false)}>
-  <div class="figs-sheet" tabindex="-1" bind:this={sheet} style:--n={Math.min(Math.max(list.length, 1), 2)}>
+  <!-- the save menu hangs from a button in the sheet, so it goes when the sheet moves under it -->
+  <div class="figs-sheet" tabindex="-1" bind:this={sheet} style:--n={Math.min(Math.max(list.length, 1), 2)} onscroll={() => ui.pop === 'figure' && (ui.pop = null)}>
     {#if loaded}
       <header class="dlg-head figs-head"><h2>Figures <span class="figs-n">{list.length}</span></h2><button class="x" aria-label="Close" title="Close · esc" onclick={() => (open = false)}><Icon name="x" /></button></header>
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -64,6 +67,7 @@
             </button>
             <div class="figs-row">
               <span class="figs-no">{f.n === null ? '' : `[${f.n}]`}</span>
+              <Save src={f.src} alpha={f.alpha} tag={tagOf(cells, f)} label />
               <button class="btn quiet figs-jump" onclick={() => go(f.cell)}>Go to cell</button>
             </div>
           </li>

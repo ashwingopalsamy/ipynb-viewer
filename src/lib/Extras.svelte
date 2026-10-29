@@ -27,8 +27,6 @@
     name,
     language,
     ready,
-    sections = $bindable(0),
-    chapter = $bindable(''),
     replayed = $bindable(false),
     reorder = $bindable(),
   }: {
@@ -40,11 +38,11 @@
     name: string;
     language: string | null;
     ready: boolean;
-    sections: number;
-    chapter: string;
     replayed: boolean;
     reorder: ((cells: readonly Cell[]) => Cell[]) | undefined;
   } = $props();
+
+  let sections = $state(0);
 
   $effect(() => {
     reorder = order;
@@ -87,8 +85,17 @@
   $effect(() => {
     if (ui.pop === 'compare' && !Diff) import('./Compare.svelte').then((m) => (Diff = m.default));
   });
+  // On a wide window the search sits in the header from the start, so it loads as soon as there is a notebook.
+  let wide = $state(false);
   $effect(() => {
-    if (ui.pop === 'search' && !Find) import('./Search.svelte').then((m) => (Find = m.default));
+    const q = matchMedia('(min-width: 1200px)');
+    const sync = () => (wide = q.matches);
+    sync();
+    q.addEventListener('change', sync);
+    return () => q.removeEventListener('change', sync);
+  });
+  $effect(() => {
+    if ((ui.pop === 'search' || (ready && wide)) && !Find) import('./Search.svelte').then((m) => (Find = m.default));
   });
   $effect(() => {
     if (ui.trace && !Pill) import('./Trace.svelte').then((m) => (Pill = m.default));
@@ -101,11 +108,24 @@
     if (on.matches?.('.notebook th')) import('./tables').then((m) => m.sort(on as HTMLTableCellElement));
     else if (!has('notrace') && on.closest?.('.notebook .src')) trace().then((m) => m.onClick(e, cells, language));
   }
-  // a table offers its CSV once the pointer has reached it
-  const near = (e: MouseEvent) => {
-    const t = (e.target as Element).closest?.('.notebook table');
-    if (t) import('./tables').then((m) => m.offer(t as HTMLTableElement));
-  };
+  // Tables arrive as cells draw: one watch on the page, one pass per frame, and the CSV button comes without waiting for the pointer.
+  $effect(() => {
+    const page = ready ? document.querySelector('.notebook') : null;
+    if (!page) return;
+    let queued = 0;
+    const pass = () => {
+      queued = 0;
+      if (page.querySelector('table, .csv-row')) import('./tables').then((m) => m.sweep(page));
+    };
+    const later = () => (queued ||= requestAnimationFrame(pass));
+    later();
+    const watch = new MutationObserver(later);
+    watch.observe(page, { childList: true, subtree: true });
+    return () => {
+      watch.disconnect();
+      cancelAnimationFrame(queued);
+    };
+  });
   $effect(() => {
     if (ui.trace && has('notrace')) trace().then((m) => m.clear());
   });
@@ -134,8 +154,8 @@
   // The cell the reader has picked: the one holding keyboard focus (a click on a cell focuses it), else the one at the reading line.
   const picked = () => (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('.notebook > [data-cell]') ?? reading();
 
-  // The notebook is one tab stop; arrows move between its handles and rows.
-  const ITEMS = '.notebook .handle:not(.quiet), .notebook .row:not(.closed), .notebook .snap, .notebook .copy, .notebook .save, .notebook .zoom';
+  // The notebook is one tab stop; arrows move between its handles and rows. A picture is a stop of its own only when no Enlarge button follows it.
+  const ITEMS = '.notebook .handle:not(.quiet), .notebook .row:not(.closed), .notebook .snap, .notebook .copy, .notebook .enlarge, .notebook .save, .notebook .zoom:last-child';
   let stop: HTMLElement | undefined;
   const items = () => [...document.querySelectorAll<HTMLElement>(ITEMS)];
   function park(el: HTMLElement | undefined) {
@@ -221,13 +241,13 @@
   }
 </script>
 
-<svelte:window onmouseover={near} onkeydown={keys} onscroll={moved} onpointerdown={away} onclick={pick} onfocusin={(e) => {
+<svelte:window onkeydown={keys} onscroll={moved} onpointerdown={away} onclick={pick} onfocusin={(e) => {
     const on = e.target as Element;
     if (on.matches?.(ITEMS)) park(on as HTMLElement);
     if (on.closest?.('.bar')) document.querySelector('.bar')?.removeAttribute('data-hush');
   }} />
 
-<Toc {cells} bind:count={sections} bind:chapter />
+<Toc {cells} bind:count={sections} />
 <Menus />
 <Net cells={raw} {name} {ready} />
 <Privacy />

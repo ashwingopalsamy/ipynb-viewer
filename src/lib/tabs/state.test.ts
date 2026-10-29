@@ -77,7 +77,7 @@ describe('saved', () => {
 
 describe('shared state', () => {
   it('starts as one notebook that is its own tab, with no strip', () => {
-    expect(strip).toEqual({ list: [], active: 'h', me: 'h' });
+    expect(strip).toEqual({ list: [], active: 'h', me: 'h', x: 0 });
     expect(mine).toEqual({ name: '', status: 'loading', dirty: false, key: '', link: '' });
     expect(hooks.keep()).toBe(false);
   });

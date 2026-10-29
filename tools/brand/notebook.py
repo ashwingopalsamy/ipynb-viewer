@@ -122,7 +122,7 @@ print(f"k is between {lo:.4f} and {hi:.4f} (95%)")""", {'tqdm': 200}),
 
 The next cell prints a report in colour; the viewer keeps terminal colours, so PASS is green and WARN amber. The cell after it prints 31 lines. Past 24, the first 12 and the last 8 show and the rest sits behind a "lines hidden" row.
 
-> **Try it.** Click that row to open the rest. Turn Trim off in Settings, the sliders icon, to see long outputs in full."""),
+> **Try it.** Click that row to open the rest. Turn off Trim long outputs in Settings, the sliders icon, to see long outputs in full."""),
 ('code', """GREEN, AMBER, RESET = "\\033[32m", "\\033[33m", "\\033[0m"
 
 print(f"{GREEN}PASS{RESET}  residuals centred on zero (mean {residual.mean():+.2f} °C)")
@@ -221,7 +221,7 @@ print("Scale token set:", SCALE_API_TOKEN[:5] + "…")"""),
 
 | You have | Do this |
 |---|---|
-| A notebook file | Drop it anywhere on the page, press `⌘O` (`Ctrl O` elsewhere), or use Open at the top left |
+| A notebook file | Drop it anywhere on the page, press `⌘O` (`Ctrl O` elsewhere), or use the + at the top left |
 | A notebook on GitHub, or a gist | Open, then paste the link. Colab and nbviewer addresses for GitHub files work too |
 | A link someone made with the notebook sheet | Open it. The notebook is in the address after the `#` |
 | A Markdown file | Drop it. It reads, and edits, like a one-cell notebook |
@@ -230,10 +230,9 @@ To open a GitHub notebook straight from an address, put `?url=` and the link aft
 
 **Make it comfortable.** Settings, the sliders icon, holds:
 
-- **Text size** and **page width**: narrow, centred or wide.
-- **Serif** for text cells, and **Wrap** and **Line numbers** for code.
-- **Run info** for the counts beside each cell, and **Trim** for long outputs.
-- **Spotlight**, which dims all but the cell you read.
+- **Page**: text size, width (narrow, centred or wide), **Serif** for text cells, and **Spotlight**, which dims all but the cell you read.
+- **Code**: **Show code**, **Wrap long lines**, **Line numbers** and **Run counts** beside each cell.
+- **Outputs**: **Show outputs**, **Trim long outputs**, and whether pictures from the web load.
 - **Run order**, which appears when a notebook's cells ran out of order and lays them out as they ran.
 - **Shortcuts**, with the full key list and a switch that turns the single keys off.
 

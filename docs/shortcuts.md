@@ -19,9 +19,13 @@ Single keys act on the cell you are reading, except `c` and `o`, which act on th
 | `m` | Copy as Markdown |
 | `i` | Notebook sheet: secrets, requirements, weight |
 | `/` | Search the notebook (also `⌘K` or `Ctrl K`) |
+| `Enter` `⇧Enter` | In the search field on a wide window, the next or previous match; `esc` clears the search |
 | `?` | This list |
 | `esc` | Close a popover or a picture |
 | `⌘O` or `Ctrl O` | Open a file |
+| `⌘V` or `Ctrl V` | With the Open card up, open the copied link |
+| `←` `→` `Home` `End` | On the tabs, move between them; `Delete` closes the one in hand |
+| `↑` `↓` | In the list of every tab, move through it |
 | `↑` `↓` `Home` `End` | Move between the controls in the notebook, which is one Tab stop |
 
 ## Editing

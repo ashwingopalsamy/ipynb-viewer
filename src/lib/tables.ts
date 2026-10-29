@@ -41,14 +41,22 @@ export const csv = (rows: readonly (readonly string[])[]) => rows.map((r) => r.m
 
 const toCsv = (table: HTMLTableElement) => csv([...table.rows].map((r) => [...r.cells].map((c) => c.textContent?.trim() ?? '')));
 
-const offered = new WeakSet<Element>();
+/** The button rows, each with the table it copies. */
+const owners = new WeakMap<Element, HTMLTableElement>();
 
-/** A small button on a table that copies it as CSV, added the first time the pointer reaches it. */
+/** What a table's button row follows: the table's frame, and the line of row and column counts under it when there is one. */
+function above(table: HTMLTableElement) {
+  const frame = table.closest('.tbl') ?? table;
+  return frame.nextElementSibling?.matches('.foot') ? frame.nextElementSibling : frame;
+}
+
+/** A quiet "Copy as CSV" button in a row under a table of four rows or more, never over its data. */
 export function offer(table: HTMLTableElement) {
-  const box = table.parentElement;
-  if (!box || offered.has(table) || table.rows.length < 4) return;
-  offered.add(table);
-  box.classList.add('csv-box');
+  const at = above(table);
+  const next = at.nextElementSibling;
+  if (!at.parentElement || (next && owners.get(next) === table) || table.rows.length < 4 || table.parentElement?.closest('table')) return;
+  const row = document.createElement('div');
+  row.className = 'csv-row';
   const b = document.createElement('button');
   b.className = 'csv';
   b.textContent = 'Copy as CSV';
@@ -61,5 +69,16 @@ export function offer(table: HTMLTableElement) {
     }
     setTimeout(() => (b.textContent = 'Copy as CSV'), 1600);
   };
-  box.append(b);
+  row.append(b);
+  owners.set(row, table);
+  at.after(row);
+}
+
+/** Gives every table under `root` its button, and takes away the button of a table that has since been drawn again. */
+export function sweep(root: ParentNode) {
+  for (const row of root.querySelectorAll('.csv-row')) {
+    const table = owners.get(row);
+    if (!table?.isConnected || above(table).nextElementSibling !== row) row.remove();
+  }
+  for (const table of root.querySelectorAll('table')) offer(table);
 }

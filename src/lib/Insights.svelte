@@ -3,7 +3,7 @@
   import Pop from './Pop.svelte';
   import Icon from './Lucide.svelte';
   import Seg from './Seg.svelte';
-  import { ui, jump } from './ui.svelte';
+  import { ui, jump, showing } from './ui.svelte';
   import { findSecrets, redact } from './insight/secrets';
   import { needs } from './insight/needs';
   import { weigh, clean, type Strip } from './insight/weight';
@@ -17,10 +17,12 @@
   let { cells, meta, name }: { cells: readonly Cell[]; meta: NotebookMeta | null; name: string } = $props();
 
   const open = $derived(ui.pop === 'info');
+  // what the sheet shows is worked out while it can be seen, fading out included
+  const shown = $derived(showing('info'));
   // worked out only while the sheet is up: a large notebook should not be rescanned as it streams in
-  const hits = $derived(open ? findSecrets(cells) : []);
-  const need = $derived(open ? needs(cells, meta) : null);
-  const weight = $derived(open ? weigh(cells) : null);
+  const hits = $derived(shown ? findSecrets(cells) : []);
+  const need = $derived(shown ? needs(cells, meta) : null);
+  const weight = $derived(shown ? weigh(cells) : null);
   const secrets = $derived(hits.filter((h) => h.tier === 'secret').length);
   const label = (n: number | null, id: string) => (n !== null ? `[${n}]` : `#${cells.findIndex((c) => c.id === id) + 1}`);
   const verdict = $derived(
@@ -100,6 +102,22 @@
   }
 
   const top = $derived(weight?.heavy[0]?.bytes || 1);
+  // the file in three parts, always in this order, so a part keeps its place and its colour (panel.css)
+  const parts = $derived.by(() => {
+    if (!weight) return [];
+    const all = weight.total || 1;
+    return [
+      { name: 'Pictures', bytes: weight.images, hue: 'var(--part-pic)' },
+      { name: 'Other outputs', bytes: weight.outputs - weight.images, hue: 'var(--part-out)' },
+      { name: 'Code and text', bytes: weight.total - weight.outputs, hue: 'var(--part-src)' },
+    ].map((p) => ({ ...p, share: p.bytes / all }));
+  });
+  const held = $derived(parts.filter((p) => p.bytes > 0));
+  const lead = $derived(held.length ? held.reduce((a, p) => (p.bytes > a.bytes ? p : a)) : null);
+  const pct = (share: number) => (share > 0 && share < 0.01 ? '<1' : String(Math.round(share * 100)));
+  // a heaviest cell takes the colour of what it holds
+  const PICTURE = /^(?:PNG|JPEG|SVG|GIF|WEBP|BMP|AVIF)$/;
+  const hue = (what: string) => (PICTURE.test(what) ? 'var(--part-pic)' : 'var(--part-out)');
 
   type Tab = 'share' | 'run' | 'weight';
   const TABS: [Tab, string][] = [
@@ -112,7 +130,7 @@
 </script>
 
 <Pop id="info" label="About this notebook" width={344} lead={false} anchor={() => document.querySelector('[data-pop=info]')}>
-  {#if open}
+  {#if shown}
     <div class="set">
       <div class="set-ctl wide">
         <Seg label="Notebook" options={TABS} value={tab} onchange={(t) => (tab = t)} />
@@ -153,19 +171,32 @@
               <p class="set-note">{need?.installs.length ? `It installs ${need.installs.join(', ')} for itself.` : need?.language && need.language !== 'python' && need.language.toLowerCase() !== 'r' ? 'Packages are listed for Python and R notebooks.' : 'No packages beyond the standard library.'}</p>
             {/if}
           {:else if weight}
-            <div class="set-group">
-              <div class="set-meter">
-                <div class="weigh" role="img" aria-label="Outputs are {Math.round((weight.outputs / (weight.total || 1)) * 100)} percent of the file"><i style:width="{(weight.images / (weight.total || 1)) * 100}%"></i><i style:width="{((weight.outputs - weight.images) / (weight.total || 1)) * 100}%"></i></div>
-              </div>
-              <div class="set-kv"><span>In all</span><b>{size(weight.total)}</b></div>
-              <div class="set-kv"><span>Outputs</span><b>{size(weight.outputs)}{weight.images ? `, ${size(weight.images)} pictures` : ''}</b></div>
-              {#each weight.heavy.slice(0, 3) as h}
-                <button class="set-find" onclick={() => see(h.cell)}><span>{h.what} <small>{label(h.n, h.cell)}</small></span><i class="meter"><i style:width="{Math.max(3, (h.bytes / top) * 100)}%"></i></i><em>{size(h.bytes)}</em></button>
-              {/each}
+            <div class="stat">
+              <b>{size(weight.total)}</b>
+              <span>In all</span>
+              {#if lead}<small>{pct(lead.share)}% {lead.name.toLowerCase()}</small>{/if}
             </div>
+            {#if held.length}
+              <div class="weigh" role="img" aria-label="Share of the file: {parts.map((p) => `${p.name.toLowerCase()} ${pct(p.share)} percent`).join(', ')}">
+                {#each held as p}<i style:flex-grow={p.bytes} style:--part={p.hue} title="{p.name} · {size(p.bytes)} · {pct(p.share)}%"></i>{/each}
+              </div>
+              <div class="set-group">
+                {#each held as p}
+                  <div class="set-kv"><i class="hue" style:--part={p.hue}></i><span>{p.name}</span><b>{size(p.bytes)} · {pct(p.share)}%</b></div>
+                {/each}
+              </div>
+            {/if}
+            {#if weight.heavy.length}
+              <p class="set-cat">Heaviest cells</p>
+              <div class="set-group">
+                {#each weight.heavy.slice(0, 3) as h}
+                  <button class="set-find" onclick={() => see(h.cell)}><span>{h.what} <small>{label(h.n, h.cell)}</small></span><i class="meter" style:--part={hue(h.what)}><i style:width="{Math.max(3, (h.bytes / top) * 100)}%"></i></i><em>{size(h.bytes)}</em></button>
+                {/each}
+              </div>
+            {/if}
             <div class="set-group">
-              <button class="set-action" onclick={() => saveCopy('images')} disabled={!weight.images}><Icon name="download" />No pictures</button>
-              <button class="set-action" onclick={() => saveCopy('outputs')} disabled={!weight.outputs}><Icon name="download" />No outputs</button>
+              <button class="set-action" onclick={() => saveCopy('images')} disabled={!weight.images}><Icon name="download" />Save without pictures</button>
+              <button class="set-action" onclick={() => saveCopy('outputs')} disabled={!weight.outputs}><Icon name="download" />Save without outputs</button>
             </div>
           {/if}
         </div>

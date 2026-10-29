@@ -11,7 +11,7 @@
   backdrop-filter: blur(16px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 200ms var(--out), visibility 0s 200ms;
+  transition: opacity var(--t2) var(--out), visibility 0s var(--t2);
 }
 .shot.on { opacity: 1; visibility: visible; transition-delay: 0s; }
 
@@ -27,7 +27,7 @@
   box-shadow: var(--float);
   outline: 0;
   transform: translateY(8px) scale(0.98);
-  transition: transform 220ms var(--pop);
+  transition: transform var(--t3) var(--pop);
 }
 .shot.on .dlg { transform: none; }
 
@@ -43,9 +43,9 @@
 .swatches { display: flex; align-items: center; justify-content: space-between; padding: 0; }
 .swatch { position: relative; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: inset 0 0 0 1px var(--line-2); }
 .swatch.none { background: linear-gradient(to top right, transparent calc(50% - 1px), var(--fg-3) calc(50% - 1px), var(--fg-3) calc(50% + 1px), transparent calc(50% + 1px)), var(--well-2); }
-.swatch::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--fg); opacity: 0; transform: scale(0.88); transition: opacity 150ms var(--out), transform 220ms var(--rel); }
+.swatch::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--fg); opacity: 0; transform: scale(0.88); transition: opacity var(--t2) var(--out), transform var(--t3) var(--rel); }
 .swatch[aria-checked='true']::after { opacity: 1; transform: none; }
-.swatch:active { transform: scale(0.94); }
+.swatch:active { transform: scale(var(--press-scale)); }
 .swatch:focus-visible { outline-offset: 5px; }
 
 .ctl footer { display: flex; flex-direction: column; gap: var(--s2); padding: var(--s2) var(--pad) var(--s4); background: var(--paper); }

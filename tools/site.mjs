@@ -191,6 +191,6 @@ ${paths.map((p) => `  <url><loc>${ORIGIN}${p}</loc></url>`).join('\n')}
 </urlset>
 `,
 );
-// The viewer used to be its own page; links already shared keep working.
-writeFileSync(new URL('_redirects', dist), '/viewer / 301\n/viewer/* / 301\n');
+// The viewer used to be its own page, and so did privacy (now on the home page); links already shared keep working.
+writeFileSync(new URL('_redirects', dist), '/viewer / 301\n/viewer/* / 301\n/privacy / 301\n/privacy/* / 301\n');
 console.log(`dist ready for Cloudflare (${hashes.size} inline script hashed)`);
