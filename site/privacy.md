@@ -29,7 +29,7 @@ A notebook opened from a link has to be downloaded. The viewer names the site fi
 
 ## The offline copy
 
-After the first visit the app keeps its own files on your device through a service worker. Opening a notebook then makes no request at all. A new version waits until the old tabs close, so files never change under a notebook you are reading. Nothing about a notebook is stored apart from where you stopped reading.
+After the first visit the app keeps its own files on your device through a service worker. Opening a notebook then makes no request at all. A new version takes over on the next load when it is the app's only window, and otherwise once the other windows close, so files never change under a notebook you are reading. Nothing about a notebook is stored apart from where you stopped reading.
 
 ## Secrets before you share
 
