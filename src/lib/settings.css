@@ -3,21 +3,19 @@
 .set { display: flex; flex-direction: column; gap: var(--s2); }
 .set > .rise { display: flex; flex-direction: column; gap: var(--s2); }
 
-/* section label: 16px above it, 6px to its own group */
-.set-cat { margin: var(--s2) 0 -2px; padding: 0 var(--inset); font: 600 var(--fs-cap)/14px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
-.set > .set-cat:first-child { margin-top: var(--s1); }
+/* section label: a hairline above it parts it from what came before, 6px to its own rows */
+.set-cat { margin: var(--s1) 0 -2px; padding: var(--s3) var(--inset) 0; border-top: 1px solid var(--line); font: 600 var(--fs-cap)/14px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+.set-cat:first-child { margin-top: var(--s1); padding-top: 0; border-top: 0; }
 /* helper text: 6px under the group it explains */
 .set-note { margin: -2px 0 0; padding: 0 var(--inset); font-size: var(--fs-xs); line-height: 16px; color: var(--fg-3); text-wrap: pretty; }
 .set-note:empty { display: none; }
 .set-note.bad { color: var(--danger); }
 
-/* a group: rows flush, hairlines between them that start where the text does, corners clipped */
-.set-group { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border-radius: var(--r-group); corner-shape: squircle; background: var(--well); }
-.set-group > * { position: relative; isolation: isolate; }
-.set-group > :first-child { border-top-left-radius: inherit; border-top-right-radius: inherit; corner-shape: inherit; }
-.set-group > :last-child { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; corner-shape: inherit; }
-.set-group > * + * { background-image: linear-gradient(var(--line), var(--line)); background-repeat: no-repeat; background-position: 100% 0; background-size: calc(100% - var(--sep, var(--inset))) 1px; }
-.set-group > :has(> svg:first-child), .set-group > :has(> .ico-swap:first-child), .set-group > .set-ledger { --sep: calc(var(--inset) + var(--icon) + var(--s3)); }
+/* a group: its rows sit on the sheet itself, with no box around them, so a sheet never looks like a notebook's cells; a row that acts
+   lights up under the pointer, rounded on its own. Two groups in a row are parted by a hairline. */
+.set-group { display: grid; grid-template-columns: minmax(0, 1fr); }
+.set-group > * { position: relative; isolation: isolate; border-radius: var(--r-group); corner-shape: squircle; }
+.set-group + .set-group { padding-top: var(--s2); border-top: 1px solid var(--line); }
 
 /* a label and its control; the label column is fixed so every control starts and ends on the same lines */
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-height: max(var(--row), calc(var(--ctl) + 12px)); padding: 0 var(--inset); font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
@@ -25,6 +23,8 @@
 .set-row > span { white-space: nowrap; }
 .set-row:has(> .set-ctl) > span { flex: 0 0 var(--lab); overflow: hidden; text-overflow: ellipsis; }
 .set-ctl { flex: 1 1 0; min-width: 176px; }
+/* a row that starts with an icon: its 16 + 12 leave the 344px sheet 96 for the label, 12, and 168 for the control, which gives way on a sheet any narrower rather than overflow */
+.set-row:has(> svg:first-child) > .set-ctl { min-width: 0; }
 .set-ctl.wide { width: 100%; min-width: 0; }
 .set-ctl .seg { width: 100%; }
 .set-row.warn > svg { color: var(--danger); }
@@ -35,19 +35,21 @@
 @media (max-width: 360px) {
   .set-row:has(> .set-ctl) { flex-wrap: wrap; row-gap: 6px; padding-block: 10px; }
   .set-row:has(> .set-ctl) > span, .set-ctl { flex: 1 0 100%; min-width: 0; }
+  .set-row:has(> svg:first-child) > span { flex: 1 1 0; }
+  .set-row:has(> svg:first-child) > .set-ctl { flex-basis: calc(100% - var(--icon) - var(--s3)); margin-left: calc(var(--icon) + var(--s3)); }
 }
 
 /* the text-size stepper: the segmented track, three parts, the size in the middle; a part under the pointer rises like a thumb */
 .set-ctl.step { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; height: var(--ctl); padding: 2px; border-radius: 999px; background: var(--track); }
 .set-ctl.step > * { position: relative; display: grid; place-items: center; height: 100%; }
 .set-ctl.step > * + *::before { content: ''; position: absolute; top: 30%; bottom: 30%; left: -0.5px; width: 1px; background: var(--line-2); transition: opacity var(--t2) var(--out); }
-.set-ctl.step button { border-radius: 999px; color: var(--fg-2); transition: background-color var(--t1) var(--out), color var(--t1) var(--out); }
+.set-ctl.step button { border-radius: 999px; color: var(--fg-2); transition: background-color var(--t1) var(--out), color var(--t1) var(--out), transform var(--t3) var(--rel); }
 .set-ctl.step button:hover:not(:disabled) { background: var(--thumb); box-shadow: var(--thumb-shadow); color: var(--fg); }
 .set-ctl.step button:hover:not(:disabled)::before, .set-ctl.step button:hover:not(:disabled) + *::before { opacity: 0; }
 .set-ctl.step button:disabled { opacity: 0.35; cursor: default; }
 .set-ctl.step button:focus-visible { outline-offset: 0; }
-.set-ctl.step b { display: block; font-weight: 600; line-height: 1; transition: transform var(--t1) var(--out); }
-.set-ctl.step button:active:not(:disabled) b { transform: scale(0.86); }
+.set-ctl.step b { display: block; font-weight: 600; line-height: 1; }
+.set-ctl.step button:active:not(:disabled) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .set-ctl.step .s { font-size: 12px; }
 .set-ctl.step .l { font-size: 16px; }
 .set-ctl.step output { overflow: hidden; font: 600 var(--fs-sm)/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--fg); }
@@ -65,8 +67,8 @@
 .st[data-s='on']::before { background: var(--accent); opacity: 1; }
 .st[data-s='wait']::before, .st[data-s='busy']::before { background: var(--wait); opacity: 1; }
 .st[data-s='bad']::before { background: var(--danger); opacity: 1; }
-.st[data-s='busy']::before { animation: beat 1.2s var(--io) infinite; }
-@keyframes beat { 50% { opacity: 0.3; } }
+.st[data-s='busy']::before { animation: breathe 1.2s var(--io) infinite; }
+@keyframes breathe { 50% { opacity: 0.3; } }
 
 /* the hero numeral: the number spans two lines of text whose heights add up to its own (18 + 16 = 34) */
 .stat { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s3); padding: var(--s1) var(--inset); }
@@ -85,6 +87,8 @@
 .set-foot { display: flex; gap: var(--s2); margin-top: var(--s1); padding-top: var(--s2); border-top: 1px solid var(--line); }
 .set-foot > * { flex: 1 1 0; }
 .set-foot > .btn { padding-inline: var(--s2); }
+/* in the settings sheet, which scrolls, the foot stays at the bottom of the sheet with paper behind it; it reaches down over the sheet's padding so nothing shows beneath it */
+#pop-settings .set-foot { position: sticky; z-index: 1; bottom: calc(-1 * var(--pad)); margin-bottom: calc(-1 * var(--pad)); padding-bottom: var(--pad); background: var(--paper); }
 
 /* the requests: the host first; the folder gives way before the file name, so a long address loses its middle; focus (a tap) shows it whole */
 .set-ledger { display: grid; grid-template-columns: minmax(0, 1fr); max-height: 176px; margin: 0; padding: var(--s1) 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
@@ -100,8 +104,8 @@
 /* rows that act: a find, an action; hover and press tint the row the same way a switch row does */
 .set-find, .set-action { display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: var(--row); padding: 0 var(--inset); text-align: left; font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
 .set-find::before, .set-action::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t1) var(--out); }
-.set-find:hover::before, .set-action:hover:not(:disabled)::before { opacity: 0.06; }
-.set-find:active::before, .set-action:active:not(:disabled)::before { opacity: 0.1; }
+.set-find:hover::before, .set-action:hover:not(:disabled)::before { opacity: var(--hover); }
+.set-find:active::before, .set-action:active:not(:disabled)::before { opacity: var(--press); }
 .set-find:focus-visible, .set-action:focus-visible { outline-offset: -2px; }
 .set-action > svg, .set-action .ico-swap { color: var(--fg-3); }
 .set-action:disabled { opacity: 0.35; cursor: default; }
@@ -110,8 +114,8 @@
 .set-find code { min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--fs-xs)/16px var(--mono); color: var(--fg-2); }
 .set-find .meter { flex: 0 0 84px; }
 .set-find em { flex: none; font-style: normal; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--fg-2); }
-.set-meter { padding: var(--s3) var(--inset) 10px; }
-.set-code { display: flex; align-items: center; gap: var(--s2); min-height: var(--row); padding: 6px 6px 6px var(--inset); }
+/* code stays in the well it has on the page */
+.set-code { display: flex; align-items: center; gap: var(--s2); min-height: var(--row); padding: 6px 6px 6px var(--inset); background: var(--well); }
 .set-code code { flex: 1; min-width: 0; font: var(--fs-xs)/16px var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .set-code button { flex: none; display: grid; place-items: center; width: var(--ctl); height: var(--ctl); border-radius: 999px; color: var(--fg-2); }
 .set-code button:hover { background: var(--fill); color: var(--fg); }

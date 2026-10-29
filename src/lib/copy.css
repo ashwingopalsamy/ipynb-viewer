@@ -9,19 +9,19 @@
   isolation: isolate;
   border-radius: 999px;
   color: var(--fg-3);
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
-.copy::before, .snap::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
+.copy::before, .snap::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
 .copy:hover, .snap:hover { color: var(--fg); }
-.copy:hover::before, .snap:hover::before { opacity: 0.08; }
-.copy:active, .snap:active { transform: scale(0.94); transition-duration: 100ms; }
+.copy:hover::before, .snap:hover::before { opacity: var(--hover); }
+.copy:active, .snap:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .copy:focus-visible, .snap:focus-visible { outline-offset: -2px; }
 @media (pointer: coarse) {
   .copy::after, .snap::after { content: ''; position: absolute; inset: -6px; }
   .acts { gap: 12px; }
 }
 
-.copy svg { position: absolute; inset: 0; margin: auto; transition: transform 200ms var(--io), opacity 150ms var(--out); }
+.copy svg { position: absolute; inset: 0; margin: auto; transition: transform var(--t3) var(--io), opacity var(--t2) var(--out); }
 .copy .k { opacity: 0; transform: scale(0.6); }
 .copy.done { color: var(--fg); }
 .copy.done .c { opacity: 0; transform: scale(0.6); }

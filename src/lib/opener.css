@@ -1,10 +1,15 @@
-/* The open control beside the file name, and its card: one row for a link, one row for a file on this device. */
-.opener { width: 44px; height: 44px; }
-.opener-link { padding-right: 6px; }
-.opener-link:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: -2px; }
+/* The Open card: a file on this device first, a link second. */
+.opener-pick > span { font-weight: 600; letter-spacing: -0.01em; }
+.opener-pick small { font-weight: 400; letter-spacing: 0; }
+/* the link row is a field: a quiet fill of its own, under the file row with no hairline between them */
+.opener-card .set-group + .set-group { padding-top: 0; border-top: 0; }
+.opener-link { padding-right: var(--inset); background: var(--track); }
+:root[data-kb] .opener-link:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: -2px; }
 .opener-link > svg { color: var(--fg-3); }
 .opener-link input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; outline: 0; font: var(--fs-md) var(--sans); color: var(--fg); }
 .opener-link input::placeholder { color: var(--fg-3); opacity: 1; }
-.opener-link button { flex: none; height: var(--ctl); padding: 0 14px; border-radius: 999px; background: var(--fg); color: var(--paper); font: 600 var(--fs-sm)/1 var(--sans); transition: transform 200ms var(--rel); }
-.opener-link button:active:not(:disabled) { transform: scale(0.97); transition-duration: var(--t1); }
+.opener-link button { flex: none; height: var(--ctl); margin-right: -6px; padding: 0 14px; border-radius: 999px; background: var(--fg); color: var(--paper); font: 600 var(--fs-sm)/1 var(--sans); transition: transform var(--t3) var(--rel); animation: open-in var(--t2) var(--pop); }
+.opener-link button:active:not(:disabled) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .opener-link button:disabled { opacity: 0.35; cursor: default; }
+@keyframes open-in { from { opacity: 0; transform: scale(0.9); } }
+@media (hover: none) { .opener-card .opener-link kbd { display: none; } }

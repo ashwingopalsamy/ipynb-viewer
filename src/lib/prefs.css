@@ -34,15 +34,15 @@
 [data-pf~='nocnt'] .cnt { font-size: 0; }
 
 /* spotlight: the cell under the reading line stays bright; the rest steps back, and a hover or focus brings it forward */
-[data-pf~='spot'] .notebook > .cell { opacity: 0.55; transition: opacity 250ms var(--out); }
+[data-pf~='spot'] .notebook > .cell { opacity: 0.55; transition: opacity var(--t2) var(--out); }
 [data-pf~='spot'] .notebook > .cell.lit, [data-pf~='spot'] .notebook > .cell:hover, [data-pf~='spot'] .notebook > .cell:focus-within { opacity: 1; }
 
 /* a header that gets out of the way while reading down */
-[data-pf~='hush'] .bar { transition: transform 250ms var(--io); }
+[data-pf~='hush'] .bar { transition: transform var(--t3) var(--io); }
 [data-pf~='hush'] .bar[data-hush] { transform: translateY(-100%); }
 /* on a phone the dock is a child of the bar and stays; only the top row steps away */
 @media (max-width: 720px) {
   [data-pf~='hush'] .bar[data-hush] { transform: none; }
-  [data-pf~='hush'] .name { transition: transform 250ms var(--io); }
-  [data-pf~='hush'] .bar[data-hush] :is(.name, .opener) { transform: translateY(-64px); }
+  [data-pf~='hush'] .tb { transition: transform var(--t3) var(--io); }
+  [data-pf~='hush'] .bar[data-hush] .tb { transform: translateY(-64px); }
 }

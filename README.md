@@ -27,13 +27,13 @@
 
 ## Read a notebook
 
-Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` anywhere on the page. No notebook to hand? **Demo**, at the top right of the home page, loads one that is also a tour of the app: a note beside each feature says what to press, and the last sections list everything else. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
+Open [ipynb.ashwingopalsamy.in](https://ipynb.ashwingopalsamy.in/) and drop a `.ipynb` notebook or a Markdown `.md` file anywhere on the page. No notebook to hand? **Demo**, at the top right of the home page, loads one that is also a tour of the app: a note beside each feature says what to press, and the last sections list everything else. To see an [example notebook](https://ipynb.ashwingopalsamy.in/?url=https%3A%2F%2Fgithub.com%2Fashwingopalsamy%2Fipynb-viewer%2Fblob%2Fmain%2Fexamples%2Fcooling-coffee.ipynb) open from a GitHub link, follow that link.
 
 The file never leaves your browser. There is no server to send it to, and no code in it ever runs. A notebook opened from a link is the one exception on the hosted copy: the site's Worker fetches public GitHub files and gists for the page, which keeps its policy at `connect-src 'self'`, and keeps no record of them. After the first visit the app works with the network off, and once a notebook is open the page closes its own connections. If you only want to see what a notebook says, you no longer need a kernel for it.
 
 ## Read several notebooks
 
-Open a second notebook and the first stays where it is. Choose it from the Open button or with `⌘O`, drop one or more files on the page, or paste a link into the Open card, and each one opens in a tab of its own. The tabs sit in the header where the file name was, and when they no longer fit, a count button lists them all. `{` and `}` step between tabs, `W` closes the one you are reading, and opening the same file or link again brings its tab forward instead of a second copy.
+Open a second notebook and the first stays where it is. Choose it from the `+` beside the file name or with `⌘O`, drop one or more files on the page, or paste a link into the Open card, and each one opens in a tab of its own. The tabs sit in the header where the file name was, and when they no longer fit, they scroll and a count button lists them all. `{` and `}` step between tabs, `W` closes the one you are reading, and opening the same file or link again brings its tab forward instead of a second copy.
 
 Reload the page and the tabs you opened from a link come back. The ones you opened from files do not, because the page cannot read a file again without you.
 
@@ -62,6 +62,7 @@ Nothing is uploaded: edits stay in the page until you save, and saving writes to
 
 ### Reading
 
+- **Reads Markdown too.** A `.md` file opens as a notebook of one text cell, with math, tables and code drawn the same way, and edits and saves like any notebook.
 - **Reads like a document.** Prose is set in Inter and code in JetBrains Mono, with math typeset and every code cell highlighted, in light or dark.
 - **Holds several at once.** Notebooks open as tabs in the header, side by side, each with its own privacy settings.
 - **Knows where you are.** A slim rail on the right tracks the chapter you are in and opens into the full outline. When you come back to a notebook, it offers to pick up where you stopped.

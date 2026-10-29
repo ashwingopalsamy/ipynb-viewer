@@ -1,30 +1,31 @@
-/* The save button on a picture, the menu it opens, and the pill buttons shared with the screenshot dialog. */
-.save {
-  position: absolute;
-  z-index: 2;
-  right: 10px;
-  bottom: 10px;
+/* The row under a picture (Enlarge and Save, the same round buttons as a cell's camera and copy), and the save menu they open. */
+.pic-acts { display: flex; justify-content: flex-end; margin: 2px -8px 0 0; }
+.enlarge, .save {
+  position: relative;
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
+  isolation: isolate;
   border-radius: 999px;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 0 0 1px var(--line), 0 2px 8px rgba(20, 24, 40, 0.14);
-  color: var(--fg-2);
-  opacity: 0;
-  transform: scale(0.92);
-  transition: opacity 150ms var(--out), transform 200ms var(--rel);
+  color: var(--fg-3);
+  transition: transform var(--t3) var(--rel);
+}
+.enlarge::before, .save::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.enlarge:hover, .save:hover, .save[aria-expanded='true'] { color: var(--fg); }
+.enlarge:hover::before, .save:hover::before { opacity: var(--hover); }
+.save[aria-expanded='true']::before { opacity: var(--held); }
+.enlarge:active, .save:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
+.enlarge:focus-visible, .save:focus-visible { outline-offset: -2px; }
+@media (pointer: coarse) {
+  .enlarge::after, .save::after { content: ''; position: absolute; inset: -6px; }
+  .pic-acts { gap: 12px; }
 }
 .zoom { display: block; padding: 0; border-radius: 10px; corner-shape: squircle; cursor: zoom-in; }
 .zoom:focus-visible { outline-offset: 2px; }
-.pic:hover .save, .pic:focus-within .save, .save[aria-expanded='true'] { opacity: 1; transform: none; }
-.save:hover { color: var(--fg); }
-.save:active { transform: scale(0.94); transition-duration: 100ms; }
-.save:focus-visible { outline-offset: 2px; }
-@media (pointer: coarse) {
-  .save { opacity: 0.92; transform: none; }
-  .save::after { content: ''; position: absolute; inset: -6px; }
-}
+
+/* the same action with its word, in the figures sheet and the viewer */
+.btn.save-btn { height: var(--ctl); padding: 0 var(--s3); }
+
+/* the menu opens above the figures sheet and the viewer (both 30) */
+#pop-figure { z-index: 40; }

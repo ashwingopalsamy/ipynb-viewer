@@ -154,6 +154,10 @@ async function world(href = `${ORIGIN}/`, start: Start = {}) {
     hello(id: string) {
       this.msg(this.frame(id), { t: 'hello' });
     },
+    /** The frame's word that its strip is on screen, after which the host may show it. */
+    painted(id: string) {
+      this.msg(this.frame(id), { t: 'painted' });
+    },
   };
   return w;
 }
@@ -263,6 +267,7 @@ describe('open', () => {
     expect(w.frame('t1').on).toBe(false);
     expect(w.active()).toBe('h');
     w.api.open([{ link: 'b.ipynb' }]);
+    w.painted('t2');
     expect(w.frame('t1').inert).toBe(true);
     expect(w.frame('t2').inert).toBe(false);
     expect(w.frame('t2').on).toBe(true);
@@ -362,9 +367,41 @@ describe('open', () => {
 });
 
 describe('go and step', () => {
+  it('keeps the page on screen until a new tab has drawn its strip, while every strip already marks it', async () => {
+    const w = await world();
+    w.api.open([{ link: 'a.ipynb' }]);
+    expect(w.active()).toBe('t1');
+    expect(w.frame('t1').on).toBe(false);
+    expect(w.app.inert).toBe(false);
+    w.painted('t1');
+    expect(w.frame('t1').on).toBe(true);
+    expect(w.app.inert).toBe(true);
+  });
+
+  it('shows a tab that never says it has drawn after a moment', async () => {
+    const w = await world();
+    w.api.open([{ link: 'a.ipynb' }]);
+    vi.advanceTimersByTime(1199);
+    expect(w.frame('t1').on).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(w.frame('t1').on).toBe(true);
+  });
+
+  it('forgets a tab still drawing itself when another is chosen', async () => {
+    const w = await world();
+    w.api.open([{ link: 'a.ipynb' }]);
+    w.api.go('h');
+    w.painted('t1');
+    vi.advanceTimersByTime(5000);
+    expect(w.frame('t1').on).toBe(false);
+    expect(w.active()).toBe('h');
+  });
+
   it('shows one frame, hides the page behind it, and says so on the root', async () => {
     const w = await world();
     w.api.open([{ link: 'a.ipynb' }, { link: 'b.ipynb' }]);
+    w.painted('t1');
+    w.painted('t2');
     expect(w.active()).toBe('t2');
     expect(w.frames.map((f) => [f.on, f.inert])).toEqual([
       [false, true],
@@ -389,6 +426,7 @@ describe('go and step', () => {
   it('puts keyboard focus in the frame it shows, and takes it out of the page on return', async () => {
     const w = await world();
     w.api.open([{ link: 'a.ipynb' }]);
+    w.painted('t1');
     expect(w.frame('t1').contentWindow.focus).toHaveBeenCalledTimes(1);
     w.api.go('h');
     expect(w.doc.activeElement.blur).toHaveBeenCalledTimes(1);
@@ -398,6 +436,7 @@ describe('go and step', () => {
     const w = await world();
     vi.stubGlobal('scrollY', 640);
     w.api.open([{ link: 'a.ipynb' }]);
+    w.painted('t1');
     expect(w.scrollTo).not.toHaveBeenCalled();
     vi.stubGlobal('scrollY', 0);
     w.api.go('h');
@@ -408,6 +447,8 @@ describe('go and step', () => {
     const w = await world();
     vi.stubGlobal('scrollY', 300);
     w.api.open([{ link: 'a.ipynb' }, { link: 'b.ipynb' }]);
+    w.painted('t1');
+    w.painted('t2');
     vi.stubGlobal('scrollY', 0);
     w.api.go('t1');
     w.api.go('h');
@@ -686,6 +727,7 @@ describe('close', () => {
   it('moves to the tab before when the last one is closed', async () => {
     const w = await world();
     w.api.open([{ link: 'a.ipynb' }, { link: 'b.ipynb' }]);
+    w.painted('t1');
     await w.api.close('t2');
     expect(w.active()).toBe('t1');
     expect(w.frame('t1').on).toBe(true);
@@ -701,6 +743,7 @@ describe('close', () => {
   it('cancels the load timer of a frame it closes', async () => {
     const w = await world();
     w.api.open([{ link: 'a.ipynb' }, { link: 'b.ipynb' }]);
+    w.painted('t2');
     expect(vi.getTimerCount()).toBe(2);
     await w.api.close('t1');
     expect(vi.getTimerCount()).toBe(1);
@@ -793,6 +836,7 @@ describe('close', () => {
   it('moves on to the next tab when this page\u2019s own notebook was the one on show', async () => {
     const w = await world();
     w.api.open([{ link: 'a.ipynb' }, { link: 'b.ipynb' }], true);
+    w.painted('t1');
     await w.api.close('h');
     expect(w.ids()).toEqual(['t1', 't2']);
     expect(w.active()).toBe('t1');
@@ -877,9 +921,9 @@ describe('messages from frames', () => {
     expect(tabsMsg[1]).toBe(ORIGIN);
     expect(tabsMsg[0].active).toBe('t2');
     expect(tabsMsg[0].list).toEqual([
-      { id: 'h', name: 'notebook', status: 'ready', dirty: false, web: false },
-      { id: 't1', name: 'a.ipynb', status: 'loading', dirty: false, web: true },
-      { id: 't2', name: 'b.ipynb', status: 'loading', dirty: false, web: true },
+      { id: 'h', name: 'notebook', status: 'ready', dirty: false, web: false, from: '', born: 0 },
+      { id: 't1', name: 'a.ipynb', status: 'loading', dirty: false, web: true, from: '', born: expect.any(Number) },
+      { id: 't2', name: 'b.ipynb', status: 'loading', dirty: false, web: true, from: '', born: expect.any(Number) },
     ]);
     expect(w.sent(w.frame('t2'), 'tabs')).toEqual([]);
     expect(structuredClone(tabsMsg[0])).toEqual(tabsMsg[0]);

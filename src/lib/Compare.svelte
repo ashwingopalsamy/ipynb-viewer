@@ -2,7 +2,7 @@
   import type { Cell } from './notebook';
   import type { Change } from './insight/diff';
   import Pop from './Pop.svelte';
-  import { ui, jump } from './ui.svelte';
+  import { ui, jump, showing } from './ui.svelte';
   import './info.css';
   import './settings.css';
 
@@ -32,7 +32,7 @@
 {/snippet}
 
 <Pop id="compare" label="Changes" width={560} lead={false} anchor={() => document.querySelector('.bar')}>
-  {#if ui.pop === 'compare' && r}
+  {#if showing('compare') && r}
     <div class="set">
       <p class="diff-head">From <b>{ui.cmp!.name}</b> to this notebook</p>
       {#if !r.changes.length}

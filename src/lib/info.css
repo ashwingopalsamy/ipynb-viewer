@@ -5,7 +5,7 @@
 .diff-tally { display: flex; flex-wrap: wrap; gap: 4px var(--s3); margin: 0; padding: 0 var(--inset); }
 .change { display: grid; gap: 6px; width: 100%; padding: 10px var(--inset); text-align: left; font-size: var(--fs-sm); }
 button.change::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t1) var(--out); }
-button.change:hover::before { opacity: 0.06; }
+button.change:hover::before { opacity: var(--hover); }
 button.change:focus-visible { outline-offset: -2px; }
 .change header { display: flex; align-items: center; gap: var(--s2); color: var(--fg-2); }
 .change pre { margin: 0; overflow-x: auto; font: var(--fs-xs)/1.5 var(--mono); white-space: pre; }

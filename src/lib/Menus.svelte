@@ -5,6 +5,7 @@
   import { ui, prefs, setKeys } from './ui.svelte';
   import { layout, setWidth, type Width } from './width.svelte';
   import { has, set, zoom, setZoom, SIZES } from './prefs.svelte';
+  import { view, setCode, setOut, hold } from './fold.svelte';
   import { net, setMode, type Mode } from './netstate.svelte';
   import './panel.css';
   import './settings.css';
@@ -51,6 +52,9 @@
     setZoom(SIZES[Math.min(SIZES.length - 1, Math.max(0, size + by))]);
   };
   const fromSettings = () => document.querySelector('[data-pop=settings]') ?? bar();
+  // Showing or hiding a layer keeps the cell at the reading line where it is, as the c and o keys do.
+  const reading = () => [...document.querySelectorAll<HTMLElement>('.notebook > [data-cell]')].findLast((c) => c.getBoundingClientRect().top <= 140);
+  const layer = (change: () => void) => hold(reading() ?? document.body, change, 'cell');
 </script>
 
 {#snippet opt(label: string, icon: Lucide, on: boolean, flip: () => void, sub: string)}
@@ -67,10 +71,12 @@
     <p class="set-cat">Page</p>
     <div class="set-group">
       <div class="set-row">
+        <Icon name="move-horizontal" />
         <span>Width</span>
         <div class="set-ctl"><Seg label="Width" options={WIDTHS} value={layout.value} onchange={setWidth} item={widthIcon} /></div>
       </div>
       <div class="set-row">
+        <Icon name="a-large-small" />
         <span>Text size</span>
         <div class="set-ctl step" role="group" aria-label="Text size">
           <button aria-label="Smaller text" disabled={size <= 0} onclick={() => step(-1)}><b class="s">A</b></button>
@@ -78,26 +84,25 @@
           <button aria-label="Larger text" disabled={size >= SIZES.length - 1} onclick={() => step(1)}><b class="l">A</b></button>
         </div>
       </div>
-    </div>
-
-    <p class="set-cat">Text</p>
-    <div class="set-group">
       {@render opt('Serif', 'type', has('serif'), () => set('serif', !has('serif')), 'Text cells in a book face')}
-      {@render opt('Wrap', 'wrap', has('wrap'), () => set('wrap', !has('wrap')), 'Long code lines wrap')}
-      {@render opt('Line numbers', 'order', has('ln'), () => set('ln', !has('ln')), 'Beside every line of code')}
+      {@render opt('Spotlight', 'focus', has('spot'), () => set('spot', !has('spot')), 'Dim all but the cell you read')}
     </div>
 
-    <p class="set-cat">Cells</p>
+    <p class="set-cat">Code</p>
     <div class="set-group">
-      {@render opt('Run info', 'hash', runInfo, () => (set('nocnt', runInfo), set('nodot', runInfo)), 'Run counts beside each cell')}
-      {@render opt('Trim', 'scissors', !has('notrim'), () => set('notrim', !has('notrim')), 'Shorten long outputs')}
-      {@render opt('Spotlight', 'focus', has('spot'), () => set('spot', !has('spot')), 'Dim all but the cell you read')}
+      {@render opt('Show code', 'code', view.code, () => layer(() => setCode(!view.code)), 'Source of every code cell')}
+      {@render opt('Wrap long lines', 'wrap', has('wrap'), () => set('wrap', !has('wrap')), 'Instead of scrolling sideways')}
+      {@render opt('Line numbers', 'order', has('ln'), () => set('ln', !has('ln')), 'Beside every line of code')}
+      {@render opt('Run counts', 'hash', runInfo, () => (set('nocnt', runInfo), set('nodot', runInfo)), 'Beside each cell')}
       {#if ui.scrambled}{@render opt('Run order', 'shuffle', ui.replayed, () => (ui.replayed = !ui.replayed), 'Cells in the order they ran')}{/if}
     </div>
 
-    <p class="set-cat">Pictures</p>
+    <p class="set-cat">Outputs</p>
     <div class="set-group">
+      {@render opt('Show outputs', 'terminal', view.out, () => layer(() => setOut(!view.out)), 'What each cell printed or drew')}
+      {@render opt('Trim long outputs', 'scissors', !has('notrim'), () => set('notrim', !has('notrim')), 'Shorten very long text')}
       <div class="set-row">
+        <Icon name="image" />
         <span>Web pictures</span>
         <div class="set-ctl"><Seg label="Web pictures" options={MODES} value={net.mode} onchange={setMode} /></div>
       </div>

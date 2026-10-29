@@ -10,7 +10,7 @@
   margin-top: calc(var(--span) * -0.5px - 12px);
 }
 /* While a panel is open the ticks step aside; they come back when it closes. */
-.rail.away { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 150ms var(--out), visibility 0s 150ms; }
+.rail.away { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--t2) var(--out), visibility 0s var(--t2); }
 .stack { display: block; width: 100%; height: 100%; padding: 12px 0; cursor: default; }
 .stack:focus-visible { outline-offset: -6px; border-radius: 12px; }
 .ticks { position: relative; display: block; height: 100%; clip-path: inset(0 -200px); }
@@ -23,7 +23,7 @@
   height: 20px;
   padding-right: 14px;
   transform: translateY(calc(var(--y) * 1px - var(--slide) * 1px));
-  transition: transform 300ms var(--io), opacity 300ms var(--out);
+  transition: transform var(--t4) var(--io), opacity var(--t4) var(--out);
 }
 .tk {
   position: relative;
@@ -33,9 +33,9 @@
   background: var(--fg-3);
   opacity: 0.75;
   transform-origin: 100% 50%;
-  transition: transform 250ms var(--io), opacity 150ms var(--out);
+  transition: transform var(--t3) var(--io), opacity var(--t2) var(--out);
 }
-.tk::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity 150ms var(--out); }
+.tk::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t2) var(--out); }
 .tr.near .tk { opacity: 1; }
 .tr.now .tk { opacity: 1; transform: scale(1.5, 1.4); }
 .tr.now .tk::after { opacity: 1; }
@@ -53,7 +53,7 @@
   color: var(--fg-3);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 200ms var(--out);
+  transition: opacity var(--t2) var(--out);
 }
 .rail:hover .lbl, .rail.pin .lbl, .rail:has(:focus-visible) .lbl { opacity: 0 !important; }
 
@@ -76,13 +76,13 @@
   visibility: hidden;
   transform: translate(10px, -50%) scale(0.98);
   transform-origin: 100% 50%;
-  transition: opacity 140ms var(--in) 140ms, transform 140ms var(--in) 140ms, visibility 0s 280ms;
+  transition: opacity var(--t2) var(--in) var(--t2), transform var(--t2) var(--in) var(--t2), visibility 0s calc(var(--t2) * 2);
 }
 .rail:hover .panel, .rail.pin .panel, .rail:has(:focus-visible) .panel {
   opacity: 1;
   visibility: visible;
   transform: translate(0, -50%);
-  transition: opacity 200ms var(--out) 60ms, transform 220ms var(--pop) 60ms, visibility 0s;
+  transition: opacity var(--t2) var(--out) var(--t1), transform var(--t3) var(--pop) var(--t1), visibility 0s;
 }
 
 .t {
@@ -101,8 +101,8 @@
   line-height: 30px;
   color: var(--fg-3);
 }
-.t::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity 100ms var(--out); }
-.t:hover::before { opacity: 0.06; }
+.t::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
+.t:hover::before { opacity: var(--hover); }
 .t.near, .t.top { color: var(--fg-2); }
 .t.top { font-weight: 500; }
 .t[aria-current] { color: var(--fg); font-weight: 600; }
@@ -129,8 +129,3 @@
   .tr.now .lbl { opacity: 1; color: var(--fg); }
   :root[data-toc] .notebook { padding-right: max(24px, calc(232px - max(0px, (100% - var(--measure)) / 2))); }
 }
-
-/* The top-level section being read, on a pill of its own in the middle of the header; it needs the room the other pills leave. */
-.mid { position: fixed; z-index: 10; top: 8px; left: 50%; display: none; max-width: calc(100vw - 40px - 816px); padding: 0 22px; transform: translateX(-50%); font: 600 14px/1 var(--sans); letter-spacing: -0.01em; color: var(--fg); pointer-events: none; }
-.mid span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; animation: swap 200ms var(--out) both; }
-@media (min-width: 1024px) { :root:not([data-width='narrow']) .mid { display: flex; } }

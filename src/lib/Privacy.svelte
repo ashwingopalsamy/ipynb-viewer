@@ -3,7 +3,7 @@
   import Icon from './Lucide.svelte';
   import Glyph from './Icon.svelte';
   import { net, sites, forget } from './netstate.svelte';
-  import { ui } from './ui.svelte';
+  import { ui, showing } from './ui.svelte';
   import './panel.css';
   import './net.css';
   import './settings.css';
@@ -38,7 +38,7 @@
 </script>
 
 <Pop id="privacy" label="Privacy" width={344} lead={false} anchor={() => document.querySelector('[data-pop=settings]') ?? document.querySelector('.bar')}>
-  {#if open}
+  {#if showing('privacy')}
     <div class="set">
       <div class="stat" aria-live="polite">
         {#key others.length}<b class="roll">{others.length}</b>{/key}
@@ -73,7 +73,7 @@
 
       <div class="set-foot">
         <button class="btn quiet" class:done={cleared} onclick={() => (forget(), (cleared = true))} disabled={cleared}><span class="ico-swap"><Icon name="history" /><Icon name="check" /></span>{cleared ? 'Forgotten' : 'Forget choices'}</button>
-        <a class="btn quiet" href={new URL('privacy/', document.baseURI).href} target="_blank" rel="noopener"><Icon name="arrow-up-right" />How this works</a>
+        <a class="btn quiet" href={new URL('./#privacy', document.baseURI).href} target="_blank" rel="noopener"><Icon name="arrow-up-right" />How this works</a>
       </div>
     </div>
   {/if}

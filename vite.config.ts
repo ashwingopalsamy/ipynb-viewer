@@ -112,9 +112,10 @@ function finish(): Plugin {
   }
 }
 
-/** The guide pages, written in Markdown under site/, become static pages with no script, plus Markdown copies, llms.txt and the FAQ on the home page. */
+/** The guide pages, written in Markdown under site/, become static pages with no script, plus Markdown copies, llms.txt and the FAQ on the home page.
+ * The build writes them; the dev server draws the same pages on request, so every link in the footer opens there too. */
 function pages(): Plugin {
-  const GUIDES = ['open-from-github', 'privacy', 'compare', 'agents', 'design']
+  const GUIDES = ['open-from-github', 'compare', 'agents', 'design']
   let base = '/'
   const source = (name: string) => readFileSync(join('site', name), 'utf8')
   const guide = (slug: string) => {
@@ -133,40 +134,23 @@ function pages(): Plugin {
         const [question, ...rest] = block.split('\n')
         return { question: question.trim(), answer: rest.join('\n').trim() }
       })
-
-  return {
-    name: 'pages',
-    enforce: 'post',
-    configResolved: (config) => {
-      base = config.base
-    },
-    transformIndexHtml: {
-      order: 'pre',
-      handler: (html) => {
-        const faq = questions()
-        const ld = JSON.stringify({
-          '@type': 'FAQPage',
-          mainEntity: faq.map(({ question, answer }) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: text(marked.parse(answer, { async: false })) } })),
-        }).replace(/</g, '\\u003c')
-        return html
-          .replace('<!--site:faq-->', () => faq.map(({ question, answer }) => `<h3>${esc(question)}</h3>\n    ${marked.parse(answer, { async: false }).trim()}`).join('\n    '))
-          .replace('<!--site:faq-ld-->', () => ld)
-          .replace('<!--site:alt-->', () => `<link rel="alternate" type="text/markdown" href="${base}index.md" />`)
-      },
-    },
-    generateBundle(_, bundle) {
-      const index = readFileSync('index.html', 'utf8')
-      const theme = /<script>([\s\S]*?)<\/script>/.exec(index)?.[1]
-      const footer = /<footer>[\s\S]*?<\/footer>/.exec(index)?.[0]
-      const sheet = Object.keys(bundle).find((f) => /^assets\/home-.*\.css$/.test(f))
-      if (!theme || !footer || !sheet) throw new Error('index.html is missing its theme script or footer, or the home stylesheet was not built')
-      const style = this.getFileName(this.emitFile({ type: 'asset', name: 'guide.css', source: readFileSync('src/about/guide.css', 'utf8') }))
-      // links to the guides are written for the home page; from a guide they go up one level
-      const foot = footer.replace(/href="(?=(?:open-from-github|privacy|compare|agents|design)\/")/g, 'href="../').replace('src="/ashwin.webp"', `src="${base}ashwin.webp"`)
-      const all = GUIDES.map(guide)
-
-      for (const g of all) {
-        const html = `<!doctype html>
+  // The home page's theme script and footer, which every guide page shares; links to the guides are written for the home page, and from a
+  // guide they go up one level. A guide's footer also leads home first, with the app's mark.
+  const home = '<a class="app" href="../"><svg viewBox="0 0 40 48" width="13" height="16" aria-hidden="true"><rect width="40" height="48" rx="10" fill="#1d1d1f"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></svg>Home</a>'
+  const shell = () => {
+    const index = readFileSync('index.html', 'utf8')
+    const theme = /<script>([\s\S]*?)<\/script>/.exec(index)?.[1]
+    const footer = /<footer>[\s\S]*?<\/footer>/.exec(index)?.[0]
+    if (!theme || !footer || !footer.includes('<nav class="links" aria-label="More">')) throw new Error('index.html is missing its theme script or footer')
+    const foot = footer
+      .replace(new RegExp(`href="(?=(?:${GUIDES.join('|')})/")`, 'g'), 'href="../')
+      .replace('src="/ashwin.webp"', `src="${base}ashwin.webp"`)
+      .replace('<nav class="links" aria-label="More">', `$&\n    ${home}`)
+    return { theme, foot }
+  }
+  const render = (g: ReturnType<typeof guide>, sheets: string[]) => {
+    const { theme, foot } = shell()
+    return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -183,8 +167,7 @@ function pages(): Plugin {
 <link rel="manifest" href="${base}manifest.webmanifest" />
 <title>${esc(g.title)} · ipynb viewer</title>
 <link rel="alternate" type="text/markdown" href="index.md" />
-<link rel="stylesheet" href="${base}${sheet}" />
-<link rel="stylesheet" href="${base}${style}" />
+${sheets.map((href) => `<link rel="stylesheet" href="${href}" />`).join('\n')}
 <script>${theme}</script>
 </head>
 <body>
@@ -203,6 +186,56 @@ ${foot}
 </body>
 </html>
 `
+  }
+  const chevron = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 6 3.5 3.5L11.5 6"/></svg>'
+
+  return {
+    name: 'pages',
+    enforce: 'post',
+    configResolved: (config) => {
+      base = config.base
+    },
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const path = (req.url ?? '').split('?')[0]
+        const slug = GUIDES.find((s) => path === `${base}${s}` || path === `${base}${s}/` || path === `${base}${s}/index.html`)
+        if (!slug) return next()
+        // a guide's links are relative to its folder, so the address ends in a slash
+        if (path === `${base}${slug}`) return res.writeHead(301, { Location: `${base}${slug}/` }).end()
+        const html = await server.transformIndexHtml(path, render(guide(slug), [`${base}src/about/about.css`, `${base}src/about/guide.css`]))
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.end(html)
+      })
+    },
+    transformIndexHtml: {
+      order: 'pre',
+      handler: (html) => {
+        const faq = questions()
+        const ld = JSON.stringify({
+          '@type': 'FAQPage',
+          mainEntity: faq.map(({ question, answer }) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: text(marked.parse(answer, { async: false })) } })),
+        }).replace(/</g, '\\u003c')
+        return html
+          // each question opens in place; its number says how far down the list it is
+          .replace(
+            '<!--site:faq-->',
+            () =>
+              `<div class="faq">\n    ${faq
+                .map(({ question, answer }, i) => `<details>\n      <summary><i>${i + 1}</i><span>${esc(question)}</span>${chevron}</summary>\n      <div class="ans">${marked.parse(answer, { async: false }).trim()}</div>\n    </details>`)
+                .join('\n    ')}\n    </div>`,
+          )
+          .replace('<!--site:faq-ld-->', () => ld)
+          .replace('<!--site:alt-->', () => `<link rel="alternate" type="text/markdown" href="${base}index.md" />`)
+      },
+    },
+    generateBundle(_, bundle) {
+      const sheet = Object.keys(bundle).find((f) => /^assets\/home-.*\.css$/.test(f))
+      if (!sheet) throw new Error('the home stylesheet was not built')
+      const style = this.getFileName(this.emitFile({ type: 'asset', name: 'guide.css', source: readFileSync('src/about/guide.css', 'utf8') }))
+      const all = GUIDES.map(guide)
+
+      for (const g of all) {
+        const html = render(g, [`${base}${sheet}`, `${base}${style}`])
         this.emitFile({ type: 'asset', fileName: `${g.slug}/index.html`, source: html })
         this.emitFile({ type: 'asset', fileName: `${g.slug}/index.md`, source: g.body })
       }

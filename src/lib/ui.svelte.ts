@@ -16,6 +16,8 @@ export interface Figure {
 
 export const ui = $state<{
   pop: Pop | null;
+  /** The card fading out after it closed, which keeps what it showed until it has gone (Pop.svelte). */
+  leaving: Pop | null;
   sections: number;
   figures: number;
   scrambled: boolean;
@@ -34,6 +36,7 @@ export const ui = $state<{
   cmp: { name: string; report: Report } | null;
 }>({
   pop: null,
+  leaving: null,
   sections: 0,
   figures: 0,
   scrambled: false,
@@ -50,6 +53,9 @@ export const ui = $state<{
 });
 
 export const toggle = (id: Pop) => (ui.pop = ui.pop === id ? null : id);
+
+/** True while a card is open or still fading out: what it shows is drawn for as long as it can be seen. */
+export const showing = (id: Pop) => ui.pop === id || ui.leaving === id;
 
 // Single-key shortcuts can be turned off (WCAG 2.1.4); the choice sticks.
 export const prefs = $state({ keys: true });

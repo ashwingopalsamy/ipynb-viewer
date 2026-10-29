@@ -7,9 +7,10 @@
   margin-inline: auto;
   width: max-content;
   max-width: min(420px, calc(100vw - 32px));
-  padding: 10px 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 12px;
   white-space: nowrap;
   border-radius: 999px;
   background: var(--glass);
@@ -19,10 +20,10 @@
   color: var(--fg);
   font-size: 13.5px;
   font-weight: 500;
-  transition: transform 200ms var(--rel);
-  animation: lift 300ms var(--out) both 300ms;
+  transition: transform var(--t3) var(--rel);
+  animation: lift var(--t4) var(--out) both var(--t4);
 }
-.back:active { transform: scale(0.97); transition-duration: 100ms; }
+.back:active { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 
 @keyframes lift {
   from { opacity: 0; transform: translateY(12px); }
@@ -30,3 +31,7 @@
 
 /* the name-tracing pill takes the same spot */
 body:has(.tpill.on) .back { visibility: hidden; }
+/* where it leads, quieter than the offer, and the part that gives way when the line runs long */
+.back svg { flex: none; color: var(--fg-3); }
+.back .where { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--fg-3); }
+.back .where::before { content: '·'; margin-right: 8px; }

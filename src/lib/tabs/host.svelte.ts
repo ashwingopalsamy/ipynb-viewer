@@ -5,8 +5,8 @@ import { fileKey, hooks, mine, strip, type Status, type Want } from './state.sve
 // reader in a frame of this page (`t1`, `t2`, …), which keeps its own policy, its own state and its own network lock.
 export interface TabHost {
   open(wants: Want[], quiet?: boolean): void;
-  go(id: string): void;
-  step(by: 1 | -1): void;
+  go(id: string, x?: number): void;
+  step(by: 1 | -1, x?: number): void;
   close(id: string): Promise<void>;
   restore(all: string[], own: string): void;
 }
@@ -21,15 +21,23 @@ interface Rec {
   frame?: HTMLIFrameElement;
   want?: Want;
   ready: boolean;
+  /** Its strip is on screen, so showing it now cannot blink an empty header. The first notebook always is. */
+  painted: boolean;
+  born: number;
   timer?: ReturnType<typeof setTimeout>;
   asking?: (ok: boolean) => void;
 }
 
 const tabs: Rec[] = [];
 let active = 'h';
+// the tab on screen; `active` runs ahead of it while a new tab draws itself
+let shown = 'h';
+let pending: { id: string; timer: ReturnType<typeof setTimeout> } | undefined;
 let n = 0;
 // where the first notebook was scrolled to when another tab took over
 let top = 0;
+// how far the chips were scrolled when the tab was picked, handed on so the next page's strip starts there
+let across = 0;
 // the address this page began with: a notebook carried in `#nb=` can only come back from it
 const first = location.href;
 let api: TabHost | undefined;
@@ -44,6 +52,13 @@ const label = (link: string) => {
   }
 };
 const find = (id: string) => tabs.find((r) => r.id === id);
+const hostOf = (link: string) => {
+  try {
+    return new URL(link).host;
+  } catch {
+    return '';
+  }
+};
 const post = (rec: Rec, msg: object) => rec.frame?.contentWindow?.postMessage(msg, location.origin);
 
 // Only addresses are kept, and only for this browser tab's session: enough to bring the link tabs back after a reload.
@@ -69,10 +84,11 @@ function where() {
 }
 
 function sync() {
-  const views = tabs.map(({ id, name, status, dirty, link }) => ({ id, name, status, dirty, web: !!link }));
+  const views = tabs.map(({ id, name, status, dirty, link, born }) => ({ id, name, status, dirty, web: !!link, from: hostOf(link), born }));
   strip.list = views;
   strip.active = active;
-  for (const r of tabs) if (r.ready && r.frame) post(r, { t: 'tabs', list: views, active });
+  strip.x = across;
+  for (const r of tabs) if (r.ready && r.frame) post(r, { t: 'tabs', list: views, active, x: across });
   const now = find(active);
   if (now) document.title = `${now.dirty ? '• ' : ''}${now.name} · ipynb viewer`;
   where();
@@ -94,7 +110,7 @@ function open(wants: Want[], quiet = false) {
       frame.inert = true;
       frame.src = w.file ? `./?tab=${id}` : `./?url=${encodeURIComponent(w.link!)}&tab=${id}`;
       document.body.append(frame);
-      const made: Rec = { id, name, status: 'loading', dirty: false, key, link: w.link ?? '', frame, want: w, ready: false };
+      const made: Rec = { id, name, status: 'loading', dirty: false, key, link: w.link ?? '', frame, want: w, ready: false, painted: false, born: Date.now() };
       // a frame that never says hello (offline with no copy, a crash) shows as failed and can be closed
       made.timer = setTimeout(() => {
         if (!made.ready) {
@@ -111,11 +127,14 @@ function open(wants: Want[], quiet = false) {
   else sync();
 }
 
-function go(id: string) {
+// Puts a tab on screen: its frame shows and takes the keyboard, the others are hidden and inert.
+function show(id: string) {
+  clearTimeout(pending?.timer);
+  pending = undefined;
   const rec = find(id);
   if (!rec) return;
-  if (active === 'h' && id !== 'h') top = scrollY;
-  active = id;
+  if (shown === 'h' && id !== 'h') top = scrollY;
+  shown = id;
   for (const r of tabs) {
     r.frame?.classList.toggle('on', r.id === id);
     if (r.frame) r.frame.inert = r.id !== id;
@@ -127,13 +146,25 @@ function go(id: string) {
     scrollTo(0, top);
     (document.activeElement as HTMLElement | null)?.blur();
   } else rec.frame?.contentWindow?.focus();
-  sync();
 }
 
-function step(by: 1 | -1) {
+// The strips follow at once; the page itself changes when the tab has drawn its header, so a new tab never shows an empty one (a tab that
+// never says so is shown after a moment anyway).
+function go(id: string, x?: number) {
+  const rec = find(id);
+  if (!rec) return;
+  if (typeof x === 'number' && Number.isFinite(x)) across = x;
+  active = id;
+  sync();
+  if (rec.painted || !rec.frame) return show(id);
+  clearTimeout(pending?.timer);
+  pending = { id, timer: setTimeout(() => show(id), 1200) };
+}
+
+function step(by: 1 | -1, x?: number) {
   if (tabs.length < 2) return;
   const i = tabs.findIndex((r) => r.id === active);
-  go(tabs[(i + by + tabs.length) % tabs.length].id);
+  go(tabs[(i + by + tabs.length) % tabs.length].id, x);
 }
 
 async function close(id: string) {
@@ -163,7 +194,11 @@ async function close(id: string) {
     save();
     location.assign(location.pathname);
   } else if (rec.id === active) go((tabs[i] ?? tabs[i - 1]).id);
-  else sync();
+  else {
+    // the page on screen went while another was still drawing itself: show that one now
+    if (rec.id === shown) show(active);
+    sync();
+  }
 }
 
 function onMessage(e: MessageEvent) {
@@ -175,6 +210,8 @@ function onMessage(e: MessageEvent) {
     case 'hello': {
       clearTimeout(rec.timer);
       rec.ready = true;
+      // a page that loads again draws its header again
+      rec.painted = false;
       // a reloaded frame has nothing left to ask about
       rec.asking?.(true);
       const w = rec.want;
@@ -215,16 +252,20 @@ function onMessage(e: MessageEvent) {
       break;
     }
     case 'go':
-      if (typeof d.id === 'string') go(d.id);
+      if (typeof d.id === 'string') go(d.id, d.x);
       break;
     case 'close':
       if (typeof d.id === 'string') void close(d.id);
       break;
     case 'step':
-      if (d.by === 1 || d.by === -1) step(d.by);
+      if (d.by === 1 || d.by === -1) step(d.by, d.x);
       break;
     case 'close!':
       rec.asking?.(d.ok === true);
+      break;
+    case 'painted':
+      rec.painted = true;
+      if (pending?.id === rec.id) show(rec.id);
       break;
   }
 }
@@ -249,6 +290,8 @@ export function boot(): TabHost {
     key: mine.key,
     link: mine.link,
     ready: true,
+    painted: true,
+    born: 0,
   });
   addEventListener('message', onMessage);
   // this page's own reader reports through `mine`, as a frame's does by message

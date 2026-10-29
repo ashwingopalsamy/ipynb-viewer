@@ -15,14 +15,14 @@ button { -webkit-tap-highlight-color: transparent; }
   visibility: hidden;
   transform: translateY(-4px) scale(0.97);
   transform-origin: var(--ox) 0;
-  transition: opacity 150ms var(--in), transform 150ms var(--in), visibility 0s 150ms;
+  transition: opacity var(--t2) var(--in), transform var(--t2) var(--in), visibility 0s var(--t2);
 }
 .pop.up { transform: translateY(4px) scale(0.97); transform-origin: var(--ox) 100%; }
 .pop.on {
   opacity: 1;
   visibility: visible;
   transform: none;
-  transition: opacity 200ms var(--out), transform var(--t3) var(--pop), visibility 0s;
+  transition: opacity var(--t2) var(--out), transform var(--t3) var(--pop), visibility 0s;
 }
 #pop-settings, #pop-keys { max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
 
@@ -32,21 +32,21 @@ button { -webkit-tap-highlight-color: transparent; }
 /* Segmented control: a raised thumb slides to the choice; hairlines part the others, and a press on the chosen one squeezes it. */
 .seg { position: relative; isolation: isolate; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: var(--ctl); padding: 2px; border-radius: 999px; background: var(--track); }
 .seg .thumb { position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px; background: var(--thumb); box-shadow: var(--thumb-shadow); transform: translateX(calc(var(--i) * 100%)); transition: transform var(--t3) var(--pop); }
-.seg:has(> [aria-checked='true']:active) .thumb { transform: translateX(calc(var(--i) * 100%)) scale(0.95); transition-duration: var(--t1); }
-.seg button { position: relative; display: grid; place-items: center; min-width: 0; padding: 0 6px; border-radius: 999px; font: 500 var(--fs-sm)/1 var(--sans); color: var(--fg-3); white-space: nowrap; transition: color var(--t2) var(--out), opacity var(--t1) var(--out); }
+.seg:has(> [aria-checked='true']:active) .thumb { transform: translateX(calc(var(--i) * 100%)) scale(var(--press-scale)); transition-duration: var(--t1); }
+.seg button { position: relative; display: grid; place-items: center; min-width: 0; padding: 0 6px; border-radius: 999px; font: 500 var(--fs-sm)/1 var(--sans); color: var(--fg-3); white-space: nowrap; transition: color var(--t2) var(--out), opacity var(--t1) var(--out), transform var(--t3) var(--rel); }
 .seg button + button::before { content: ''; position: absolute; top: 30%; bottom: 30%; left: -0.5px; width: 1px; background: var(--line-2); transition: opacity var(--t2) var(--out); }
 .seg button[aria-checked='true']::before, .seg button[aria-checked='true'] + button::before { opacity: 0; }
 .seg button:hover:not(:disabled):not([aria-checked='true']) { color: var(--fg-2); }
 .seg button[aria-checked='true'] { color: var(--fg); font-weight: 600; }
-.seg button:active:not(:disabled):not([aria-checked='true']) { opacity: 0.55; }
+.seg button:active:not(:disabled):not([aria-checked='true']) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .seg button:disabled { opacity: 0.35; cursor: default; }
 .seg button:focus-visible { outline-offset: 0; }
 
 /* A switch row: icon, label with a line on what it does, then the switch. The whole row is the control. */
 .sw { position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: var(--row); padding: 0 var(--inset); text-align: left; font-size: var(--fs-md); line-height: 20px; color: var(--fg); }
 .sw::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background: var(--fg); opacity: 0; transition: opacity var(--t1) var(--out); }
-.sw:hover::before { opacity: 0.06; }
-.sw:active::before { opacity: 0.1; }
+.sw:hover::before { opacity: var(--hover); }
+.sw:active::before { opacity: var(--press); }
 .sw:focus-visible { outline-offset: -2px; }
 .sw > svg { color: var(--fg-3); }
 .sw > span { flex: 1; min-width: 0; }
@@ -55,7 +55,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .sw[aria-expanded] > svg:last-child { transition: transform var(--t3) var(--io); }
 .sw[aria-expanded='true'] > svg:last-child { transform: rotate(90deg); }
 kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5px/1.4 var(--mono); color: var(--fg-2); }
-.pop kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-key); background: var(--well); box-shadow: inset 0 -1px 0 var(--line-2); font: 500 var(--fs-xs)/1 var(--mono); color: var(--fg-2); }
+:is(.pop, .find) kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-key); background: var(--well); box-shadow: inset 0 -1px 0 var(--line-2); font: 500 var(--fs-xs)/1 var(--mono); color: var(--fg-2); }
 @media (hover: none) { .sw kbd { display: none; } }
 
 /* The switch: white knob on grey when off; the track fills and the knob turns paper when on; a press stretches the knob toward where it will go. */
@@ -73,10 +73,10 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
 .keys dd { margin: 0; color: var(--fg-2); }
 
 /* Buttons: secondary (a tint), primary (solid), quiet (navigation). One height, one weight. */
-.btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); min-width: 0; height: var(--btn); padding: 0 var(--s4); border-radius: 999px; background: var(--btn-2); font: 600 var(--fs-sm)/1 var(--sans); color: var(--fg); white-space: nowrap; text-decoration: none; transition: transform 200ms var(--rel); }
+.btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); min-width: 0; height: var(--btn); padding: 0 var(--s4); border-radius: 999px; background: var(--btn-2); font: 600 var(--fs-sm)/1 var(--sans); color: var(--fg); white-space: nowrap; text-decoration: none; transition: transform var(--t3) var(--rel); }
 .btn::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
-.btn:hover:not(:disabled)::before { opacity: 0.07; }
-.btn:active:not(:disabled) { transform: scale(0.97); transition-duration: var(--t1); }
+.btn:hover:not(:disabled)::before { opacity: var(--hover); }
+.btn:active:not(:disabled) { transform: scale(var(--press-scale)); transition-duration: var(--t1); }
 .btn.solid { background: var(--fg); color: var(--paper); }
 .btn.solid:hover:not(:disabled)::before { opacity: 0.16; }
 .btn.quiet { background: none; font-weight: 500; color: var(--fg-2); }
@@ -102,11 +102,16 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
 .x { position: relative; isolation: isolate; display: grid; place-items: center; flex: none; width: var(--ctl); height: var(--ctl); border-radius: 999px; color: var(--fg-3); }
 .x::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--t1) var(--out); }
 .x:hover { color: var(--fg); }
-.x:hover::before { opacity: 0.08; }
-.x:active::before { opacity: 0.12; }
+.x:hover::before { opacity: var(--hover); }
+.x:active::before { opacity: var(--press); }
 .x:focus-visible { outline-offset: -2px; }
 
 .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--page); }
+
+/* a header control whose card is open keeps the pressed look of Edit: ink, with a 12% fill (16% under the pointer) */
+.bar .icon[aria-expanded='true'] { color: var(--fg); }
+.bar .icon[aria-expanded='true']::before { opacity: var(--held); }
+.bar .icon[aria-expanded='true']:hover::before { opacity: var(--held-hover); }
 
 /* a name for each symbol, on hover or keyboard focus only; the last one keeps to the window's edge */
 @media (hover: hover) {
@@ -125,11 +130,14 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
     pointer-events: none;
     opacity: 0;
     transform: translate(-50%, -3px);
-    transition: opacity 90ms var(--out), transform 120ms var(--out);
+    transition: opacity var(--t1) var(--out), transform var(--t1) var(--out);
   }
-  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 120ms; }
+  /* a name shows under the pointer, or on keyboard focus while the keyboard is moving (App.svelte marks it): a button that gets focus back
+     when a card closes stays quiet */
+  [data-tip]:hover::after, :root[data-kb] [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: var(--t1); }
+  :root:has(.pop.on, .pop.leaving) .bar [data-tip]::after, [data-tip][data-quiet]::after { display: none; }
   .tools > :last-child::after { left: auto; right: 0; transform: translate(0, -3px); }
-  .tools > :last-child:hover::after, .tools > :last-child:focus-visible::after { transform: none; }
+  .tools > :last-child:hover::after, :root[data-kb] .tools > :last-child:focus-visible::after { transform: none; }
 }
 
 /* iOS Safari zooms the page into a field whose text is under 16px */
@@ -143,13 +151,13 @@ kbd { padding: 2px 6px; border-radius: 6px; background: var(--well); font: 11.5p
   [aria-checked='true'] > .track::before { display: none; }
   .seg .thumb { forced-color-adjust: none; background: Highlight; }
   .seg button[aria-checked='true'] { color: HighlightText; }
+  .bar .icon[aria-expanded='true'] { outline: 2px solid Highlight; outline-offset: -2px; }
 }
 
 /* On a phone the controls sit in a dock at the bottom: what floats above it clears it, and a card opens upward. */
 @media (max-width: 720px) {
   :root .back, :root .tpill, :root .notice-pill { bottom: calc(84px + env(safe-area-inset-bottom)); }
   .tools [data-tip]::after { display: none; }
-  .tools [aria-expanded='true'] { background: var(--fg); color: var(--paper); }
   #app { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
   #pop-settings, #pop-keys { max-height: calc(100dvh - 140px); }
 }

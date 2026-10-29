@@ -11,7 +11,7 @@
   backdrop-filter: blur(16px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 200ms var(--out), visibility 0s 200ms;
+  transition: opacity var(--t2) var(--out), visibility 0s var(--t2);
 }
 .figs-shelf.on { opacity: 1; visibility: visible; transition-delay: 0s; }
 
@@ -28,7 +28,7 @@
   box-shadow: var(--float);
   outline: 0;
   transform: translateY(6px) scale(0.98);
-  transition: transform 200ms var(--pop);
+  transition: transform var(--t3) var(--pop);
 }
 .figs-shelf.on .figs-sheet { transform: none; }
 
@@ -50,9 +50,9 @@
   padding: 0;
   border-radius: 14px;
   corner-shape: squircle;
-  transition: transform 200ms var(--rel);
+  transition: transform var(--t3) var(--rel);
 }
-.figs-tile:active { transform: scale(0.985); transition-duration: 100ms; }
+.figs-tile:active { transform: scale(var(--press-surface)); transition-duration: var(--t1); }
 .figs-tile:focus-visible { outline-offset: 3px; }
 
 /* The picture fills a 4:3 box; the image sits inside it with a little air, so no plot is cut or pushed into the label. */
@@ -64,7 +64,7 @@
   border-radius: 14px;
   corner-shape: squircle;
   background: #fff;
-  transition: box-shadow 150ms var(--out);
+  transition: box-shadow var(--t2) var(--out);
 }
 .figs-thumb.figs-alpha { background: #f3f3f5; }
 .figs-tile:hover .figs-thumb { box-shadow: 0 0 0 1px var(--line-2); }
@@ -78,8 +78,9 @@
 }
 .figs-tile:hover .figs-thumb img { transform: scale(1.02); }
 
-.figs-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 0 8px; }
-.figs-no { font: 12px/1.2 var(--mono); color: var(--fg-3); }
+/* the number on the left, then Save and Go to cell: always there, no hover needed */
+.figs-row { display: flex; align-items: center; gap: 4px; padding: 0 2px 0 8px; }
+.figs-no { margin-right: auto; font: 12px/1.2 var(--mono); color: var(--fg-3); }
 .figs-jump { height: var(--ctl); padding: 0 var(--s3); }
 
 @media (max-width: 720px) {

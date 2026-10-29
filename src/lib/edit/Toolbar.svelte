@@ -101,15 +101,21 @@
   onMount(() => {
     document.addEventListener('selectionchange', sync);
     document.addEventListener('input', sync, true);
-    // In the header's own row, between its pills (the file and Open on the left, the tools on the right), centred on the open
+    // In the header's own row, between its pills (the notebooks and Open on the left, the tools on the right), centred on the open
     // cell, not the window: the text column sits right of centre, past the gutter. Where the pills leave it less room than it
-    // needs it takes what there is and scrolls. Ignored on a phone, where the bar spans the screen above the dock.
+    // needs, editing takes the row as it does on a phone: the notebooks' pill and the reading tools step aside until Done
+    // (`fmt-crowd`), and only then, if it still does not fit, does the bar scroll. The choice is made with the pills at their full
+    // size, in one go, so nothing flickers between the two. Ignored on a phone, where the bar spans the screen above the dock.
     const cell = document.querySelector('.md:has(> :is(.editing, .editing-src))');
+    const root = document.documentElement;
     const side = (sel: string, edge: 'left' | 'right') => document.querySelector(`.bar ${sel}`)?.getBoundingClientRect()[edge];
     const centre = () => {
-      if (!cell || innerWidth <= 720) return;
+      if (!cell || innerWidth <= 720) return void root.classList.remove('fmt-crowd');
       const box = cell.getBoundingClientRect();
-      const lo = Math.max(20, (side('.name', 'right') ?? 0) + 8, (side('.opener', 'right') ?? 0) + 8);
+      root.classList.remove('fmt-crowd');
+      const crowd = bar.scrollWidth > (side('.tools', 'left') ?? innerWidth - 20) - 8 - Math.max(20, (side('.tb', 'right') ?? 0) + 8);
+      root.classList.toggle('fmt-crowd', crowd);
+      const lo = crowd ? 20 : Math.max(20, (side('.tb', 'right') ?? 0) + 8);
       const hi = (side('.tools', 'left') ?? innerWidth - 20) - 8;
       const room = Math.max(0, hi - lo);
       bar.style.setProperty('--room', `${room}px`);
@@ -117,10 +123,10 @@
       const half = Math.min(bar.scrollWidth, room) / 2;
       bar.style.setProperty('--x', `${Math.min(Math.max(box.left + box.width / 2, lo + half), hi - half)}px`);
     };
-    // the column moves with the window, the contents rail and the width setting; the pills with Save and the file's name
+    // the column moves with the window, the contents rail and the width setting; the pills with Save and the notebooks' names
     const look = new ResizeObserver(centre);
     if (cell) look.observe(cell);
-    for (const sel of ['.name', '.opener', '.tools']) {
+    for (const sel of ['.tb', '.tools']) {
       const pill = document.querySelector(`.bar ${sel}`);
       if (pill) look.observe(pill);
     }
@@ -131,6 +137,7 @@
       document.removeEventListener('input', sync, true);
       look.disconnect();
       removeEventListener('resize', centre);
+      root.classList.remove('fmt-crowd');
     };
   });
 

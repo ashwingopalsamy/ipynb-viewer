@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Cell } from './notebook';
   import { figures } from './shelf';
-  import { ui } from './ui.svelte';
+  import { jump, ui } from './ui.svelte';
+  import Save, { tagOf } from './Save.svelte';
   import './lightbox.css';
 
   // A picture at the size of the screen. A click on it flips between fitting and its own pixels; the arrows walk the figures.
@@ -29,6 +30,15 @@
   const n = $derived(at >= 0 ? list[at].n : null);
   const name = $derived(n === null ? 'Figure' : `Figure from cell ${n}`);
 
+  // The bar under the picture keeps its figure while the box fades out.
+  let kept = $state(-1);
+  $effect(() => {
+    if (at >= 0) kept = at;
+  });
+  const pos = $derived(ui.light ? at : kept);
+  const here = $derived(list[pos]);
+  const caption = $derived([here?.n == null ? '' : `[${here.n}]`, list.length > 1 ? `${pos + 1} of ${list.length}` : ''].filter(Boolean).join(' · '));
+
   function close() {
     const back = ui.light?.el;
     ui.light = null;
@@ -40,9 +50,17 @@
     if (f && ui.light) (ui.light = { ...ui.light, src: f.src, cell: f.cell }), (full = false);
   }
 
+  // Closes the viewer and brings the figure's cell to the middle of the screen, the way the figures sheet does.
+  function go(cell: string) {
+    ui.light = null;
+    jump(document.querySelector(`[data-cell="${CSS.escape(cell)}"]`), 'center');
+  }
+
   function keys(e: KeyboardEvent) {
     if (!ui.light) return;
-    if (e.key === 'Escape') (close(), e.preventDefault());
+    // the save menu sits above the box: Esc closes it first, and while any card is up the arrows and Tab are its own
+    if (e.key === 'Escape') (ui.pop === 'figure' ? (ui.pop = null) : close(), e.preventDefault());
+    else if (ui.pop) return;
     else if (e.key === 'ArrowLeft') (step(-1), e.preventDefault());
     else if (e.key === 'ArrowRight') (step(1), e.preventDefault());
     else if (e.key === 'Tab') {
@@ -78,7 +96,13 @@
       <button class="lb-go lb-next" aria-label="Next figure" disabled={at === list.length - 1} onclick={() => step(1)}>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
       </button>
-      <p class="lb-count" aria-hidden="true">{at + 1} / {list.length}</p>
+    {/if}
+    {#if here}
+      <div class="lb-bar" role="group" aria-label="Figure">
+        {#if caption}<p class="lb-cap">{caption}</p>{/if}
+        <Save src={here.src} alpha={here.alpha} tag={tagOf(cells, here)} label />
+        <button class="btn quiet lb-jump" onclick={() => go(here.cell)}>Go to cell</button>
+      </div>
     {/if}
   </div>
 </div>

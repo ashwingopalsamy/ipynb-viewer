@@ -1,6 +1,16 @@
 /* The shared parts of the sheets that hang from the header, the Notebook sheet most of all. Settings and Privacy have their own, in settings.css. */
-.weigh { display: flex; height: 10px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
-.weigh i { display: block; height: 100%; background: var(--fg-3); }
-.weigh i + i { background: color-mix(in srgb, var(--fg-3) 45%, transparent); }
+
+/* Weight's three parts. A fixed categorical set for data marks only (the bar, its swatches, the heaviest cells' meters), validated for colour-blind
+   separation on the app's paper in both themes. Colour follows the part, never its rank; text stays in the text tokens and the legend names every part. */
+:root { --part-pic: #2a78d6; --part-out: #eb6834; --part-src: #1baf7a; }
+:root[data-theme='dark'] { --part-pic: #3987e5; --part-out: #d95926; --part-src: #199e70; }
+
+/* the stacked bar: each part its own segment, 2px of paper between them, a part's share of the file as its flex-grow; --part is set on the mark */
+.weigh { display: flex; gap: 2px; height: 8px; margin: var(--s1) var(--inset); }
+.weigh i { flex: 0 1 0; min-width: 3px; border-radius: 2px; background: var(--part, var(--fg-3)); }
+.weigh i:first-child { border-start-start-radius: 4px; border-end-start-radius: 4px; }
+.weigh i:last-child { border-start-end-radius: 4px; border-end-end-radius: 4px; }
+.hue { flex: none; width: 8px; height: 8px; margin-right: -4px; border-radius: 2px; background: var(--part, var(--fg-3)); }
 .meter { height: 6px; border-radius: 999px; background: var(--sunk); box-shadow: var(--dip); overflow: hidden; }
-.meter i { display: block; height: 100%; border-radius: inherit; background: var(--fg-3); }
+.meter i { display: block; height: 100%; border-radius: inherit; background: var(--part, var(--fg-3)); }
+@media (forced-colors: active) { .weigh i, .hue, .meter i { forced-color-adjust: none; } }

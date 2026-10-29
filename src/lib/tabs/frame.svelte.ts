@@ -4,10 +4,11 @@ import { act, hooks, mine, strip, type Want } from './state.svelte';
 export function join(id: string, mount: (file?: File, handle?: FileSystemFileHandle) => void) {
   strip.me = id;
   const post = (m: object) => parent.postMessage(m, location.origin);
+  hooks.painted = () => post({ t: 'painted' });
   Object.assign(act, {
     open: (wants: Want[]) => post({ t: 'open', wants }),
-    go: (to: string) => post({ t: 'go', id: to }),
-    step: (by: 1 | -1) => post({ t: 'step', by }),
+    go: (to: string, x?: number) => post({ t: 'go', id: to, x }),
+    step: (by: 1 | -1, x?: number) => post({ t: 'step', by, x }),
     close: (to: string) => post({ t: 'close', id: to }),
   });
 
@@ -35,6 +36,7 @@ export function join(id: string, mount: (file?: File, handle?: FileSystemFileHan
         if (Array.isArray(d.list) && typeof d.active === 'string') {
           strip.list = d.list;
           strip.active = d.active;
+          if (Number.isFinite(d.x)) strip.x = d.x;
         }
         break;
       case 'close?':
