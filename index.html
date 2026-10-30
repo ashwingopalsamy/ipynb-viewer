@@ -20,71 +20,6 @@
 <script>
 !function(d,t,p,w){try{t=localStorage.theme;p=localStorage.pf;w=localStorage.width}catch(e){}d=document.documentElement;/[?#](?:url|nb|tab)=/.test(location.href)&&d.classList.add('opening');d.dataset.theme=t=='light'||t=='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';/^[a-z0-9 ]+$/.test(p||'')&&(d.dataset.pf=p);w=='narrow'||w=='wide'?d.dataset.width=w:0}()
 </script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebApplication",
-      "@id": "https://ipynb.ashwingopalsamy.in/#app",
-      "name": "ipynb viewer",
-      "url": "https://ipynb.ashwingopalsamy.in/",
-      "description": "Open .ipynb notebooks and .md files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline.",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Any",
-      "browserRequirements": "A current browser with JavaScript",
-      "offers": {
-        "@type": "Offer",
-        "price": 0,
-        "priceCurrency": "USD"
-      },
-      "isAccessibleForFree": true,
-      "featureList": [
-        "Search across text, code and outputs",
-        "Every plot on one figures shelf, each saved as an image",
-        "Live refresh when the notebook changes on disk, in Chromium browsers",
-        "Run order view",
-        "Share by link, with the notebook after the #",
-        "Cell screenshots",
-        "Copy as Markdown",
-        "Edit text cells in place and save the notebook back, or a copy of it",
-        "Markdown (.md) files open and edit like a notebook of one text cell",
-        "Keyboard shortcuts for every action"
-      ],
-      "image": "https://ipynb.ashwingopalsamy.in/social-preview.png",
-      "license": "https://opensource.org/licenses/MIT",
-      "author": {
-        "@type": "Person",
-        "name": "Ashwin Gopalsamy",
-        "url": "https://ashwingopalsamy.in",
-        "sameAs": "https://github.com/ashwingopalsamy"
-      },
-      "sameAs": [
-        "https://github.com/ashwingopalsamy/ipynb-viewer"
-      ],
-      "about": {
-        "@type": "Thing",
-        "name": "Jupyter Notebook",
-        "sameAs": "https://en.wikipedia.org/wiki/Project_Jupyter"
-      }
-    },
-    {
-      "@type": "SoftwareSourceCode",
-      "name": "ipynb viewer",
-      "codeRepository": "https://github.com/ashwingopalsamy/ipynb-viewer",
-      "programmingLanguage": [
-        "TypeScript",
-        "Svelte"
-      ],
-      "license": "https://opensource.org/licenses/MIT",
-      "targetProduct": {
-        "@id": "https://ipynb.ashwingopalsamy.in/#app"
-      }
-    },
-    <!--site:faq-ld-->
-  ]
-}
-</script>
 <script type="module" src="/src/about/about.ts"></script>
 </head>
 <body>
@@ -311,5 +246,71 @@
 <div class="carry" aria-hidden="true"><span><svg viewBox="0 0 24 24"><path class="arr" d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>Drop to open</span></div>
 <input id="picker" type="file" multiple accept=".ipynb,.json,application/json,.md,.markdown,text/markdown" hidden />
 </div>
+<!-- Structured data sits beside the questions it repeats, so gzip, which looks back 32 KB, stores the answers once. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://ipynb.ashwingopalsamy.in/#app",
+      "name": "ipynb viewer",
+      "url": "https://ipynb.ashwingopalsamy.in/",
+      "description": "Open .ipynb notebooks and .md files in your browser, from disk or a GitHub link. Nothing runs and nothing is uploaded. Free, open source, and it works offline.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "A current browser with JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": 0,
+        "priceCurrency": "USD"
+      },
+      "isAccessibleForFree": true,
+      "featureList": [
+        "Search across text, code and outputs",
+        "Every plot on one figures shelf, each saved as an image",
+        "Live refresh when the notebook changes on disk, in Chromium browsers",
+        "Run order view",
+        "Share by link, with the notebook after the #",
+        "Cell screenshots",
+        "Copy as Markdown",
+        "Edit text cells in place and save the notebook back, or a copy of it",
+        "Markdown (.md) files open and edit like a notebook of one text cell",
+        "Keyboard shortcuts for every action"
+      ],
+      "image": "https://ipynb.ashwingopalsamy.in/social-preview.png",
+      "license": "https://opensource.org/licenses/MIT",
+      "author": {
+        "@type": "Person",
+        "name": "Ashwin Gopalsamy",
+        "url": "https://ashwingopalsamy.in",
+        "sameAs": "https://github.com/ashwingopalsamy"
+      },
+      "sameAs": [
+        "https://github.com/ashwingopalsamy/ipynb-viewer"
+      ],
+      "about": {
+        "@type": "Thing",
+        "name": "Jupyter Notebook",
+        "sameAs": "https://en.wikipedia.org/wiki/Project_Jupyter"
+      }
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "ipynb viewer",
+      "codeRepository": "https://github.com/ashwingopalsamy/ipynb-viewer",
+      "programmingLanguage": [
+        "TypeScript",
+        "Svelte"
+      ],
+      "license": "https://opensource.org/licenses/MIT",
+      "targetProduct": {
+        "@id": "https://ipynb.ashwingopalsamy.in/#app"
+      }
+    },
+    <!--site:faq-ld-->
+  ]
+}
+</script>
 </body>
 </html>
