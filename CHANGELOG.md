@@ -2,6 +2,19 @@
 
 Versions follow [semantic versioning](https://semver.org). Each release lists what a reader would notice.
 
+## 2.5.0 (2026-10-30)
+
+The home page shows its proof, and the comparison page is rebuilt to back it up.
+
+- The comparison page is a table of thirty things, checked against nbviewer, GitHub, Colab, JupyterLab and, new, VS Code. Every verdict is a tick, a part tick or a dash with a few words beside it, on one line at every width. Rows are grouped by what you would ask; chips filter them, Only differences hides the row that is the same everywhere, and each row opens to its detail and the page it was checked against. Seven rows are marked Only here.
+- On a phone the table shows this page against one other tool at a time, chosen from a menu, Colab first.
+- The comparison also shows the same notebook read two ways (a printed DataFrame, a traceback, a progress bar), where each tool takes your file, which tool to choose for what, what this one does not do, and its sources with the month they were checked.
+- The home page's "how it works" is rebuilt around the same proof: what kind of tool this is beside the others, four figures from the build, a card into the full comparison, the reading demos, where your file goes and how to check it yourself, why a notebook is untrusted input, what loads when and cells arriving while the file is read, and every feature with its key. Editing a notebook's Markdown cells comes second, right after the comparison.
+- The questions sit in two columns on a wide window, and a long address in an answer wraps instead of running off a phone's screen.
+- The comparison page and its Markdown copy for agents come from one data file, so they cannot disagree, and the build checks that every verdict has a source and fits its column.
+- The home page's highlight is the same blue as the comparison's ticks.
+- The first screen grows to about 24 KB gzipped, still under its 30 KB budget.
+
 ## 2.1.0 (2026-10-29)
 
 A calmer header with search in its middle, pictures that save as PNG, JPEG or WebP, footers that lead somewhere, and the whole app moving and answering one way.
