@@ -157,7 +157,7 @@
 .demos .ph .g { width: 15px; height: 15px; }
 .demos .ph .mk { width: 15px; height: 18px; }
 .demos .ph small { margin-left: auto; font-weight: 500; color: var(--fg-3); }
-.demos .body { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr); align-content: center; padding: 4px 18px 18px; }
+.demos .body { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr); align-content: start; padding: 4px 18px 18px; }
 .demos .s { grid-area: 1 / 1; align-self: center; min-width: 0; overflow-x: auto; opacity: 0; visibility: hidden; transition: opacity var(--t2) var(--out), visibility 0s var(--t2); }
 .demos:has(#dm1:checked) .s1, .demos:has(#dm2:checked) .s2, .demos:has(#dm3:checked) .s3 { opacity: 1; visibility: visible; transition-delay: 0s; }
 .demos .draw { margin: 0; font: 12.5px/1.6 var(--mono); color: var(--fg-2); }
@@ -222,7 +222,7 @@
 .editor code { padding: 1px 5px; border-radius: 5px; background: var(--well-2); font: 13.5px var(--mono); }
 .editor .cc { display: flex; align-items: center; gap: 12px; margin: 0 -12px 16px; padding: 10px 12px; border-radius: 10px; background: var(--well-2); font: 13.5px var(--mono); color: var(--fg-2); }
 .editor .cc .n { color: var(--fg-3); }
-.editor .cc code { padding: 0; background: none; }
+.editor .cc code { min-width: 0; padding: 0; background: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .editor .cc .lk { margin-left: auto; font: 500 12px var(--sans); color: var(--fg-3); white-space: nowrap; }
 @media (max-width: 640px) {
   .editor .page { padding: 24px 20px 28px; }

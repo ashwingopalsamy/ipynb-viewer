@@ -1,5 +1,8 @@
 /* The compare page: the opening, the matrix, the choice cards, and the limits and sources sheets. Shared parts are in shared.css. */
 
+/* the guides' 1040px column would put the table in its phone layout; .wrap sets the width instead */
+main.compare { width: 100%; padding: 0 0 64px; }
+
 /* ---- opening ---- */
 .opening { display: grid; gap: 40px 72px; align-items: center; }
 @media (min-width: 960px) { .opening { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }

@@ -12,7 +12,8 @@ const rivals = tools.filter((t) => t.id !== 'us')
 const cls = (id: ToolId) => (id === 'us' ? 'us' : `t t-${id}`)
 const hasMore = (r: Row) => Object.values(r.cells).some((c) => c.more)
 const flags = (r: Row) => `g-${r.group}${onlyHere(r) ? ' only' : ''}${same(r) ? ' same' : ''}`
-const host = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+// the site's name only: a full documentation path wraps in the sources sheet
+const host = (url: string) => new URL(url).hostname
 const mark = '<svg aria-hidden="true"><use href="#mark"/></svg>'
 
 const chip = (value: string, text: string, n: number, only = false) =>
