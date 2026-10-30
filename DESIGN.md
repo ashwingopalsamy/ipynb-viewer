@@ -42,6 +42,7 @@ A notebook reader should disappear. The interface is neutral and calm so the not
 - There is no brand colour. `accent` is for links and the unread dot only. `ok`, `wait` and `danger` mean state and nothing else. Never fill a large area with a hue.
 - Light and dark share every token and switch on `data-theme="dark"`. Dark drops drop-shadows and adds a 1px top highlight instead.
 - Charts use one fixed categorical set (blue, orange, aqua; each stepped for light and dark and checked for colour-blind separation on the paper), for data marks only. Colour follows the thing measured, never its rank, and every mark has a label, so colour is never the only cue.
+- The homepage and the comparison page add one exception: a verified-tick blue (`tick`, with `tick-ink` for text) marks what is ours: its small glyphs, the hairline round its own column, card or lane, its captions, and at most a 9% tint behind them. Never in the app.
 
 ## Typography
 

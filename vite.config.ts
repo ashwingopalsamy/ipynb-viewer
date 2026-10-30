@@ -5,6 +5,7 @@ import { gzipSync } from 'node:zlib'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { marked } from 'marked'
 import { defineConfig, type Plugin } from 'vite'
+import { check, fill, markdown, page } from './tools/compare/index.ts'
 
 // The font fallbacks (.woff, .ttf) are left out of the offline copy because every browser that can run the app takes the .woff2 files.
 const SKIP = /\.(?:map|woff|ttf)$|^(?:sw\.js|_headers|404\.html|social-preview\.png|cooling-coffee\.ipynb|llms(?:-full)?\.txt)$|\.md$/
@@ -18,8 +19,8 @@ const partOf = (ids: string[]): Part =>
   ids.some((id) => id.includes('/katex/')) ? 'math' : ids.some((id) => /\/(?:shiki|@shikijs|oniguruma)/.test(id)) ? 'highlight' : ids.some((id) => /\/(?:marked|dompurify)\//.test(id)) ? 'markdown' : 'extras'
 
 /**
- * Finishes a build. The home page (the About page) is filled in with figures read from the files just written, so its sizes are the
- * real ones, and the offline worker is written last with the list of every file the app can ask for.
+ * Finishes a build. The home page, the compare page and their Markdown copies are filled in with figures read from the files just written,
+ * so their sizes are the real ones, and the offline worker is written last with the list of every file the app can ask for.
  */
 function finish(): Plugin {
   let out = 'dist'
@@ -62,7 +63,7 @@ function finish(): Plugin {
       let languages = 0
       let widest = 0
       for (const f of all) {
-        if (!/\.(?:js|css)$/.test(f) || first.includes(f) || f === 'sw.js' || /^assets\/(?:home|guide)-/.test(f)) continue
+        if (!/\.(?:js|css)$/.test(f) || first.includes(f) || f === 'sw.js' || /^assets\/(?:home|guide|compare)-/.test(f)) continue
         const size = gz(f)
         const part = /katex/i.test(f) ? 'math' : (chunks.get(f) ?? 'extras')
         parts[part] += size
@@ -101,8 +102,10 @@ function finish(): Plugin {
         benchtotal: ms(big.totalMs),
         benchnote: `Measured with npm run bench on Node ${bench.node.replace(/^v/, '').split('.')[0]}, one core of a cloud server, reading in 64 KB chunks. Drawing the cells in the browser takes longer than reading them; this is the reader’s share.`,
       }
-      const page = join(out, 'index.html')
-      writeFileSync(page, readFileSync(page, 'utf8').replace(/<!--fact:(\w+)-->/g, (_, key: string) => facts[key] ?? (() => { throw new Error(`index.html asks for a fact that is not computed: ${key}`) })()))
+      for (const file of ['index.html', 'compare/index.html', 'compare/index.md', 'llms-full.txt']) {
+        const target = join(out, file)
+        writeFileSync(target, readFileSync(target, 'utf8').replace(/<!--fact:(\w+)-->/g, (_, key: string) => facts[key] ?? (() => { throw new Error(`${file} asks for a fact that is not computed: ${key}`) })()))
+      }
 
       const hash = createHash('sha256')
       for (const f of precache) hash.update(f).update(readFileSync(join(out, f)))
@@ -124,6 +127,8 @@ function pages(): Plugin {
     const meta = Object.fromEntries(m[1].split('\n').map((l) => [l.slice(0, l.indexOf(':')).trim(), l.slice(l.indexOf(':') + 1).trim()]))
     return { slug, title: meta.title, description: meta.description, body: source(`${slug}.md`).slice(m[0].length) }
   }
+  // the compare page's Markdown copy is its source with the components written out; the other guides are copied as written
+  const copy = (g: ReturnType<typeof guide>) => (g.slug === 'compare' ? markdown(g.body) : g.body)
   const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
   const text = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()
   const questions = () =>
@@ -150,6 +155,15 @@ function pages(): Plugin {
   }
   const render = (g: ReturnType<typeof guide>, sheets: string[]) => {
     const { theme, foot } = shell()
+    const main =
+      g.slug === 'compare'
+        ? page(g.body)
+        : `<main class="doc">
+<article>
+${marked.parse(g.body, { async: false })}
+<p class="cta"><a href="../">Open a notebook</a></p>
+</article>
+</main>`
     return `<!doctype html>
 <html lang="en">
 <head>
@@ -176,12 +190,7 @@ ${sheets.map((href) => `<link rel="stylesheet" href="${href}" />`).join('\n')}
     <a class="name pill" href="../"><img src="${base}mark.svg" alt="" width="17" height="20" style="flex:none" />ipynb viewer</a>
   </div>
 </header>
-<main class="doc">
-<article>
-${marked.parse(g.body, { async: false })}
-<p class="cta"><a href="../">Open a notebook</a></p>
-</article>
-</main>
+${main}
 ${foot}
 </body>
 </html>
@@ -195,6 +204,9 @@ ${foot}
     configResolved: (config) => {
       base = config.base
     },
+    buildStart() {
+      check(GUIDES)
+    },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? '').split('?')[0]
@@ -202,7 +214,7 @@ ${foot}
         if (!slug) return next()
         // a guide's links are relative to its folder, so the address ends in a slash
         if (path === `${base}${slug}`) return res.writeHead(301, { Location: `${base}${slug}/` }).end()
-        const html = await server.transformIndexHtml(path, render(guide(slug), [`${base}src/about/about.css`, `${base}src/about/guide.css`]))
+        const html = await server.transformIndexHtml(path, render(guide(slug), [`${base}src/about/about.css`, `${base}src/about/guide.css`, ...(slug === 'compare' ? [`${base}src/about/compare.css`] : [])]))
         res.setHeader('Content-Type', 'text/html; charset=utf-8')
         res.end(html)
       })
@@ -215,7 +227,7 @@ ${foot}
           '@type': 'FAQPage',
           mainEntity: faq.map(({ question, answer }) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: text(marked.parse(answer, { async: false })) } })),
         }).replace(/</g, '\\u003c')
-        return html
+        return fill(html, 'home')
           // each question opens in place; its number says how far down the list it is
           .replace(
             '<!--site:faq-->',
@@ -232,12 +244,13 @@ ${foot}
       const sheet = Object.keys(bundle).find((f) => /^assets\/home-.*\.css$/.test(f))
       if (!sheet) throw new Error('the home stylesheet was not built')
       const style = this.getFileName(this.emitFile({ type: 'asset', name: 'guide.css', source: readFileSync('src/about/guide.css', 'utf8') }))
+      const compare = this.getFileName(this.emitFile({ type: 'asset', name: 'compare.css', source: readFileSync('src/about/compare.css', 'utf8') }))
       const all = GUIDES.map(guide)
 
       for (const g of all) {
-        const html = render(g, [`${base}${sheet}`, `${base}${style}`])
+        const html = render(g, [`${base}${sheet}`, `${base}${style}`, ...(g.slug === 'compare' ? [`${base}${compare}`] : [])])
         this.emitFile({ type: 'asset', fileName: `${g.slug}/index.html`, source: html })
-        this.emitFile({ type: 'asset', fileName: `${g.slug}/index.md`, source: g.body })
+        this.emitFile({ type: 'asset', fileName: `${g.slug}/index.md`, source: copy(g) })
       }
 
       const summary = `${source('home.md').trim()}\n\n${source('faq.md').trim()}\n`
@@ -262,7 +275,7 @@ ${all.map((g) => `- [${g.title}](${g.slug}/index.md): ${g.description}`).join('\
 - [Source code](https://github.com/ashwingopalsamy/ipynb-viewer)
 `,
       })
-      this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: [summary.trim(), ...all.map((g) => g.body.trim())].join('\n\n---\n\n') + '\n' })
+      this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: [summary.trim(), ...all.map((g) => copy(g).trim())].join('\n\n---\n\n') + '\n' })
     },
   }
 }

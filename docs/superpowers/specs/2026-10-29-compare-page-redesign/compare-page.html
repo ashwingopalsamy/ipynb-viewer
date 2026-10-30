@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compare page · the whole page</title>
+<style>
+@font-face{font-family:Inter;font-weight:100 900;font-display:swap;src:url(http://localhost:5317/fonts/inter.woff2)}
+@font-face{font-family:"JetBrains Mono";font-weight:100 900;font-display:swap;src:url(http://localhost:5317/fonts/jetbrains-mono.woff2)}
+*{box-sizing:border-box}
+body{margin:0;background:#e4e4ea;color:#1d1d1f;font:15px/1.55 Inter,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:26px 24px 96px}
+.top{max-width:1330px;margin:0 auto 18px;display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}
+.top h1{margin:0;font-size:26px;letter-spacing:-.025em}
+.top p{margin:6px 0 0;color:#48484a;max-width:92ch}
+.mode{margin-left:auto;display:inline-flex;padding:3px;border-radius:999px;background:#d6d6de;gap:2px}
+.mode label{height:32px;padding:0 16px;border-radius:999px;display:grid;place-items:center;font-size:13.5px;font-weight:600;color:#48484a;cursor:pointer}
+.mode input{position:absolute;opacity:0;pointer-events:none}
+.mode label:has(input:checked){background:#fff;color:#1d1d1f;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.notes{max-width:1330px;margin:0 auto 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px 22px;font-size:13.5px;color:#3a3a3e}
+.notes div{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 0 0 1px rgba(0,0,0,.07)}
+.notes b{display:block;color:#1d1d1f;font-size:12px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.stage{max-width:1330px;margin:0 auto;display:flex;gap:22px;align-items:flex-start}
+.screen{border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 24px 48px -28px rgba(20,24,40,.45);flex:none}
+.cap{font:600 11px/1 Inter,-apple-system,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#636368;padding:10px 14px;background:#fff;border-bottom:1px solid rgba(0,0,0,.08)}
+.desk{width:964px}.desk .vp{width:1440px;zoom:.6694}
+.phone{width:342px;position:sticky;top:12px}.phone .vp{width:375px;zoom:.912;height:1640px;overflow:hidden}
+
+/* ================= the page, in site tokens ================= */
+.site{
+  --page:#f5f5f7;--paper:#fff;--well:#e6e8ef;--well-2:#f3f4f8;--sunk:#f3f4f8;--fg:#1d1d1f;--fg-2:#48484a;--fg-3:#636368;
+  --line:rgba(0,0,0,.08);--line-2:rgba(0,0,0,.16);--dip:inset 0 1px 3px rgba(20,24,40,.14);
+  --lift:0 1px 2px rgba(20,24,40,.06),0 12px 24px -16px rgba(20,24,40,.18);--glass:rgba(255,255,255,.86);
+  --tick:#1a8cd8;--tick-soft:color-mix(in srgb,var(--tick) 9%,var(--paper));--ring:color-mix(in srgb,var(--tick) 34%,transparent);
+  --part:#b4b4bb;--danger:#b3261e;--hover:color-mix(in srgb,var(--fg) 4%,transparent);
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  background:var(--page);color:var(--fg);font:16px/1.6 Inter,-apple-system,system-ui,sans-serif;
+}
+body:has(#dk:checked) .site{
+  --page:#0a0a0c;--paper:#1a1a21;--well:#272833;--well-2:#20212a;--sunk:#121217;--fg:#f5f5f7;--fg-2:#cfcfd4;--fg-3:#9a9aa1;
+  --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.2);--dip:inset 0 2px 5px rgba(0,0,0,.55);--lift:inset 0 1px 0 rgba(255,255,255,.06);
+  --glass:rgba(34,34,38,.84);--tick:#1d9bf0;--part:#55555f;--danger:#ff7b72;--hover:color-mix(in srgb,var(--fg) 5%,transparent);
+}
+.site a{color:inherit}
+.g{width:18px;height:18px;flex:none;display:block}
+.k{font:600 11.5px/1 Inter,-apple-system,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+.pg{padding:22px 0 0}
+.in{max-width:1240px;margin:0 auto}
+.wide{max-width:1240px;margin:0 auto}
+.gh{display:flex;justify-content:center;margin-bottom:56px}
+.pill{display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 16px 0 10px;border-radius:999px;background:var(--glass);box-shadow:0 0 0 1px var(--line),var(--lift);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.pill svg{width:20px;height:24px}
+.mk rect:first-child{stroke:var(--line-2);stroke-width:1.5}
+.sec{padding:112px 0 0}
+.sh{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:28px}
+.sh h2{margin:10px 0 0;font-size:40px;line-height:1.08;letter-spacing:-.032em;font-weight:700;text-wrap:balance}
+.sh p{margin:12px 0 0;max-width:60ch;color:var(--fg-2);font-size:17px;line-height:1.55;text-wrap:pretty}
+.sh .aside{flex:none;font-size:14px;color:var(--fg-3);max-width:34ch;text-align:right}
+
+/* --- hero --- */
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:72px;align-items:center}
+.eyebrow{display:flex;align-items:center;gap:12px}
+.stamp{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px 0 8px;border-radius:999px;background:var(--paper);box-shadow:0 0 0 1px var(--line);font-size:13px;font-weight:500;color:var(--fg-2)}
+.stamp .g{width:16px;height:16px}
+.hero h1{margin:18px 0 0;font-size:58px;line-height:1.02;letter-spacing:-.04em;font-weight:700;text-wrap:balance}
+.lede{margin:22px 0 0;font-size:19px;line-height:1.55;color:var(--fg-2);max-width:52ch;text-wrap:pretty}
+.lede b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:nowrap;white-space:nowrap;gap:6px 22px;margin-top:28px;font-size:14px;font-weight:500;color:var(--fg-2)}
+.toc a{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.toc a::after{content:"";width:7px;height:7px;border:solid var(--fg-3);border-width:0 1.6px 1.6px 0;transform:rotate(45deg) translate(-2px,-2px)}
+.jobs{margin:0;display:grid;gap:10px;padding:20px;border-radius:22px;background:var(--paper);box-shadow:var(--lift)}
+.lane{display:flex;align-items:center;gap:8px;min-height:64px;padding:8px 16px;border-radius:16px;background:var(--sunk);box-shadow:var(--dip)}
+.lane>b{flex:none;width:72px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
+.route .lane>b{width:118px;font-size:14px;letter-spacing:-.005em;text-transform:none;color:var(--fg-2)}
+.route .lane.sub{margin-left:118px;min-height:56px;background:transparent;box-shadow:inset 0 0 0 1px var(--ring)}
+.route .lane.sub>b{width:auto;margin-right:6px;font-size:13px;color:var(--fg-3)}
+.hero .jobs{padding:22px;gap:12px}
+.hero .lane{min-height:76px;padding:10px 18px}
+.hero .node{height:38px;font-size:14.5px;padding:0 16px}
+.node{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:999px;background:var(--paper);box-shadow:var(--lift);font-size:13.5px;font-weight:500;white-space:nowrap}
+.node svg{width:14px;height:17px}
+.node.cloud{color:var(--fg-3)}
+.node.kern{box-shadow:inset 0 0 0 1px var(--line-2),var(--lift)}
+.lane small{margin-left:auto;font-size:13px;color:var(--fg-3);white-space:nowrap;padding-left:12px}
+.lane.us{background:var(--tick-soft);box-shadow:inset 0 0 0 1px var(--ring)}
+.lane.us>b{color:var(--tick)}
+.lane.us .node{font-weight:600}
+.lane.us small{color:var(--fg-2)}
+.arrow{width:30px;height:12px;flex:none;fill:none;stroke:var(--fg-3);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.arrow.long{width:96px}
+.figs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:64px}
+.fig{display:grid;align-content:start;gap:6px;padding:20px 22px 18px;border-radius:18px;background:var(--paper);box-shadow:var(--lift)}
+.fig b{font-size:34px;line-height:1.05;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.fig span{font-size:14px;line-height:1.45;color:var(--fg-2);text-wrap:pretty}
+.fig a{margin-top:6px;font-size:13px;font-weight:500;color:var(--fg-3);text-decoration:none}
+.fig a::after{content:" →"}
+.fine{margin:12px 0 0;font-size:13px;color:var(--fg-3)}
+
+/* --- matrix (approved; abridged here) --- */
+.ctl{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+.chip{position:relative;height:36px;padding:0 15px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--fg-2);background:var(--paper);box-shadow:0 0 0 1px var(--line);white-space:nowrap;cursor:pointer}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip em{font-style:normal;color:var(--fg-3);font-variant-numeric:tabular-nums;font-size:13px}
+.chip.on,.chip:has(input:checked){background:var(--fg);color:var(--page);box-shadow:none}
+.chip.on em{color:color-mix(in srgb,var(--page) 65%,transparent)}
+.chip code{font:500 13px var(--mono)}
+.chip.only{color:var(--tick);box-shadow:0 0 0 1px var(--ring)}
+.chip.only svg{width:14px;height:14px}
+.sw{display:inline-flex;align-items:center;gap:9px;margin-left:auto;font-size:14px;font-weight:500;color:var(--fg-2);white-space:nowrap}
+.sw i{width:38px;height:22px;border-radius:999px;background:var(--well);position:relative;box-shadow:var(--dip)}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--paper);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.mx{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;margin-top:14px}
+.mx col.lab{width:214px}.mx col.us{width:212px}
+.mx th,.mx td{padding:13px 14px;text-align:left;vertical-align:middle;font-size:14px;line-height:1.35;white-space:nowrap}
+.mx thead th{padding:16px 14px 14px;vertical-align:bottom;font-size:15px;font-weight:600;letter-spacing:-.01em;border-bottom:1px solid var(--line-2)}
+.mx thead th small{display:block;margin-top:4px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3)}
+.mx thead th.us{border-bottom-color:transparent}
+.mx .who{display:flex;align-items:center;gap:9px}
+.mx .who svg{width:17px;height:20px;flex:none}
+.mx tbody th{font-weight:500}
+.mx td{color:var(--fg-2)}
+.v{display:flex;align-items:center;gap:9px}
+.mx tbody tr:not(.grp)+tr:not(.grp)>*{box-shadow:inset 0 1px 0 var(--line)}
+.mx tr.grp th{padding:26px 14px 9px;font:600 11.5px/1 Inter,-apple-system,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+.mx .us{background:var(--paper);color:var(--fg);font-weight:500;box-shadow:inset 1px 0 0 var(--ring),inset -1px 0 0 var(--ring)!important}
+.mx tbody tr:not(.grp)+tr:not(.grp)>.us{box-shadow:inset 1px 0 0 var(--ring),inset -1px 0 0 var(--ring),inset 0 1px 0 var(--line)!important}
+.mx thead .us{border-radius:18px 18px 0 0;box-shadow:inset 1px 0 0 var(--ring),inset -1px 0 0 var(--ring),inset 0 1px 0 var(--ring)!important;background:var(--tick-soft)}
+.mx tbody tr:last-child .us{border-radius:0 0 18px 18px;box-shadow:inset 1px 0 0 var(--ring),inset -1px 0 0 var(--ring),inset 0 -1px 0 var(--ring),inset 0 1px 0 var(--line)!important}
+.mx .lbl{display:grid;gap:3px}
+.mx .lbl small{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--tick)}
+.mx .lbl small svg{width:12px;height:12px}
+.more{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;height:44px;border-radius:14px;border:1px dashed var(--line-2);font-size:13px;color:var(--fg-3)}
+
+/* --- before / after --- */
+.demo{border-radius:24px;background:var(--paper);box-shadow:var(--lift);padding:10px}
+.dbar{display:flex;align-items:center;gap:8px;padding:10px 10px 16px}
+.dbar .k{margin-right:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pane{border-radius:16px;min-height:330px;display:flex;flex-direction:column;overflow:hidden}
+.pane.was{background:var(--sunk);box-shadow:var(--dip)}
+.pane.now{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ring)}
+.ph{display:flex;align-items:center;gap:8px;padding:14px 18px 10px;font-size:13px;font-weight:600;color:var(--fg-2)}
+.ph svg{width:15px;height:18px}
+.ph small{margin-left:auto;font-weight:500;color:var(--fg-3)}
+.pane.now .ph{color:var(--fg)}
+.body{flex:1;padding:4px 18px 18px;display:flex;flex-direction:column;justify-content:center}
+.s{display:none}
+pre.raw{margin:0;font:12.5px/1.6 var(--mono);color:var(--fg-2);white-space:pre;overflow:hidden}
+pre.raw .dim{opacity:.55}
+pre.raw .bad{color:var(--danger)}
+.tbl{border-radius:12px;box-shadow:0 0 0 1px var(--line);overflow:hidden;width:max-content;font:13px/1.6 var(--mono);font-variant-numeric:tabular-nums}
+.tbl table{border-collapse:collapse}
+.tbl th,.tbl td{padding:7px 16px;text-align:left}
+.tbl thead th{font-weight:600;background:var(--well-2);border-bottom:1px solid var(--line)}
+.tbl td.n,.tbl th.n{text-align:right}
+.tbl td.i{color:var(--fg-3)}
+.tbl tr+tr td{border-top:1px solid var(--line)}
+.exc{margin:0 0 10px;font-size:15px}
+.exc strong{color:var(--danger);font-weight:600;margin-right:.6em}
+.frame{font:12.5px/1.65 var(--mono);color:var(--fg-2);white-space:pre;margin:0}
+.frame .hl{color:var(--fg);font-weight:600}
+.rowcap{display:flex;align-items:center;gap:8px;margin-top:12px;height:36px;padding:0 12px;border-radius:10px;background:var(--well-2);font-size:13px;font-weight:500;color:var(--fg-2);width:max-content}
+.rowcap::before{content:"";width:6px;height:6px;border:solid var(--fg-3);border-width:0 1.6px 1.6px 0;transform:rotate(-45deg)}
+.why{align-items:center;gap:10px;margin:0;padding:16px 12px 8px;font-size:14.5px;color:var(--fg-2)}
+.why svg{width:13px;height:13px;color:var(--tick);flex:none}
+.why b{color:var(--tick);font-weight:600;font-size:13px;white-space:nowrap}
+.d1:has(#d1:checked) .s1,.d1:has(#d2:checked) .s2,.d1:has(#d3:checked) .s3{display:block}
+.d1 .why.s{display:none}.d1:has(#d1:checked) .why.s1,.d1:has(#d2:checked) .why.s2,.d1:has(#d3:checked) .why.s3{display:flex}
+
+/* --- markdown --- */
+.md2{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:56px;align-items:center}
+.md2 h2{margin:10px 0 0;font-size:40px;line-height:1.08;letter-spacing:-.032em;font-weight:700}
+.md2 .say{margin:14px 0 0;font-size:17px;color:var(--fg-2);max-width:46ch}
+.ticks{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:12px}
+.ticks li{display:flex;gap:12px;align-items:flex-start;font-size:15.5px;line-height:1.45}
+.ticks .g{margin-top:2px}
+.ticks kbd{font:600 12px Inter;padding:1px 6px;border-radius:6px;background:var(--paper);box-shadow:0 0 0 1px var(--line-2),0 1px 0 var(--line-2)}
+.else{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:8px;font-size:14px;color:var(--fg-3)}
+.else span{display:flex;gap:10px;align-items:center}
+.else b{color:var(--fg-2);font-weight:600;min-width:92px}
+.win{border-radius:22px;background:var(--paper);box-shadow:var(--lift),0 0 0 1px var(--line);overflow:hidden}
+.wbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.wbar .pill{height:34px;font-size:13.5px;box-shadow:0 0 0 1px var(--line)}
+.wbar .pill svg{width:16px;height:19px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--fg-3);margin-left:2px}
+.btn{display:inline-flex;align-items:center;height:34px;padding:0 16px;border-radius:999px;font-size:13.5px;font-weight:600}
+.btn.solid{background:var(--fg);color:var(--page)}
+.btn.def{background:var(--paper);box-shadow:0 0 0 1px var(--line-2)}
+.wbar .saved{margin-left:auto;font-size:13px;color:var(--fg-3)}
+.doc{padding:34px 44px 40px;position:relative}
+.doc h3{margin:0 0 14px;font-size:30px;letter-spacing:-.025em}
+.doc p{margin:0 0 14px;font-size:16px;line-height:1.65;color:var(--fg)}
+.doc .edit{border-radius:8px;box-shadow:0 0 0 2px var(--ring);padding:2px 6px;margin:0 -6px 14px}
+.sel{background:color-mix(in srgb,var(--tick) 22%,transparent);border-radius:3px}
+.caret{display:inline-block;width:1.5px;height:1.1em;background:var(--fg);vertical-align:-2px;margin-left:1px}
+.ed{position:relative;margin-top:58px}
+.tool{position:absolute;left:150px;top:-50px;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:var(--glass);box-shadow:0 0 0 1px var(--line),0 8px 20px -8px rgba(20,24,40,.35)}
+.tool i{width:32px;height:30px;border-radius:999px;display:grid;place-items:center;font:600 13px Inter;font-style:normal;color:var(--fg-2)}
+.tool i.on{background:color-mix(in srgb,var(--fg) 10%,transparent);color:var(--fg)}
+.tool i.sep{width:1px;height:16px;background:var(--line-2);border-radius:0}
+.doc ul{margin:0 0 14px;padding-left:20px;line-height:1.7}
+.doc code{font:13.5px var(--mono);padding:1px 5px;border-radius:5px;background:var(--well-2)}
+.doc .math{font-family:"Times New Roman",serif;font-style:italic;font-size:17px}
+
+/* --- choose --- */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{display:grid;align-content:start;gap:10px;padding:22px 22px 20px;border-radius:20px;background:var(--paper);box-shadow:var(--lift)}
+.card.us{box-shadow:inset 0 0 0 1px var(--ring),var(--lift);background:var(--tick-soft)}
+.card .t{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.card .t svg{width:18px;height:21px}
+.tag{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3)}
+.card.us .tag{color:var(--tick)}
+.card p{margin:0;font-size:15px;line-height:1.5;color:var(--fg-2);text-wrap:pretty}
+.card p b{color:var(--fg);font-weight:600}
+
+/* --- limits + sources --- */
+.two-up{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sheet{padding:26px 28px;border-radius:22px;background:var(--paper);box-shadow:var(--lift)}
+.sheet h3{margin:0 0 4px;font-size:20px;letter-spacing:-.015em}
+.sheet>p{margin:0 0 14px;color:var(--fg-2);font-size:15px}
+.nots{list-style:none;margin:0;padding:0;display:grid}
+.nots li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;font-size:15px;line-height:1.45;color:var(--fg-2)}
+.nots li+li{border-top:1px solid var(--line)}
+.nots .g{margin-top:2px}
+.nots b{color:var(--fg);font-weight:600}
+.src{list-style:none;margin:0;padding:0;display:grid}
+.src li{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14.5px}
+.src li+li{border-top:1px solid var(--line)}
+.src b{font-weight:600;min-width:104px}
+.src a{color:var(--fg-2);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.src time{margin-left:auto;font-size:13px;color:var(--fg-3);font-variant-numeric:tabular-nums}
+
+/* --- close --- */
+.close{margin-top:112px;padding:56px 56px 52px;border-radius:28px;background:var(--paper);box-shadow:var(--lift);display:flex;align-items:center;gap:40px}
+.close h2{margin:0;font-size:40px;line-height:1.08;letter-spacing:-.032em}
+.close p{margin:12px 0 0;font-size:17px;color:var(--fg-2)}
+.close .acts{margin-left:auto;display:flex;gap:10px;flex:none}
+.close .btn{height:48px;padding:0 24px;font-size:15.5px}
+.close .btn.q{color:var(--fg-2)}
+.foot{margin-top:72px;padding:28px 0 36px;border-top:1px solid var(--line);display:flex;gap:26px;font-size:13.5px;color:var(--fg-3)}
+
+/* ================= phone ================= */
+.p{padding:14px 16px 0}
+.p .gh{margin-bottom:28px}
+.p .pill{height:36px;font-size:14px}
+.p h1{margin:14px 0 0;font-size:38px;line-height:1.04;letter-spacing:-.035em;font-weight:700}
+.p .lede{font-size:16.5px;margin-top:14px}
+.p .jobs{margin-top:22px;padding:10px;gap:8px;border-radius:18px}
+.p .lane{min-height:0;flex-wrap:wrap;gap:6px;padding:10px 12px}
+.p .lane>b{width:100%;font-size:11px;margin-bottom:2px}
+.p .lane small{width:100%;margin:2px 0 0;padding:0;font-size:12.5px}
+.p .node{height:30px;font-size:13px;padding:0 12px}
+.p .figs{grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
+.p .fig{padding:14px 14px 12px;border-radius:16px}
+.p .fig b{font-size:26px}
+.p .fig span{font-size:12.5px}
+.p .fig a{display:none}
+.p .sec{padding-top:56px}
+.p h2{margin:8px 0 0;font-size:28px;line-height:1.1;letter-spacing:-.03em}
+.p .sh p{font-size:15.5px}
+.p .sh{margin-bottom:16px}
+.p .dchips{display:flex;gap:6px;margin:0 0 10px;overflow:hidden}
+.p .dchips .chip{height:32px;padding:0 12px;font-size:13px}
+.seg{display:grid;grid-template-columns:1fr 1fr;padding:3px;border-radius:999px;background:var(--well);box-shadow:var(--dip);margin:0 0 10px}
+.seg label{position:relative;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--fg-2);cursor:pointer}
+.seg label svg{width:13px;height:15px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--paper);color:var(--fg);box-shadow:var(--lift)}
+.p .pane{min-height:210px;display:none}
+.p .ph{padding:12px 14px 6px}
+.p .body{padding:2px 14px 14px}
+.p pre.raw{font-size:11.5px}
+.d2:has(#pw:checked) .pane.was,.d2:has(#pn:checked) .pane.now{display:flex}
+.p .why{display:flex;padding:10px 2px 0;font-size:13.5px;align-items:flex-start}
+.p .why svg{margin-top:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="rose" viewBox="0 0 18 18"><path d="M9.00 0.78L9.53 0.88L10.03 1.16L10.48 1.55L10.89 1.96L11.27 2.31L11.67 2.55L12.12 2.67L12.64 2.69L13.22 2.68L13.82 2.72L14.37 2.88L14.81 3.19L15.12 3.63L15.28 4.18L15.32 4.78L15.31 5.36L15.33 5.88L15.45 6.33L15.69 6.73L16.04 7.11L16.45 7.52L16.84 7.97L17.12 8.47L17.22 9.00L17.12 9.53L16.84 10.03L16.45 10.48L16.04 10.89L15.69 11.27L15.45 11.67L15.33 12.12L15.31 12.64L15.32 13.22L15.28 13.82L15.12 14.37L14.81 14.81L14.37 15.12L13.82 15.28L13.22 15.32L12.64 15.31L12.12 15.33L11.67 15.45L11.27 15.69L10.89 16.04L10.48 16.45L10.03 16.84L9.53 17.12L9.00 17.22L8.47 17.12L7.97 16.84L7.52 16.45L7.11 16.04L6.73 15.69L6.33 15.45L5.88 15.33L5.36 15.31L4.78 15.32L4.18 15.28L3.63 15.12L3.19 14.81L2.88 14.37L2.72 13.82L2.68 13.22L2.69 12.65L2.67 12.12L2.55 11.67L2.31 11.27L1.96 10.89L1.55 10.48L1.16 10.03L0.88 9.53L0.78 9.00L0.88 8.47L1.16 7.97L1.55 7.52L1.96 7.11L2.31 6.73L2.55 6.33L2.67 5.88L2.69 5.35L2.68 4.78L2.72 4.18L2.88 3.63L3.19 3.19L3.63 2.88L4.18 2.72L4.78 2.68L5.35 2.69L5.88 2.67L6.33 2.55L6.73 2.31L7.11 1.96L7.52 1.55L7.97 1.16L8.47 0.88Z"/></symbol>
+  <symbol id="y" viewBox="0 0 18 18"><use href="#rose" style="fill:var(--tick)"/><path d="m5.7 9.3 2.2 2.2 4.4-4.7" style="fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"/></symbol>
+  <symbol id="p" viewBox="0 0 18 18"><use href="#rose" style="fill:var(--part)"/><path d="m5.7 9.3 2.2 2.2 4.4-4.7" style="fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"/></symbol>
+  <symbol id="n" viewBox="0 0 18 18"><path d="M5.5 9h7" style="stroke:var(--fg-3);stroke-width:1.8;stroke-linecap:round;opacity:.8"/></symbol>
+  <symbol id="spark" viewBox="0 0 12 12"><path d="M6 .5c.35 2.6 2.4 4.65 5 5-2.6.35-4.65 2.4-5 5-.35-2.6-2.4-4.65-5-5 2.6-.35 4.65-2.4 5-5Z" style="fill:currentColor"/></symbol>
+  <symbol id="mark" viewBox="0 0 40 48"><rect width="40" height="48" rx="10" fill="#1d1d1f" style="stroke:var(--line-2);stroke-width:1.5"/><circle cx="12" cy="13" r="4" fill="#4cc38a"/><rect x="9" y="25" width="22" height="4" rx="2" fill="#fff" opacity=".9"/><rect x="9" y="33" width="15" height="4" rx="2" fill="#fff" opacity=".55"/></symbol>
+  <symbol id="ar" viewBox="0 0 30 12"><path d="M1 6h27m-5-5 5 5-5 5"/></symbol>
+</svg>
+
+<div class="top">
+  <div>
+    <h1>The whole page</h1>
+    <p>Everything around the approved table, top to bottom. The table is abridged here. The demo chips and the phone’s Elsewhere / Here switch work, with no script, as they would on the page. Scroll the desktop; the phone stays beside it.</p>
+  </div>
+  <div class="mode"><label><input type="radio" name="m" id="lt" checked>Light</label><label><input type="radio" name="m" id="dk">Dark</label></div>
+</div>
+<div class="notes">
+  <div><b>1 · Opening</b>Left-aligned, not centred. The claim on the left; on the right, the three jobs (shows, runs, reads) so the table’s logic is clear before it starts. Four figures the build measures, each with a link to how.</div>
+  <div><b>2 · Read better</b>The proof that isn’t a tick: the same output as it was saved and as it reads here. print(df), a traceback and a progress bar. Only things no rival does.</div>
+  <div><b>3 · Where the file goes</b>One lane per tool, reusing the landing page’s lanes. Ours is the shortest. Links are shown honestly as the exception: GitHub, then this site’s relay, which keeps nothing.</div>
+  <div><b>4 · Markdown too</b>Claims only what works: open from disk, edit in the rendered page, save to the same file. A live-looking window with the edit bar, not a screenshot.</div>
+  <div><b>5 · Which to choose</b>Six cards, one sentence each, fair to every tool. This replaces the old “when to choose” list and the separate taxonomy section.</div>
+  <div><b>6 · Limits, sources, close</b>What it does not do, said plainly. Every rival’s source with the date it was checked. A final call to open a notebook.</div>
+</div>
+
+<div class="stage">
+<!-- ======================= desktop ======================= -->
+<div class="screen desk"><div class="cap">Desktop · 1440px, scaled</div><div class="vp site"><div class="pg">
+  <header class="gh"><span class="pill"><svg><use href="#mark"/></svg>ipynb viewer</span></header>
+
+  <div class="in">
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="k">Compared</span><span class="stamp"><svg class="g"><use href="#y"/></svg>Checked October 2026</span></div>
+        <h1>Six ways to open a notebook, compared.</h1>
+        <p class="lede">nbviewer and GitHub show a notebook from a server. Colab, JupyterLab and VS Code run one, on a kernel that has to live somewhere. <b>ipynb viewer reads it in your browser:</b> nothing to install, no account, no upload, and no code runs.</p>
+        <nav class="toc"><a href="#">The table</a><a href="#">Reading</a><a href="#">Your file</a><a href="#">Markdown</a><a href="#">Choosing</a><a href="#">Sources</a></nav>
+      </div>
+      <figure class="jobs" role="img" aria-label="Three jobs: nbviewer and GitHub show a notebook, Colab, JupyterLab and VS Code run one, ipynb viewer reads one.">
+        <div class="lane"><b>Shows</b><span class="node">nbviewer</span><span class="node">GitHub</span><small>on a server, from a link</small></div>
+        <div class="lane"><b>Runs</b><span class="node">Colab</span><span class="node">JupyterLab</span><span class="node">VS Code</span><small>on a kernel</small></div>
+        <div class="lane us"><b>Reads</b><span class="node"><svg><use href="#mark"/></svg>ipynb viewer</span><small>in your browser, nothing else</small></div>
+      </figure>
+    </section>
+
+    <div class="figs">
+      <div class="fig"><b>0 bytes</b><span>leave your device when you open a file from disk</span><a href="#">Check it yourself</a></div>
+      <div class="fig"><b>28 KB</b><span>for the first screen, gzipped. The rest loads only when a notebook needs it</span><a href="#">What loads when</a></div>
+      <div class="fig"><b>425 ms</b><span>to read a 61 MB notebook of 3,000 cells, start to finish</span><a href="#">How it is measured</a></div>
+      <div class="fig"><b>2.1 MB</b><span>downloaded once. After that it opens with the wifi off</span><a href="#">What is kept</a></div>
+    </div>
+    <p class="fine">Figures are measured by the build on every release, so they cannot drift from the code.</p>
+  </div>
+
+  <!-- 2 · matrix -->
+  <section class="sec in">
+    <div class="sh"><div><div class="k">Side by side</div><h2>Thirty things, checked.</h2><p>Grouped by what you would ask. Ticks have words beside them; the detail and the source are one tap away.</p></div></div>
+    <div class="ctl" style="padding:0 0 0 0">
+      <span class="chip on">All <em>30</em></span><span class="chip">Privacy <em>5</em></span><span class="chip">Access <em>5</em></span><span class="chip">Reading <em>8</em></span><span class="chip">Sharing <em>6</em></span><span class="chip">Editing <em>4</em></span>
+      <span class="chip only"><svg><use href="#spark"/></svg>Only here <em style="color:inherit;opacity:.7">9</em></span>
+      <label class="sw"><i></i>Only differences</label>
+    </div>
+    <table class="mx">
+      <colgroup><col class="lab"><col class="us"><col><col><col><col><col></colgroup>
+      <thead><tr><th></th>
+        <th class="us"><span class="who"><svg><use href="#mark"/></svg>ipynb viewer</span><small>Reads · this site</small></th>
+        <th>nbviewer<small>Shows</small></th><th>GitHub<small>Shows</small></th><th>Colab<small>Runs</small></th><th>JupyterLab<small>Runs</small></th><th>VS Code<small>Runs</small></th></tr></thead>
+      <tbody>
+        <tr class="grp"><th>Privacy</th><td class="us"></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>Where the file is read</th><td class="us"><span class="v"><svg class="g"><use href="#y"/></svg>In your browser</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>nbviewer’s server</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>GitHub’s servers</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Google’s servers</span></td><td><span class="v"><svg class="g"><use href="#y"/></svg>Your own server</span></td><td><span class="v"><svg class="g"><use href="#y"/></svg>Your machine</span></td></tr>
+        <tr><th><span class="lbl">Printed DataFrames<small><svg><use href="#spark"/></svg>Only here</small></span></th><td class="us"><span class="v"><svg class="g"><use href="#y"/></svg>Become real tables</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Stay as text</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Stay as text</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Stay as text</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Stay as text</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>Stay as text</span></td></tr>
+        <tr><th>Markdown files</th><td class="us"><span class="v"><svg class="g"><use href="#y"/></svg>Edit in the page</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>No</span></td><td><span class="v"><svg class="g"><use href="#p"/></svg>Edit as source</span></td><td><span class="v"><svg class="g"><use href="#n"/></svg>No</span></td><td><span class="v"><svg class="g"><use href="#p"/></svg>Source + preview</span></td><td><span class="v"><svg class="g"><use href="#p"/></svg>Source + preview</span></td></tr>
+      </tbody>
+    </table>
+    <div class="more">The approved table continues here: 30 rows in six groups, with sources and method at its foot</div>
+  </section>
+
+  <div class="in">
+    <!-- 3 · before / after -->
+    <section class="sec">
+      <div class="sh"><div><div class="k">Reading</div><h2>The same notebook, read better.</h2><p>Most tools show an output exactly as it was saved. ipynb viewer reads it and shows what it means. Your file is never changed.</p></div><p class="aside">None of these run code. They read what the notebook already holds.</p></div>
+      <div class="demo d1">
+        <div class="dbar"><span class="k">Try one</span>
+          <label class="chip"><input type="radio" name="d" id="d1" checked><code>print(df)</code></label>
+          <label class="chip"><input type="radio" name="d" id="d2">A traceback</label>
+          <label class="chip"><input type="radio" name="d" id="d3">A progress bar</label>
+        </div>
+        <div class="pair">
+          <div class="pane was"><div class="ph"><svg class="g" style="width:15px;height:15px"><use href="#n"/></svg>Elsewhere<small>as saved</small></div><div class="body">
+<pre class="raw s s1">      city  temp_c  rain_mm
+0   Berlin    11.2      4.1
+1   Lisbon    19.8      0.0
+2     Oslo     6.4      7.9
+3  Chennai    31.0     12.3
+4    Quito    14.6      3.2</pre>
+<pre class="raw s s2"><span class="dim">---------------------------------------------------------------------------</span>
+<span class="bad">KeyError</span>                                  Traceback (most recent call last)
+File ~/env/lib/python3.12/site-packages/pandas/core/indexes/base.py:3805, in Index.get_loc(self, key)
+   3804 try:
+-&gt; 3805     return self._engine.get_loc(casted_key)
+   3806 except KeyError as err:
+File index.pyx:167, in pandas._libs.index.IndexEngine.get_loc()
+File index.pyx:196, in pandas._libs.index.IndexEngine.get_loc()
+File pandas/_libs/hashtable_class_helper.pxi:7081, in PyObjectHashTable.get_item()
+<span class="dim">The above exception was the direct cause of the following exception:</span>
+<span class="bad">KeyError</span>                                  Traceback (most recent call last)
+Cell In[7], line 3
+      1 df = load("weather.csv")
+----&gt; 3 df["rain_mm"].mean()
+File ~/env/lib/python3.12/site-packages/pandas/core/frame.py:4102, in DataFrame.__getitem__
+<span class="dim">   …  9 more lines</span>
+<span class="bad">KeyError: 'rain_mm'</span></pre>
+<pre class="raw s s3">  0%|          | 0/100 [00:00&lt;?, ?it/s]
+ 10%|█         | 10/100 [00:00&lt;00:03, 24.1it/s]
+ 20%|██        | 20/100 [00:00&lt;00:03, 24.3it/s]
+ 30%|███       | 30/100 [00:01&lt;00:02, 24.2it/s]
+ 40%|████      | 40/100 [00:01&lt;00:02, 24.0it/s]
+ 50%|█████     | 50/100 [00:02&lt;00:02, 24.2it/s]
+ 60%|██████    | 60/100 [00:02&lt;00:01, 24.1it/s]
+ 70%|███████   | 70/100 [00:02&lt;00:01, 24.3it/s]
+ 80%|████████  | 80/100 [00:03&lt;00:00, 24.2it/s]
+ 90%|█████████ | 90/100 [00:03&lt;00:00, 24.2it/s]
+100%|██████████| 100/100 [00:04&lt;00:00, 24.2it/s]
+Training finished: loss 0.081</pre>
+          </div></div>
+          <div class="pane now"><div class="ph"><svg><use href="#mark"/></svg>ipynb viewer<small>as read</small></div><div class="body">
+            <div class="s s1"><div class="tbl"><table><thead><tr><th></th><th>city</th><th class="n">temp_c</th><th class="n">rain_mm</th></tr></thead><tbody>
+              <tr><td class="i">0</td><td>Berlin</td><td class="n">11.2</td><td class="n">4.1</td></tr>
+              <tr><td class="i">1</td><td>Lisbon</td><td class="n">19.8</td><td class="n">0.0</td></tr>
+              <tr><td class="i">2</td><td>Oslo</td><td class="n">6.4</td><td class="n">7.9</td></tr>
+              <tr><td class="i">3</td><td>Chennai</td><td class="n">31.0</td><td class="n">12.3</td></tr>
+              <tr><td class="i">4</td><td>Quito</td><td class="n">14.6</td><td class="n">3.2</td></tr></tbody></table></div></div>
+            <div class="s s2"><p class="exc"><strong>KeyError</strong>'rain_mm'</p>
+<pre class="frame">Cell In[7], line 3
+      1 df = load("weather.csv")
+<span class="hl">----&gt; 3 df["rain_mm"].mean()</span></pre>
+              <div class="rowcap">Show full traceback</div></div>
+            <div class="s s3"><pre class="frame">100%|██████████| 100/100 [00:04&lt;00:00, 24.2it/s]
+Training finished: loss 0.081</pre></div>
+          </div></div>
+        </div>
+        <p class="why s s1"><svg><use href="#spark"/></svg><b>Only here</b>Text that lines up in columns, which is what <code>print(df)</code> writes, becomes a table. Numbers align on the right; the index stays quiet.</p>
+        <p class="why s s2"><svg><use href="#spark"/></svg><b>Only here</b>The error is named first, then the line in your own code. The 14 library frames wait behind one row.</p>
+        <p class="why s s3"><svg><use href="#spark"/></svg><b>Only here</b>A bar saved as one line per frame keeps only its last frame. Everything printed after it stays.</p>
+      </div>
+    </section>
+
+    <!-- 4 · paths -->
+    <section class="sec">
+      <div class="sh"><div><div class="k">Privacy</div><h2>Where your file goes.</h2><p>Every other tool hands the file to a server or a kernel, even when that runs on your own machine. Here, the page you are reading is the only place it goes.</p></div><p class="aside">Grey stops are someone else’s computer. Outlined stops can run code.</p></div>
+      <figure class="jobs route" style="margin:0">
+        <div class="lane us"><b>ipynb viewer</b><span class="node">your file</span><svg class="arrow long"><use href="#ar"/></svg><span class="node"><svg><use href="#mark"/></svg>this page</span><small><span class="v"><svg class="g"><use href="#y"/></svg>Stays on your device</span></small></div>
+        <div class="lane sub"><b>From a link</b><span class="node cloud">GitHub</span><svg class="arrow"><use href="#ar"/></svg><span class="node">this site’s relay</span><svg class="arrow"><use href="#ar"/></svg><span class="node"><svg><use href="#mark"/></svg>this page</span><small><span class="v"><svg class="g"><use href="#p"/></svg>Passed through, not kept</span></small></div>
+        <div class="lane"><b>nbviewer</b><span class="node">a link</span><svg class="arrow"><use href="#ar"/></svg><span class="node cloud">nbviewer’s server</span><svg class="arrow"><use href="#ar"/></svg><span class="node">a page</span><small><span class="v"><svg class="g"><use href="#n"/></svg>Fetched by their server</span></small></div>
+        <div class="lane"><b>GitHub</b><span class="node">your repository</span><svg class="arrow"><use href="#ar"/></svg><span class="node cloud">GitHub’s servers</span><svg class="arrow"><use href="#ar"/></svg><span class="node">a page</span><small><span class="v"><svg class="g"><use href="#p"/></svg>Already on GitHub</span></small></div>
+        <div class="lane"><b>Colab</b><span class="node">your file</span><svg class="arrow"><use href="#ar"/></svg><span class="node cloud">Google Drive</span><svg class="arrow"><use href="#ar"/></svg><span class="node cloud kern">Google’s runtime</span><svg class="arrow"><use href="#ar"/></svg><span class="node">a page</span><small><span class="v"><svg class="g"><use href="#n"/></svg>Copied to Google</span></small></div>
+        <div class="lane"><b>JupyterLab</b><span class="node">your file</span><svg class="arrow"><use href="#ar"/></svg><span class="node">Jupyter server</span><svg class="arrow"><use href="#ar"/></svg><span class="node kern">your kernel</span><svg class="arrow"><use href="#ar"/></svg><span class="node">a page</span><small><span class="v"><svg class="g"><use href="#y"/></svg>Your machine</span></small></div>
+        <div class="lane"><b>VS Code</b><span class="node">your file</span><svg class="arrow"><use href="#ar"/></svg><span class="node">the editor</span><svg class="arrow"><use href="#ar"/></svg><span class="node kern">your kernel</span><small><span class="v"><svg class="g"><use href="#y"/></svg>Your machine</span></small></div>
+      </figure>
+    </section>
+
+    <!-- 5 · markdown -->
+    <section class="sec">
+      <div class="md2">
+        <div>
+          <div class="k">Markdown</div>
+          <h2>Markdown files, too.</h2>
+          <p class="say">Open a <code style="font:15px var(--mono)">.md</code> file from your disk and it reads like a notebook. Edit it in the page you are reading, then save it back to the same file.</p>
+          <ul class="ticks">
+            <li><svg class="g"><use href="#y"/></svg><span>Opens <code style="font:14px var(--mono)">.md</code> and <code style="font:14px var(--mono)">.markdown</code> by picking or dropping</span></li>
+            <li><svg class="g"><use href="#y"/></svg><span>Edit the rendered text: double-click a paragraph, or press <kbd>e</kbd></span></li>
+            <li><svg class="g"><use href="#y"/></svg><span>A bar for bold, italic, code, links, headings and lists, with undo</span></li>
+            <li><svg class="g"><use href="#y"/></svg><span>Save writes the same file in Chromium browsers; others download a copy</span></li>
+          </ul>
+          <div class="else">
+            <span><b>GitHub</b>edit the source, preview in another tab</span>
+            <span><b>VS Code</b>the source, with a preview beside it</span>
+          </div>
+        </div>
+        <div class="win" aria-hidden="true">
+          <div class="wbar"><span class="pill"><svg><use href="#mark"/></svg>field-notes.md<i class="dot"></i></span><span class="saved">Edited</span><span class="btn def">Save a copy</span><span class="btn solid">Save</span></div>
+          <div class="doc">
+            <h3>Field notes</h3>
+            <div class="ed"><div class="tool"><i>↶</i><i class="sep"></i><i class="on">B</i><i style="font-style:italic">I</i><i style="font-family:var(--mono);font-size:12px">&lt;/&gt;</i><i>🔗︎</i><i class="sep"></i><i>H</i><i>≡</i></div>
+            <p class="edit">Rain at the coast came in at <span class="sel">twice</span><span class="caret"></span> the forecast, mostly after dark.</p></div>
+            <p>The mean for the week was <span class="math">x̄ = 7.9 mm</span>, against 3.4 mm inland.</p>
+            <ul><li>Lisbon stayed dry all week</li><li>Re-run <code>clean.py</code> before the next import</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · choose -->
+    <section class="sec">
+      <div class="sh"><div><div class="k">Which to choose</div><h2>Each one is right for something.</h2><p>Pick by the job, not the logo.</p></div></div>
+      <div class="cards">
+        <div class="card us"><div class="t"><svg><use href="#mark"/></svg>ipynb viewer<span class="tag">Reads</span></div><p><b>To read a notebook now</b>, on any device, with nothing to install and nothing sent anywhere, including one that came by email.</p></div>
+        <div class="card"><div class="t">nbviewer<span class="tag">Shows</span></div><p><b>For a stable public address</b> that anyone can open without this tool or an account.</p></div>
+        <div class="card"><div class="t">GitHub preview<span class="tag">Shows</span></div><p><b>When the notebook lives in a repository</b> and you are reviewing it there, beside the code.</p></div>
+        <div class="card"><div class="t">Google Colab<span class="tag">Runs</span></div><p><b>To run it with no setup</b>, on Google’s machines, when a Google account and Drive are fine.</p></div>
+        <div class="card"><div class="t">JupyterLab<span class="tag">Runs</span></div><p><b>To work on it</b>: run cells, change code, install packages, on a kernel you control.</p></div>
+        <div class="card"><div class="t">VS Code<span class="tag">Runs</span></div><p><b>When it is part of a codebase</b> you are editing and debugging, with git beside it.</p></div>
+      </div>
+    </section>
+
+    <!-- 7 · limits + sources -->
+    <section class="sec">
+      <div class="two-up">
+        <div class="sheet"><h3>What it does not do</h3><p>Said plainly, so the ticks above can be trusted.</p>
+          <ul class="nots">
+            <li><svg class="g"><use href="#n"/></svg><span><b>Run code.</b> You see what the notebook saved, never new results.</span></li>
+            <li><svg class="g"><use href="#n"/></svg><span><b>Live widgets.</b> They need a kernel; their saved picture shows if there is one.</span></li>
+            <li><svg class="g"><use href="#n"/></svg><span><b>Edit code or outputs.</b> Only the text of text cells changes.</span></li>
+            <li><svg class="g"><use href="#n"/></svg><span><b>Export to PDF.</b> The browser’s print dialog does that.</span></li>
+            <li><svg class="g"><use href="#n"/></svg><span><b>Markdown from a link.</b> Markdown files open from disk.</span></li>
+          </ul></div>
+        <div class="sheet" id="sources"><h3>Sources and method</h3><p>Each verdict links to the page it came from. The figures come from the build.</p>
+          <ul class="src">
+            <li><b>nbviewer</b><a href="#">nbviewer.org/faq</a><time>Oct 2026</time></li>
+            <li><b>GitHub</b><a href="#">docs.github.com · notebooks</a><time>Oct 2026</time></li>
+            <li><b>Colab</b><a href="#">research.google.com/colaboratory/faq</a><time>Oct 2026</time></li>
+            <li><b>JupyterLab</b><a href="#">jupyterlab.readthedocs.io</a><time>Oct 2026</time></li>
+            <li><b>VS Code</b><a href="#">code.visualstudio.com/docs/datascience</a><time>Oct 2026</time></li>
+          </ul>
+          <p class="fine" style="margin-top:14px">Something out of date? <a href="#">Open an issue</a> and it will be checked and corrected.</p></div>
+      </div>
+    </section>
+
+    <!-- 8 · close -->
+    <div class="close">
+      <div><h2>Try it on a notebook of your own.</h2><p>It opens in this tab. Nothing is uploaded.</p></div>
+      <div class="acts"><span class="btn solid">Open a notebook</span><span class="btn def">See the demo</span><span class="btn q">Open from GitHub →</span></div>
+    </div>
+    <div class="foot"><span>Open from GitHub</span><span>Privacy</span><span>Compared</span><span>For agents</span><span>Design</span><span style="margin-left:auto">Made with no tracking</span></div>
+  </div>
+</div></div></div>
+
+<!-- ======================= phone ======================= -->
+<div class="screen phone"><div class="cap">Phone · 375px</div><div class="vp site"><div class="p">
+  <header class="gh" style="justify-content:flex-start"><span class="pill"><svg><use href="#mark"/></svg>ipynb viewer</span></header>
+  <div class="eyebrow"><span class="k">Compared</span><span class="stamp"><svg class="g"><use href="#y"/></svg>October 2026</span></div>
+  <h1>Six ways to open a notebook, side by side.</h1>
+  <p class="lede">nbviewer and GitHub show a notebook. Colab, JupyterLab and VS Code run one. <b>ipynb viewer reads it in your browser</b>: no install, no upload, no code runs.</p>
+  <div class="jobs">
+    <div class="lane"><b>Shows</b><span class="node">nbviewer</span><span class="node">GitHub</span></div>
+    <div class="lane"><b>Runs</b><span class="node">Colab</span><span class="node">JupyterLab</span><span class="node">VS Code</span></div>
+    <div class="lane us"><b>Reads</b><span class="node"><svg><use href="#mark"/></svg>ipynb viewer</span><small>in your browser, nothing else</small></div>
+  </div>
+  <div class="figs">
+    <div class="fig"><b>0 bytes</b><span>leave your device</span></div>
+    <div class="fig"><b>28 KB</b><span>first screen, gzipped</span></div>
+    <div class="fig"><b>425 ms</b><span>to read 61 MB</span></div>
+    <div class="fig"><b>2.1 MB</b><span>once, then offline</span></div>
+  </div>
+  <section class="sec">
+    <div class="sh"><div><div class="k">Reading</div><h2>The same notebook, read better.</h2></div></div>
+    <div class="d2">
+      <div class="dchips"><span class="chip on"><code>print(df)</code></span><span class="chip">Traceback</span><span class="chip">Progress</span></div>
+      <div class="seg"><label><input type="radio" name="pp" id="pw">Elsewhere</label><label><input type="radio" name="pp" id="pn" checked><svg><use href="#mark"/></svg>ipynb viewer</label></div>
+      <div class="pane was"><div class="ph">As saved</div><div class="body"><pre class="raw">      city  temp_c  rain_mm
+0   Berlin    11.2      4.1
+1   Lisbon    19.8      0.0
+2     Oslo     6.4      7.9
+3  Chennai    31.0     12.3</pre></div></div>
+      <div class="pane now"><div class="ph">As read</div><div class="body"><div class="tbl" style="font-size:12px"><table><thead><tr><th></th><th>city</th><th class="n">temp_c</th><th class="n">rain_mm</th></tr></thead><tbody>
+        <tr><td class="i">0</td><td>Berlin</td><td class="n">11.2</td><td class="n">4.1</td></tr><tr><td class="i">1</td><td>Lisbon</td><td class="n">19.8</td><td class="n">0.0</td></tr><tr><td class="i">2</td><td>Oslo</td><td class="n">6.4</td><td class="n">7.9</td></tr><tr><td class="i">3</td><td>Chennai</td><td class="n">31.0</td><td class="n">12.3</td></tr></tbody></table></div></div></div>
+      <p class="why"><svg><use href="#spark"/></svg><span>Text in columns becomes a table.</span></p>
+    </div>
+  </section>
+  <section class="sec">
+    <div class="sh"><div><div class="k">Privacy</div><h2>Where your file goes.</h2></div></div>
+    <div class="jobs" style="margin:0">
+      <div class="lane us"><b>ipynb viewer</b><span class="node">your file</span><svg class="arrow"><use href="#ar"/></svg><span class="node">this page</span><small><span class="v"><svg class="g"><use href="#y"/></svg>Stays on your device</span></small></div>
+      <div class="lane"><b>Colab</b><span class="node">file</span><svg class="arrow" style="width:16px"><use href="#ar"/></svg><span class="node cloud">Drive</span><svg class="arrow" style="width:16px"><use href="#ar"/></svg><span class="node cloud kern">runtime</span><small><span class="v"><svg class="g"><use href="#n"/></svg>Copied to Google</span></small></div>
+    </div>
+  </section>
+</div></div></div>
+</div>
+</body>
+</html>
