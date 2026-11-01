@@ -166,11 +166,11 @@
       // without a file to write to, saving makes a copy
       session.detached = !handle;
       if (loaded) hint();
-      // where the browser lets a page offer tools to an agent working with the person (WebMCP), the open notebook is offered read-only
+      // where the browser lets a page offer tools to an agent working with the person (WebMCP), an agent may open another notebook beside this one
       const mc = (document as any).modelContext ?? (navigator as any).modelContext;
       if (mc) {
         const ctl = (tools = new AbortController());
-        import('./lib/agent').then((m) => m.reader(mc, ctl.signal, () => ({ cells, meta, name, language })));
+        import('./lib/agent').then((m) => m.reader(mc, ctl.signal, (file: File) => place([{ file }])));
       }
       if (!tabs.strip.list.length) document.title = `${file.name} · ipynb viewer`;
       if (handle && file instanceof File) await follow(mine, handle, file);

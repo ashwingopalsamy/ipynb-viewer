@@ -55,6 +55,10 @@ A notebook opened from a link can be up to 50 MB. A file from disk has no limit 
 
 The notebook sheet can make a link that carries the notebook after the `#`. The part after the `#` is never sent to a server, so the link works without anyone hosting the file. Pictures are dropped first and then outputs when the notebook is too long for a link. Before you share, the same sheet looks for keys and tokens in code and outputs, and Copy as Markdown hides likely secrets unless you turn that off. For a notebook that already lives on GitHub, share the GitHub link as `?url=` instead.
 
+## Can an AI agent open a notebook for me?
+
+Yes. An agent on your computer can build a link that carries the notebook after the `#` and open it in your browser. The browser never sends that part to a server, so nothing is uploaded. Agents that visit this site find the recipe in the [agent guide](agents/).
+
 ## Can I export a notebook to Markdown, images or PDF?
 
 Markdown and images, yes; PDF, no. Press `m` to copy the notebook as Markdown, with long outputs trimmed, an optional size budget for a language model, and likely secrets hidden. Press `s` to save a cell as an image, and every plot has a Save figure button for PNG, JPEG or WebP. To make a PDF, use the browser's print dialog.

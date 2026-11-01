@@ -192,7 +192,7 @@ if (!tab) {
 
   // Where the browser lets a page offer tools to an agent working with the person (WebMCP), the empty page offers one: open a link.
   const tools = (document as any).modelContext ?? (navigator as any).modelContext
-  if (tools) import('../lib/agent').then((m) => m.landing(tools, signal))
+  if (tools) import('../lib/agent').then((m) => m.landing(tools, signal, (file) => open(file)))
 
   // Notebooks opened from the operating system (an installed copy in Chromium) arrive through the launch queue.
   if ('launchQueue' in window) {
